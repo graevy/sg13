@@ -1,5 +1,5 @@
 let audio = audioSrc = ctx = gain = null, gain_val = 0.5;
-let loop_bool = false, k;
+let loop_bool = false;
 
 let start = () => {
     console.log("started")
@@ -9,8 +9,8 @@ let start = () => {
     gain.gain.setValueAtTime(0.5, ctx.currentTime);
     gain.connect(ctx.destination);
 
-    document.querySelector("#alarm").addEventListener("click", fire_alarm);
-    document.querySelector("#dial").addEventListener("click", fire_dial);
+    document.querySelector("#alarm").addEventListener("click", fire_sound);
+    document.querySelector("#dial").addEventListener("click", fire_sound);
 
     document.querySelector("#gain").addEventListener("input", set);
     document.querySelector("#loop").addEventListener("input", loop);
@@ -47,12 +47,20 @@ let set = e => {
     }
 }
 
+// Generalized sound player.
 let fire_sound = e => {
-    k=e
     if(audio != null) {
         audio.pause();
     }
-    tempAudio = new Audio("./audio/" + e.target.name + ".m4a");
+    // The h5 in the button can't have a name attribute.
+    if(!(e.target.name)) {
+        //Go up a step and get the name.
+        tempAudio = new Audio("./audio/" + e.target.parentElement.name);
+    }
+    else {
+        // Get the name from the button.
+        tempAudio = new Audio("./audio/" + e.target.name);
+    }
     if(audio == null || audio.ended || audio.src !== tempAudio.src) {
         audio = tempAudio;
         audio.loop = loop_bool;
@@ -65,38 +73,4 @@ let fire_sound = e => {
     }
 }
 
-let fire_alarm = e => {
-    if(audio != null) {
-        audio.pause();
-    }
-    tempAudio = new Audio("./audio/alarm.m4a");
-    if(audio == null || audio.ended || audio.src !== tempAudio.src) {
-        audio = tempAudio;
-        audio.loop = loop_bool;
-        audioSrc = ctx.createMediaElementSource(audio);
-        audioSrc.connect(gain);
-        audio.play();
-    }
-    else {
-        audio = null;
-    }
-}
-
-let fire_dial = e => {
-    if(audio != null) {
-        audio.pause();
-    }
-    tempAudio = new Audio("./audio/dial.m4a");
-    if(audio == null || audio.ended || audio.src !== tempAudio.src) {
-        audio = tempAudio;
-        audio.loop = loop_bool;
-        audioSrc = ctx.createMediaElementSource(audio);
-        audioSrc.connect(gain);
-        audio.play();
-    }
-    else {
-        audio = null;
-    }
-}
-
-window.addEventListener("load", start);
+window.onload = start;

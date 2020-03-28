@@ -1,4 +1,5 @@
 let audio = audioSrc = gain_field = ctx = gain = null, gain_val = 0.5;
+let loop_bool = false;
 
 let start = () => {
     console.log("started")
@@ -14,6 +15,23 @@ let start = () => {
     document.querySelector("#dial").addEventListener("click", fire_dial);
 
     gain_field.addEventListener("input", set);
+    document.querySelector("#loop").addEventListener("input", loop);
+}
+
+let loop = e => {
+    console.log("setting loop: " + e.target.checked);
+    if(e.target.checked) {
+        if(audio !== null) {
+            audio.loop = !0;
+        }
+        loop_bool = !0;
+    }
+    else {
+        if(audio !== null) {
+            audio.loop = !1;
+        }
+        loop_bool = !1;
+    }
 }
 
 let set = e => {
@@ -37,6 +55,7 @@ let fire_alarm = e => {
     tempAudio = new Audio("./audio/alarm.m4a");
     if(audio == null || audio.ended || audio.src !== tempAudio.src) {
         audio = tempAudio;
+        audio.loop = loop_bool;
         audioSrc = ctx.createMediaElementSource(audio);
         audioSrc.connect(gain);
         audio.play();
@@ -53,6 +72,7 @@ let fire_dial = e => {
     tempAudio = new Audio("./audio/dial.m4a");
     if(audio == null || audio.ended || audio.src !== tempAudio.src) {
         audio = tempAudio;
+        audio.loop = loop_bool;
         audioSrc = ctx.createMediaElementSource(audio);
         audioSrc.connect(gain);
         audio.play();
@@ -62,4 +82,4 @@ let fire_dial = e => {
     }
 }
 
-window.onload = start;
+window.addEventListener("load", start);

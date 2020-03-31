@@ -49,6 +49,8 @@ let set = e => {
 
 // Generalized sound player.
 let fire_sound = e => {
+    if(ctx.state == "suspended") {ctx.resume()}
+
     if(audio != null) {
         audio.pause();
     }
@@ -73,4 +75,4 @@ let fire_sound = e => {
     }
 }
 
-window.onload = start;
+document.addEventListener("DOMContentLoaded", start, {once: !0});

@@ -135,17 +135,7 @@ class Character:
             if self.gear[SLOTS.index(slot)] is None:
                 self.gear[SLOTS.index(slot)] = item
 
-        (
-            self.leftHand,
-            self.rightHand,
-            self.head,
-            self.body,
-            self.legs,
-            self.belt,
-            self.boots,
-            self.gloves,
-            self.back,
-        ) = (x for x in self.gear)
+        self.updateSlots()
         self.update()
 
     def unequip(self, item, slot):
@@ -162,6 +152,12 @@ class Character:
                 self.inventory.append(self.gear[SLOTS.index(slot)])
                 self.gear[SLOTS.index(slot)] is None
 
+        self.updateSlots()
+        self.update()
+    
+    def updateSlots(self):
+        """Updates the character's slots from gear.
+        """
         (
             self.leftHand,
             self.rightHand,
@@ -173,7 +169,45 @@ class Character:
             self.gloves,
             self.back,
         ) = (x for x in self.gear)
-        self.update()
+
+    def heal(self, hp=None):
+        """Heals the character. The hp provided should always be >= 0
+
+        Keyword Arguments:
+            hp {int} -- The amount to heal, default is a full heal. (default: {None})
+        """
+        if hp is not None and hp > 0:
+            self.hp = hp
+        else:
+            self.hp = self.maxhp
+        self.temphp = 0
+
+    def hurt(self, hp=None, temphp=None, totalDamage=None):
+        """Hurts the character. All args should be >= 0.
+
+        Keyword Arguments:
+            hp {int} -- Optional, how much to subtract from hp. (default: {None})
+            temphp {int} -- Optional, how much to subtract from temphp. (default: {None})
+            totalDamage {int} -- Preferred, how much total damage to do. (default: {None})
+        """
+        #If total damage is used.
+        if totalDamage is not None:
+            #Figure out how much of the damage rolls over.
+            hpDamage = totalDamage - self.temphp
+            #If nothing rolls over (temphp >= totalDamage) it's really easy.
+            if hpDamage <= 0:
+                self.temphp -= totalDamage
+            else:
+                #Otherwise subtract the roll over amount
+                self.temphp = 0
+                self.hp -= hpDamage
+        #Check for temp hp, will not roll over if trying to subtract more than the current temphp
+        elif temphp is not None:
+            #This is a ternary, if the condition is true, the left side will be assigned, otherwise the right will
+            self.temphp = self.temphp - temphp if self.temphp >= temphp else 0
+        elif hp is not None:
+            self.hp = self.hp - hp if self.hp >= hp else 0
+
 
     def grab(self, item, hand=None):
         """Grabs the provided item, optionally specify a hand to grab with.

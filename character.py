@@ -55,10 +55,19 @@ DEFAULTS = {
 
 
 class Character:
-    def __init__(self, data):
+    """Generic character class.
+    """
 
+    def __init__(self, data):
+        """Character constructor.
+
+        Arguments:
+            data {dict} -- A dictionary with any number of the attributes for the character.
+        """
+
+        # Pull the name and default value from the default store
         for (key, value) in DEFAULTS:
-            # Check if the input has
+            # Check if the input has that attribute, otherwise use the default
             if key in data:
                 setattr(self, key, data[key])
                 self.data[key] = data[key]
@@ -69,7 +78,12 @@ class Character:
         self.update()
 
     def equip(self, item, slot):
-        """slot is a (camel)case-sensitive string"""
+        """Equips the provided item in the provided slot.
+
+        Arguments:
+            item {Object} -- The item instance to equip.
+            slot {str} -- The slot to equip into, the string is case sensitive.
+        """
 
         if slot in resources.slots:
             if self.gear[resources.slots.index(slot)] is None:
@@ -89,7 +103,12 @@ class Character:
         self.update()
 
     def unequip(self, item, slot):
-        """slot is a (camel)case-sensitive string"""
+        """Un-equips the provided item from the slot.
+
+        Arguments:
+            item {Object} -- The item instance to un-equip.
+            slot {str} -- The slot to un-equip from, the string is case sensitive.
+        """
 
         # resources.slots is an identical slots list with strings instead of variables
         if slot in resources.slots:
@@ -111,7 +130,14 @@ class Character:
         self.update()
 
     def grab(self, item, hand=None):
+        """Grabs the provided item, optionally specify a hand to grab with.
 
+        Arguments:
+            item {Object} -- The item instance to grab.
+
+        Keyword Arguments:
+            hand {str} -- String name of the hand to grab with. (default: {None})
+        """
         if hand == None:
             if self.rightHand != None:
                 self.rightHand = item
@@ -135,30 +161,48 @@ class Character:
         self.update()
 
     def stow(self, item, storageItem=None):
+        """Stores an item in the inventory, or in another item.
+
+        Arguments:
+            item {Object} -- The object instance to store.
+
+        Keyword Arguments:
+            storageItem {Object} -- The optional item to store in. (default: {None})
+        """
         if storageItem == None:
             self.inventory.append(item)
         else:
             storageItem.storage.append(item)
 
     def showInventory(self):
+        """Prints the character's inventory.
+        """
         for item in self.inventory:
             print("    " + item.name)
             dmfunctions.printcontents(item)
 
     def showGear(self):
+        """Prints the character's gear.
+        """
         for item in self.gear:
             print(item.name)
             dmfunctions.printcontents(item)
 
     def showAttributes(self):
+        """Prints the attributes of the character.
+        """
         for attribute in resources.attributes:
             print(attribute + ": " + str(eval("self." + attribute)))
 
     def showSkills(self):
+        """Prints the skills of the character.
+        """
         for skill in resources.skills:
             print(skill + ": " + str(eval("self." + skill)))
 
     def show(self):
+        """Prints the current status of the character.
+        """
         if self.name[-1] == "s":
             suffix = "'"
         else:
@@ -211,9 +255,20 @@ class Character:
         )
 
     def initiative(self, dice=3, die=6):
+        """Rolls initiative for the character.
+
+        Keyword Arguments:
+            dice {int} -- The number of dice to roll. (default: {3})
+            die {int} -- The number of sides each die should have. (default: {6})
+
+        Returns:
+            int -- The initiative roll.
+        """
         return sum([randint(1, die) for x in range(dice)]) + self.dexmod
 
     def update(self):
+        """Updates various attributes of the character.
+        """
         self.strmod = (self.strength - 10) // 2
         self.dexmod = (self.dexterity - 10) // 2
         self.conmod = (self.constitution - 10) // 2
@@ -295,7 +350,8 @@ class Character:
         )
 
     def randomizeAttributes(self):
-
+        """Randomizes the attributes of the character.
+        """
         (
             self.strength,
             self.dexterity,
@@ -311,7 +367,11 @@ class Character:
         self.update()
 
     def pointBuyAttributes(self, points=27):
+        """Starts the point buy process for the character.
 
+        Keyword Arguments:
+            points {int} -- The number of points to use in the pointbuy. (default: {27})
+        """
         (
             self.strength,
             self.dexterity,
@@ -336,7 +396,8 @@ class Character:
                 print("attribute at starting cap (15)")
 
     def levelUp(self):
-
+        """Levels up the character.
+        """
         self.level += 1
 
         # level attributes

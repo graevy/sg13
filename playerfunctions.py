@@ -57,9 +57,9 @@ def update(character):
 def equip(character, item, slot):
     """slot is a (camel)case-sensitive string"""
 
-    if slot in resources.slots:
-        if character.gear[resources.slots.index(slot)] == None:
-            character.gear[resources.slots.index(slot)] = item
+    if slot in character.slots:
+        if character.gear[character.slots.index(slot)] == None:
+            character.gear[character.slots.index(slot)] = item
 
     (
         character.leftHand,
@@ -79,12 +79,12 @@ def unequip(character, item, slot):
     """slot is a (camel)case-sensitive string"""
 
     # resources.slots is an identical slots list with strings instead of variables
-    if slot in resources.slots:
-        if character.gear[resources.slots.index(slot)] != None:
+    if slot in character.slots:
+        if character.gear[character.slots.index(slot)] != None:
             character.inventory.append(
-                character.gear[resources.slots.index(slot)]
+                character.gear[character.slots.index(slot)]
             )
-            character.gear[resources.slots.index(slot)] = None
+            character.gear[character.slots.index(slot)] = None
 
     (
         character.leftHand,

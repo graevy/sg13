@@ -116,7 +116,7 @@ class Character:
                 self.data[key] = data[key]
             else:
                 if key in kwargs:
-                    setattr(self, key, key, kwargs[key])
+                    setattr(self, key, kwargs[key])
                 else:
                     setattr(self, key, value)
         self.inventory = []

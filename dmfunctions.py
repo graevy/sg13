@@ -1,7 +1,7 @@
 import character
 import resources
 from random import randint
-import json, jsonpickle
+import json
 import os
 from pathlib import Path
 
@@ -60,6 +60,7 @@ def heal(char, amount=None):
     else:
         char.heal(amount)
 
+
 # Should be moved to item.py
 def printcontents(item):
     for thing in item.storage:
@@ -86,55 +87,46 @@ def load():
 
         factions[faction] = []
 
-        for character in os.listdir("./factions/" + faction):
+        for char in os.listdir("./factions/" + faction):
 
             with open(
-                "./factions/" + faction + "/" + character,
+                "./factions/" + faction + "/" + char,
                 "r",
                 encoding="utf-8",
                 errors="ignore",
-            ) as file:
-
-                characterjson = file.readline()
-                factions[faction].append(jsonpickle.decode(characterjson))
+            ) as f:
+                data = json.load(f)
+                # This is why I used a dictionary constructor ;)
+                factions[faction].append(character.Character(data))
 
     return factions
 
 
 def savecharacters(characters):
     """characters is a list of character objects"""
-    for character in characters:
+    for char in characters:
 
         # characters must have a faction
-        if character.faction == (None or ""):
-            print(character.name + " has no faction, and wasn't saved.")
+        if char.faction == (None or ""):
+            print(char.name + " has no faction, and wasn't saved.")
 
         # create directory if it doesn't exist
-        elif not os.path.exists(".\\factions\\" + character.faction):
-            os.makedirs(".\\factions\\" + character.faction)
+        elif not os.path.exists(".\\factions\\" + char.faction):
+            os.makedirs(".\\factions\\" + char.faction)
 
         # create file if it doesn't exist
         Path(
-            ".\\factions\\"
-            + character.faction
-            + "\\"
-            + character.name
-            + ".json"
+            ".\\factions\\" + char.faction + "\\" + char.name + ".json"
         ).touch()
 
         # write
-        f = open(
-            ".\\factions\\"
-            + character.faction
-            + "\\"
-            + character.name
-            + ".json",
-            "w",
+        with open(
+            ".\\factions\\" + char.faction + "\\" + char.name + ".json",
+            "w+",
             encoding="utf-8",
             errors="ignore",
-        )
-        f.write(jsonpickle.encode(character))
-        f.close()
+        ) as f:
+            json.dump(char.getJSON(), f)
 
 
 # def savefactions(factions):

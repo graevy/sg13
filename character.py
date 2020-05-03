@@ -123,6 +123,17 @@ class Character:
         # Let update do all of the work
         self.update()
 
+    def getJSON(self):
+        """Creates and returns a JSON writable version of the character.
+
+        Returns:
+            dict -- A dictionary version of the character's data.
+        """
+        result = {}
+        for key in DEFAULTS:
+            result[key] = getattr(self, key)
+        return result
+
     def equip(self, item, slot):
         """Equips the provided item in the provided slot.
 
@@ -154,7 +165,7 @@ class Character:
 
         self.updateSlots()
         self.update()
-    
+
     def updateSlots(self):
         """Updates the character's slots from gear.
         """
@@ -190,24 +201,23 @@ class Character:
             temphp {int} -- Optional, how much to subtract from temphp. (default: {None})
             totalDamage {int} -- Preferred, how much total damage to do. (default: {None})
         """
-        #If total damage is used.
+        # If total damage is used.
         if totalDamage is not None:
-            #Figure out how much of the damage rolls over.
+            # Figure out how much of the damage rolls over.
             hpDamage = totalDamage - self.temphp
-            #If nothing rolls over (temphp >= totalDamage) it's really easy.
+            # If nothing rolls over (temphp >= totalDamage) it's really easy.
             if hpDamage <= 0:
                 self.temphp -= totalDamage
             else:
-                #Otherwise subtract the roll over amount
+                # Otherwise subtract the roll over amount
                 self.temphp = 0
                 self.hp -= hpDamage
-        #Check for temp hp, will not roll over if trying to subtract more than the current temphp
+        # Check for temp hp, will not roll over if trying to subtract more than the current temphp
         elif temphp is not None:
-            #This is a ternary, if the condition is true, the left side will be assigned, otherwise the right will
+            # This is a ternary, if the condition is true, the left side will be assigned, otherwise the right will
             self.temphp = self.temphp - temphp if self.temphp >= temphp else 0
         elif hp is not None:
             self.hp = self.hp - hp if self.hp >= hp else 0
-
 
     def grab(self, item, hand=None):
         """Grabs the provided item, optionally specify a hand to grab with.

@@ -26,47 +26,6 @@ import item
 
 # sg31 = [j, s, o3, m]
 
-
-# reference tables
-
-attributes = [
-    "strength",
-    "dexterity",
-    "constitution",
-    "intelligence",
-    "wisdom",
-    "charisma",
-]
-skills = [
-    "acting",
-    "anthropology",
-    "xenoanthropology",
-    "diplomacy",
-    "medicine",
-    "vehicles",
-    "technology",
-    "xenotechnology",
-    "sleightofhand",
-    "stealth",
-    "insight",
-    "perception",
-    "survival",
-    "tactics",
-    "athletics",
-    "acrobatics",
-]
-slots = [
-    "leftHand",
-    "rightHand",
-    "head",
-    "body",
-    "legs",
-    "belt",
-    "boots",
-    "gloves",
-    "back",
-]
-
 # generic NPCs
 # TODO: equip NPCs
 

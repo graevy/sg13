@@ -1,6 +1,4 @@
 import math
-import dmfunctions
-import resources
 from random import randint
 
 # TODO: simplify constructor:
@@ -11,6 +9,46 @@ from random import randint
 
 # x = Example(strength="7", diplomacy="9")
 # x.strength;
+
+# reference tables
+
+ATTRIBUTES = [
+    "strength",
+    "dexterity",
+    "constitution",
+    "intelligence",
+    "wisdom",
+    "charisma",
+]
+SKILLS = [
+    "acting",
+    "anthropology",
+    "xenoanthropology",
+    "diplomacy",
+    "medicine",
+    "vehicles",
+    "technology",
+    "xenotechnology",
+    "sleightofhand",
+    "stealth",
+    "insight",
+    "perception",
+    "survival",
+    "tactics",
+    "athletics",
+    "acrobatics",
+]
+SLOTS = [
+    "leftHand",
+    "rightHand",
+    "head",
+    "body",
+    "legs",
+    "belt",
+    "boots",
+    "gloves",
+    "back",
+]
 
 DEFAULTS = {
     "name": "NPC",
@@ -93,9 +131,9 @@ class Character:
             slot {str} -- The slot to equip into, the string is case sensitive.
         """
 
-        if slot in resources.slots:
-            if self.gear[resources.slots.index(slot)] is None:
-                self.gear[resources.slots.index(slot)] = item
+        if slot in SLOTS:
+            if self.gear[SLOTS.index(slot)] is None:
+                self.gear[SLOTS.index(slot)] = item
 
         (
             self.leftHand,
@@ -118,11 +156,11 @@ class Character:
             slot {str} -- The slot to un-equip from, the string is case sensitive.
         """
 
-        # resources.slots is an identical slots list with strings instead of variables
-        if slot in resources.slots:
-            if self.gear[resources.slots.index(slot)] is not None:
-                self.inventory.append(self.gear[resources.slots.index(slot)])
-                self.gear[resources.slots.index(slot)] is None
+        # SLOTS is an identical slots list with strings instead of variables
+        if slot in SLOTS:
+            if self.gear[SLOTS.index(slot)] is not None:
+                self.inventory.append(self.gear[SLOTS.index(slot)])
+                self.gear[SLOTS.index(slot)] is None
 
         (
             self.leftHand,
@@ -187,25 +225,25 @@ class Character:
         """
         for item in self.inventory:
             print("    " + item.name)
-            dmfunctions.printcontents(item)
+            # dmfunctions.printcontents(item)
 
     def showGear(self):
         """Prints the character's gear.
         """
         for item in self.gear:
             print(item.name)
-            dmfunctions.printcontents(item)
+            # dmfunctions.printcontents(item)
 
     def showAttributes(self):
         """Prints the attributes of the character.
         """
-        for attribute in resources.attributes:
+        for attribute in ATTRIBUTES:
             print(attribute + ": " + str(eval("self." + attribute)))
 
     def showSkills(self):
         """Prints the skills of the character.
         """
-        for skill in resources.skills:
+        for skill in SKILLS:
             print(skill + ": " + str(eval("self." + skill)))
 
     def show(self):
@@ -237,14 +275,14 @@ class Character:
             + " max health."
         )
         print(self.name + suffix + " attributes are: ")
-        for attribute in resources.attributes:
+        for attribute in ATTRIBUTES:
             print("    " + attribute + ": " + str(eval("self." + attribute)))
         # skills
         print(self.name + suffix + " skills are:")
-        for skill in resources.skills:
+        for skill in SKILLS:
             print("    " + skill + ": " + str(eval("self." + skill)))
         print(self.name + " has an AC of " + str(self.AC) + " and is wearing: ")
-        for slot in resources.slots:
+        for slot in SLOTS:
             try:
                 print("    " + slot + ": " + eval("self." + slot).name)
             except:
@@ -393,10 +431,10 @@ class Character:
         while points > 0:
 
             s = input("type an attribute to += 1: ")
-            if self.attributes[resources.attributes.index(s)] >= 15:
-                self.attributes[resources.attributes.index(s)] += 1
+            if self.attributes[ATTRIBUTES.index(s)] >= 15:
+                self.attributes[ATTRIBUTES.index(s)] += 1
 
-                if self.attributes[resources.attributes.index(s)] > 13:
+                if self.attributes[ATTRIBUTES.index(s)] > 13:
                     points -= 2
                 else:
                     points -= 1
@@ -433,8 +471,8 @@ class Character:
             if s == "":
                 break
 
-            if self.attributes[resources.attributes.index(s)] < 20:
-                self.attributes[resources.attributes.index(s)] += 1
+            if self.attributes[ATTRIBUTES.index(s)] < 20:
+                self.attributes[ATTRIBUTES.index(s)] += 1
                 self.attributepoints -= 1
             else:
                 print("attribute maxed; pick a different attribute")
@@ -463,23 +501,23 @@ class Character:
 
             if s == "":
                 break
-            # resources.skills is a copy of self.skills with strings instead of variables;
-            # self.skills[resources.skills.index(s)] selects the appropriate skill via user input
-            if s not in resources.skills:
+            # SKILLS is a copy of self.skills with strings instead of variables;
+            # self.skills[SKILLS.index(s)] selects the appropriate skill via user input
+            if s not in SKILLS:
                 print("that is not a skill")
 
             # check to make sure the skill isn't maxed out
-            elif self.skills[resources.skills.index(s)] < 5:
+            elif self.skills[SKILLS.index(s)] < 5:
                 # skills above 2 cost 2 to level instead of 1
-                if self.skills[resources.skills.index(s)] > 2:
+                if self.skills[SKILLS.index(s)] > 2:
                     if self.skillpoints > 1:
-                        self.skills[resources.skills.index(s)] += 1
+                        self.skills[SKILLS.index(s)] += 1
                         self.skillpoints -= 2
                     else:
                         print("not enough to points level this skill")
                 # base case: increment skill and decrement skillpoints
                 else:
-                    self.skills[resources.skills.index(s)] += 1
+                    self.skills[SKILLS.index(s)] += 1
                     self.skillpoints -= 1
             else:
                 print("skill maxed; pick a different skill")

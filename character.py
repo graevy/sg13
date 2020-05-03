@@ -112,9 +112,9 @@ class Character:
 
         # resources.slots is an identical slots list with strings instead of variables
         if slot in resources.slots:
-            if self.gear[resources.slots.index(slot)] != None:
+            if self.gear[resources.slots.index(slot)] is not None:
                 self.inventory.append(self.gear[resources.slots.index(slot)])
-                self.gear[resources.slots.index(slot)] = None
+                self.gear[resources.slots.index(slot)] is None
 
         (
             self.leftHand,
@@ -138,22 +138,22 @@ class Character:
         Keyword Arguments:
             hand {str} -- String name of the hand to grab with. (default: {None})
         """
-        if hand == None:
-            if self.rightHand != None:
+        if hand is None:
+            if self.rightHand is not None:
                 self.rightHand = item
-            elif self.leftHand != None:
+            elif self.leftHand is not None:
                 self.leftHand = item
             else:
                 print("ope")
 
         if hand == "right":
-            if self.rightHand != None:
+            if self.rightHand is not None:
                 self.rightHand = item
             else:
                 print("ope")
 
         if hand == "left":
-            if self.leftHand != None:
+            if self.leftHand is not None:
                 self.leftHand = item
             else:
                 print("ope")
@@ -169,7 +169,7 @@ class Character:
         Keyword Arguments:
             storageItem {Object} -- The optional item to store in. (default: {None})
         """
-        if storageItem == None:
+        if storageItem is None:
             self.inventory.append(item)
         else:
             storageItem.storage.append(item)

@@ -70,8 +70,8 @@ slots = [
 # generic NPCs
 # TODO: equip NPCs
 
-airman = character.Character(
-    "airman",
+airman = character.Character({},
+    name="airman",
     hitdie=10,
     hp=10,
     dexterity=12,
@@ -86,8 +86,8 @@ airman = character.Character(
     acrobatics=3,
 )
 
-jaffa = character.Character(
-    "jaffa",
+jaffa = character.Character({},
+    name="jaffa",
     race="jaffa",
     clas="guardian",
     hitdie=10,
@@ -106,8 +106,8 @@ jaffa = character.Character(
     acrobatics=1,
 )
 
-asgard = character.Character(
-    "asgard",
+asgard = character.Character({},
+    name="asgard",
     race="asgard",
     hitdie=6,
     hp=6,
@@ -128,8 +128,8 @@ asgard = character.Character(
     insight=1,
 )
 
-goauld = character.Character(
-    "goauld",
+goauld = character.Character({},
+    name="goauld",
     race="goauld",
     clas="system lord",
     hitdie=12,

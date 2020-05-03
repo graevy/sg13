@@ -26,13 +26,18 @@ DEFAULTS = {
     "dexterity": 10,
     "constitution": 10,
     "intelligence": 10,
-    "wisdom": 19,
+    "wisdom": 10,
     "charisma": 10,
     "acting": 0,
     "anthropology": 0,
     "xenoanthropology": 0,
     "sleightofhand": 0,
     "stealth": 0,
+    "diplomacy": 0,
+    "medicine": 0,
+    "vehicles": 0,
+    "xenotechnology": 0,
+    "technology": 0,
     "insight": 0,
     "perception": 0,
     "survival": 0,
@@ -58,7 +63,7 @@ class Character:
     """Generic character class.
     """
 
-    def __init__(self, data):
+    def __init__(self, data, **kwargs):
         """Character constructor.
 
         Arguments:
@@ -66,14 +71,17 @@ class Character:
         """
 
         # Pull the name and default value from the default store
-        for (key, value) in DEFAULTS:
+        for key, value in DEFAULTS.items():
             # Check if the input has that attribute, otherwise use the default
             if key in data:
                 setattr(self, key, data[key])
                 self.data[key] = data[key]
             else:
-                setattr(self, key, value)
-
+                if key in kwargs:
+                    setattr(self, key, key, kwargs[key])
+                else:
+                    setattr(self, key, value)
+        self.inventory = []
         # Let update do all of the work
         self.update()
 

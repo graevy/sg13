@@ -4,7 +4,6 @@ import item
 from random import randint
 from statistics import NormalDist
 
-
 def roll(dice=1, die=20):
     """custom roll, takes (dice)d(die)"""
     return sum([randint(1, die) for x in range(dice)])
@@ -35,8 +34,8 @@ def advantage(dice=1, die=20):
     return max(roll(dice, die), roll(dice, die))
 
 
-def initiative(character, dice=3, die=6):
-    return character.initiative()
+def initiative(char, dice=3, die=6):
+    return char.initiative()
 
 
 def printcontents(item):
@@ -45,91 +44,31 @@ def printcontents(item):
         printcontents(thing)
 
 
-def show(character):
-    return character.show()
+def show(char):
+    return char.show()
 
 
-def update(character):
+def update(char):
     """debug tool"""
-    return character.update()
+    return char.update()
 
 
-def equip(character, item, slot):
+def equip(char, item, slot):
     """slot is a (camel)case-sensitive string"""
-
-    if slot in character.slots:
-        if character.gear[character.slots.index(slot)] == None:
-            character.gear[character.slots.index(slot)] = item
-
-    (
-        character.leftHand,
-        character.rightHand,
-        character.head,
-        character.body,
-        character.legs,
-        character.belt,
-        character.boots,
-        character.gloves,
-        character.back,
-    ) = (x for x in character.gear)
-    character.update()
+    char.equip(item, slot)
 
 
-def unequip(character, item, slot):
+def unequip(char, item, slot):
     """slot is a (camel)case-sensitive string"""
-
-    # resources.slots is an identical slots list with strings instead of variables
-    if slot in character.slots:
-        if character.gear[character.slots.index(slot)] != None:
-            character.inventory.append(
-                character.gear[character.slots.index(slot)]
-            )
-            character.gear[character.slots.index(slot)] = None
-
-    (
-        character.leftHand,
-        character.rightHand,
-        character.head,
-        character.body,
-        character.legs,
-        character.belt,
-        character.boots,
-        character.gloves,
-        character.back,
-    ) = (x for x in character.gear)
-    character.update()
+    char.unequip(item, slot)
 
 
-def grab(character, item, hand=None):
-
-    if hand == None:
-        if character.rightHand != None:
-            character.rightHand = item
-        elif character.leftHand != None:
-            character.leftHand = item
-        else:
-            print("ope")
-
-    if hand == "right":
-        if character.rightHand != None:
-            character.rightHand = item
-        else:
-            print("ope")
-
-    if hand == "left":
-        if character.leftHand != None:
-            character.leftHand = item
-        else:
-            print("ope")
-
-    character.update()
+def grab(char, item, hand=None):
+    char.grab(item, hand=hand)
 
 
-def stow(character, item, storageItem=None):
-    if storageItem == None:
-        character.inventory.append(item)
-    else:
-        storageItem.storage.append(item)
+def stow(char, item, storageItem=None):
+    char.stow(item, storageItem=storageItem)
 
 
 # TODO: testing

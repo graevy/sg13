@@ -29,7 +29,8 @@ import item
 # generic NPCs
 # TODO: equip NPCs
 
-airman = character.Character({},
+airman = character.Character(
+    {},
     name="airman",
     hitdie=10,
     hp=10,
@@ -45,7 +46,8 @@ airman = character.Character({},
     acrobatics=3,
 )
 
-jaffa = character.Character({},
+jaffa = character.Character(
+    {},
     name="jaffa",
     race="jaffa",
     clas="guardian",
@@ -65,7 +67,8 @@ jaffa = character.Character({},
     acrobatics=1,
 )
 
-asgard = character.Character({},
+asgard = character.Character(
+    {},
     name="asgard",
     race="asgard",
     hitdie=6,
@@ -87,7 +90,8 @@ asgard = character.Character({},
     insight=1,
 )
 
-goauld = character.Character({},
+goauld = character.Character(
+    {},
     name="goauld",
     race="goauld",
     clas="system lord",

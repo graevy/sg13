@@ -4,6 +4,7 @@ import item
 from random import randint
 from statistics import NormalDist
 
+
 def roll(dice=1, die=20):
     """custom roll, takes (dice)d(die)"""
     return sum([randint(1, die) for x in range(dice)])

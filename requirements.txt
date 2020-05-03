@@ -1,1 +1,1 @@
-jsonpickle>=1.41
+jsonpickle>=1.4.1

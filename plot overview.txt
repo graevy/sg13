@@ -1,0 +1,29 @@
+factions:
+    good:
+        sgc, tok'ra, nox resistance, furlings, asgard, reetou
+    neutral:
+        ascended ancients, free jaffa, nox pacifists, unas
+    evil:
+        ori, trust, goa'uld, lucien alliance
+
+
+
+section 2: pegasus
+
+
+chapter 1: threads
+
+sg-13 takes the gateship through the modified cargo ship's pegasus gate. they rematerialize in a diner, wearing their uniforms (sg-1: threads). an exhausted waitress stares at them, and gestures to a booth. she asks what they'd like to order, ignoring their confused expressions. they're seated in a corner. the waitress walks away. there is a newspaper on the table. the second page reads: "Wraith submit to Origin". while reading the article, a wraith queen walks into the diner. she's unusually pale, her eyes are blue, and her clothes are uncharacteristically unassuming blue-grey robes. the diner patrons immediately surround her and push her out, closing the door and wedging a chair under the knob. sg-13 resumes reading:
+
+    Of the remaining 47 hive ships since the tau'ri evacuation of atlantis, 6 remain, all in the service of Origin. Heathens sustain the limited remaining wraith population, and a unified pegasus galaxy intensifies our omnipotent burden...
+
+the door bursts open, several pale wraith wielding blue staves enter. the patrons by the door are immediately overwhelmed. the waitress, horrified, stops serving her patron (who cackles and runs to the back door) and rushes over to the wraith. sg-13 exits out the rear of the diner, but the block's edge fades to nothingness and the waitress' patron has vanished. with this plane of existence now eternally contested, the waitress rushes over to sg-13 and whisks them back into their gateship in the milky way galaxy.
+
+
+chapter 2: oma
+
+sg-13 finds themselves back in their gateship in the modified al'kesh with the waitress (oma desala) as a passenger. When questioned, she states that as more planes of existence are contested by the ori, the ancients are increasingly lenient in policing her, and she has now taken human form to pursue (the now freed) anubis into the material plane. when sg-13 gated into the pegasus galaxy, oma saved their lives by bringing them to an ascended plane, which the ori were then able to detect and invade. she joins the party with the understanding that they will hunt anubis together. sg-31 doesn't recognize oma desala and sg-13 covers for her. sg-13, having gathered intel for sg-31, returns to earth having gained some rep and begins planning. oma desala reasons that anubis will try to reactivate the dakara superweapon to cleanse the milky way galaxy of potential life for the ori to enslave, thus allowing him to consolidate his powerbase. sg-13 returns to active duty, bringing oma, who daniel recognizes. during debriefing, she relays information to hammond, and then opens the gate with her arms.
+
+chapter 3: dakara
+
+anubis is gathering influence on dakara. he reactivates old loyal jaffa living in the free jaffa nation as spies.

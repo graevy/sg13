@@ -12,17 +12,17 @@ def roll(dice=1, die=20):
 
 def roll3d20mid():
     """mid variance standard roll"""
-    return sorted([randint(1, 20) for x in range(3)])[1]
+    return sorted([roll() for x in range(3)])[1]
 
 
 def roll3d6():
     """low variance standard roll"""
-    return sum([randint(1, 6) for x in range(3)])
+    return roll(6, 3)
 
 
 def roll7d2():
     """lowest variance standard roll"""
-    return sum([randint(1, 2) for x in range(7)])
+    return roll(7, 2)
 
 
 def disadvantage(dice=1, die=20):

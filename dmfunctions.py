@@ -61,19 +61,6 @@ def heal(char, amount=None):
         char.heal(amount)
 
 
-# Should be moved to item.py
-def printcontents(item):
-    for thing in item.storage:
-        print(item.name + ": " + thing.name)
-        printcontents(thing)
-
-
-# def showitems(character):
-#     for item in character.gear and character.inventory:
-#         print(item.name)
-#         printcontents(item)
-
-
 def levelUp(char):
     char.levelUp()
 

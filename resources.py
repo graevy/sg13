@@ -6,7 +6,7 @@ import item
 # factions = dmfunctions.loadcharacters()
 
 # characters by faction
-# naamah = character.Character("Na'amah", race='jaffa', strength=14, dexterity=12, constitution=14, intelligence=16, wisdom=16, charisma=8,
+# naamah = character.Character("Met'uu", race='jaffa', strength=14, dexterity=12, constitution=14, intelligence=16, wisdom=16, charisma=8,
 # xenotechnology=3, stealth=3, anthropology=3, xenoanthropology=2, perception=3, acrobatics=1, survival=1, tactics=1, medicine=1, level=4)
 
 # victoria = character.Character('Cadet Victoria Romanenkov', strength=12, dexterity=15, constitution=13, intelligence=14, wisdom=12, charisma=16,
@@ -174,9 +174,7 @@ c4 = item.Item("C4", "Single c4 brick", weight=0.2)
 gdo = item.Item("GDO", "Iris GDO", weight=0.2)
 compass = item.Item("Compass", "magnets", weight=0.1)
 canteen = item.Item("Canteen", "2 liters", weight=2.1)
-binoculars = item.Item(
-    "Binoculars", "Passive rangefinding, variable zoom", weight=0.7
-)
+binoculars = item.Item("Binoculars", "Passive rangefinding, variable zoom", weight=0.7)
 mre = item.Item("MRE", "Meal ready to eat", weight=0.6)
 radio = item.Item("Radio", "50km unobscured maximum range", weight=0.1)
 flashlight = item.Item("Flashlight", weight=0.4)

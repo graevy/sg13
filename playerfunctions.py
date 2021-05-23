@@ -39,10 +39,10 @@ def initiative(char, dice=3, die=6):
     return char.initiative()
 
 
-def printcontents(item):
+def printContents(item):
     for thing in item.storage:
         print(item.name + ": " + thing.name)
-        printcontents(thing)
+        printContents(thing)
 
 
 def show(char):

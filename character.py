@@ -1,7 +1,9 @@
+# pylint: disable=no-member
+
 import math
 from random import randint
 
-# TODO: simplify constructor:
+# TODO: simplify constructor?
 # class Example:
 #     def __init__(self, **kwargs):
 #         for name, value in kwargs.iteritems():
@@ -10,7 +12,7 @@ from random import randint
 # x = Example(strength="7", diplomacy="9")
 # x.strength;
 
-# reference tables
+# reference tables. move to resources?
 
 ATTRIBUTES = [
     "strength",
@@ -38,6 +40,8 @@ SKILLS = [
     "athletics",
     "acrobatics",
 ]
+
+# almost deprecated
 SLOTS = [
     "leftHand",
     "rightHand",
@@ -101,6 +105,16 @@ class Character:
     """Generic character class.
     """
 
+#   Constructor WITHOUT defaults table (doesn't work):
+
+    # def __init__(self, data):
+    #     self.data = data
+    #     for key, value in data.items():
+    #         setattr(self, key, value)
+        
+    #     self.inventory = []
+    #     self.update()
+
     def __init__(self, data, **kwargs):
         """Character constructor.
 
@@ -108,19 +122,27 @@ class Character:
             data {dict} -- A dictionary with any number of the attributes for the character.
         """
 
-        # Pull the name and default value from the default store
+        self.data = data
+
+        # Pull the name and default value from the DEFAULTS dict
         for key, value in DEFAULTS.items():
-            # Check if the input has that attribute, otherwise use the default
+            # This conditional ladder exists in case character creation gets improperly extended
+            # Check if the input has that attribute...
             if key in data:
+                # data[key] instead of value, because we're indexing the DEFAULTS dict?
                 setattr(self, key, data[key])
+                # isn't this redundant?
                 self.data[key] = data[key]
+            # otherwise maybe it's a kwarg we missed?
             else:
                 if key in kwargs:
                     setattr(self, key, kwargs[key])
+                # last ditch effort, maybe it's custom?
                 else:
                     setattr(self, key, value)
+        # (inventory has to exist for update to work)
         self.inventory = []
-        # Let update do all of the work
+        # Let update do the rest of the construction
         self.update()
 
     def getJSON(self):
@@ -142,11 +164,11 @@ class Character:
             slot {str} -- The slot to equip into, the string is case sensitive.
         """
 
-        if slot in SLOTS:
-            if self.gear[SLOTS.index(slot)] is None:
-                self.gear[SLOTS.index(slot)] = item
+        # TODO: error handling
+        if exec('self.'+slot) in self.gear:
+            exec('self.'+slot+'= item')
+        
 
-        self.updateSlots()
         self.update()
 
     def unequip(self, item, slot):
@@ -157,7 +179,7 @@ class Character:
             slot {str} -- The slot to un-equip from, the string is case sensitive.
         """
 
-        # SLOTS is an identical slots list with strings instead of variables
+        # TODO: replace this the same way equip was replaced, deprecating SLOTS
         if slot in SLOTS:
             if self.gear[SLOTS.index(slot)] is not None:
                 self.inventory.append(self.gear[SLOTS.index(slot)])

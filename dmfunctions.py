@@ -103,7 +103,7 @@ def load():
 
 
 def savecharacters(characters):
-    """characters is a list of character objects"""
+
     for char in characters:
 
         # characters must have a faction
@@ -133,7 +133,7 @@ def savecharacters(characters):
 #     for key,value in factions.iteritems():
 #         savecharacters(value)
 
-# TODO: dual wield penalty, input sanitization
+# TODO: dual wield penalty
 def attack(attacker, defender, weapon, distance=0, cover=None):
     """master attack function"""
     # factoring in distance
@@ -161,11 +161,11 @@ def attack(attacker, defender, weapon, distance=0, cover=None):
 
     # weapon mods to hit
     mod = 0
-    if weapon.dexorstr == "strength":
+    if weapon.proficiency == "strength":
         mod = attacker.strmod
-    elif weapon.dexorstr == "dexterity":
+    elif weapon.proficiency == "dexterity":
         mod = attacker.dexmod
-    elif weapon.dexorstr == "finesse":
+    elif weapon.proficiency == "finesse":
         mod = max(attacker.strmod, attacker.dexmod)
 
     # hit calculation

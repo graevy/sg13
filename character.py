@@ -4,16 +4,18 @@ import math
 from random import randint
 
 # TODO: simplify constructor?
-# class Example:
-#     def __init__(self, **kwargs):
-#         for name, value in kwargs.iteritems():
-#             setattr(self, name, value)
+# def __init__(self, data):
+#     self.data = data
+#     for key, value in data.items():
+#         setattr(self, key, value)
+    
+#     self.inventory = []
+#     self.update()
 
-# x = Example(strength="7", diplomacy="9")
-# x.strength;
+# TODO: convert lists to dicts for printing. this will break almost all the functions,
+# but simplify and secure the class
 
 # reference tables. move to resources?
-
 ATTRIBUTES = [
     "strength",
     "dexterity",
@@ -53,7 +55,6 @@ SLOTS = [
     "gloves",
     "back",
 ]
-
 DEFAULTS = {
     "name": "NPC",
     "race": "human",
@@ -104,17 +105,8 @@ DEFAULTS = {
 class Character:
     """Generic character class.
     """
-
-#   Constructor WITHOUT defaults table (doesn't work):
-
-    # def __init__(self, data):
-    #     self.data = data
-    #     for key, value in data.items():
-    #         setattr(self, key, value)
-        
-    #     self.inventory = []
-    #     self.update()
-
+    
+    # by far the worst part of the code to date
     def __init__(self, data, **kwargs):
         """Character constructor.
 
@@ -123,23 +115,24 @@ class Character:
         """
 
         self.data = data
+        # fails if these aren't initialized o.o
         self.leftHand = None
         self.rightHand = None
 
         # Pull the name and default value from the DEFAULTS dict
         for key, value in DEFAULTS.items():
             # This conditional ladder exists in case character creation gets improperly extended
-            # Check if the input has that attribute...
+            # Check if the input has that attribute,
             if key in data:
-                # data[key] instead of value, because we're indexing the DEFAULTS dict?
+                # data[key] instead of value, because we're indexing the DEFAULTS dict
                 setattr(self, key, data[key])
                 # isn't this redundant?
                 self.data[key] = data[key]
-            # otherwise maybe it's a kwarg we missed?
+            # otherwise maybe it's a kwarg,
             else:
                 if key in kwargs:
                     setattr(self, key, kwargs[key])
-                # last ditch effort, maybe it's custom?
+                # last ditch effort, maybe it's custom
                 else:
                     setattr(self, key, value)
         # (inventory has to exist for update to work)
@@ -247,7 +240,7 @@ class Character:
             slot {str} -- The slot to equip into, the string is case sensitive.
         """
 
-        # TODO: error handling, also this doesn't check if the slot is in self.gear yet
+        # TODO: this doesn't check if the slot is in self.gear yet
         if hasattr(self, slot):
             setattr(self, slot, item)
         else:
@@ -255,16 +248,15 @@ class Character:
 
         self.update()
 
-    def unequip(self, item, slot):
+    def unequip(self, slot):
         """Un-equips the provided item from the slot.
 
         Arguments:
-            item {Object} -- The item instance to un-equip.
             slot {str} -- The slot to un-equip from, the string is case sensitive.
         """
 
         if hasattr(self, slot):
-            self.inventory.append(eval('self.'+slot))
+            self.inventory.append(getattr(self, slot))
             setattr(self, slot, None)
         else:
             print("invalid unequip slot")
@@ -324,19 +316,19 @@ class Character:
             elif self.leftHand is not None:
                 self.leftHand = item
             else:
-                print("ope")
+                print("full hands")
 
         if hand == "right" or hand == "rightHand":
             if self.rightHand is not None:
                 self.rightHand = item
             else:
-                print("ope")
+                print("full right hand")
 
         if hand == "left" or hand == "leftHand":
             if self.leftHand is not None:
                 self.leftHand = item
             else:
-                print("ope")
+                print("full left hand")
 
         self.update()
 
@@ -357,29 +349,44 @@ class Character:
     def showInventory(self):
         """Prints the character's inventory.
         """
+        # TODO: recursion
+        print("Inventory:")
         for item in self.inventory:
             print("    " + item.name)
             # dmfunctions.printcontents(item)
+        print("")
 
     def showGear(self):
         """Prints the character's gear.
         """
+        slotindex = 0
+        print("Gear:")
         for item in self.gear:
-            print(item.name)
+            print(SLOTS[slotindex] + ": " + str(item))
+            slotindex += 1
             # dmfunctions.printcontents(item)
+        print("")
 
     def showAttributes(self):
         """Prints the attributes of the character.
         """
+        print("Attributes:")
         for attribute in ATTRIBUTES:
             print(attribute + ": " + str(eval("self." + attribute)))
+        print("")
 
     def showSkills(self):
         """Prints the skills of the character.
         """
+        print("Skills:")
+        #for k, v in self.skills:
+        #    print(
+        #        k + ": " + str(v))
         for skill in SKILLS:
             print(skill + ": " + str(eval("self." + skill)))
+        print("")
 
+    # this should really just use code from showSkills, showAttributes, etc
     def show(self):
         """Prints the current status of the character.
         """
@@ -444,10 +451,10 @@ class Character:
         Returns:
             int -- The initiative roll.
         """
-        return sum([randint(1, die) for x in range(dice)]) + self.dexmod
+        return (sum([randint(1, die) for x in range(dice)]) + self.dexmod)
 
     def randomizeAttributes(self):
-        """Randomizes the attributes of the character.
+        """Randomizes character attributes. 4d6 minus lowest roll per attribute
         """
         (
             self.strength,
@@ -481,7 +488,10 @@ class Character:
 
         while points > 0:
 
-            s = input("type an attribute to += 1: ")
+            s = input("type an attribute to increment 1: ").lower()
+            if s not in ATTRIBUTES:
+                print("invalid attribute. attributes are: " + str(ATTRIBUTES))
+                continue
             if self.attributes[ATTRIBUTES.index(s)] >= 15:
                 self.attributes[ATTRIBUTES.index(s)] += 1
 
@@ -498,21 +508,22 @@ class Character:
         self.level += 1
 
         # level attributes
-        self.attributepoints += 1
-        print(
-            "current attributes: strength "
-            + str(self.strength)
-            + ", dexterity "
-            + str(self.dexterity)
-            + ", constitution "
-            + str(self.constitution)
-            + ", intelligence "
-            + str(self.intelligence)
-            + ", wisdom "
-            + str(self.wisdom)
-            + ", charisma "
-            + str(self.charisma)
-        )
+        if not self.level % 4:
+            self.attributepoints += 2
+            print(
+                "current attributes: strength "
+                + str(self.strength)
+                + ", dexterity "
+                + str(self.dexterity)
+                + ", constitution "
+                + str(self.constitution)
+                + ", intelligence "
+                + str(self.intelligence)
+                + ", wisdom "
+                + str(self.wisdom)
+                + ", charisma "
+                + str(self.charisma)
+            )
 
         while self.attributepoints > 0:
             s = input(
@@ -554,7 +565,7 @@ class Character:
                 break
 
             # TODO: replace clunky implementation with hasattr
-            # SKILLS is a copy of self.skills with strings instead of variables;
+            # SKILLS is a copy of self.skills with strings instead of attributes;
             # self.skills[SKILLS.index(s)] selects the appropriate skill via user input
             if s not in SKILLS:
                 print("that's not a skill")

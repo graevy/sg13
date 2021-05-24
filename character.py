@@ -123,6 +123,8 @@ class Character:
         """
 
         self.data = data
+        self.leftHand = None
+        self.rightHand = None
 
         # Pull the name and default value from the DEFAULTS dict
         for key, value in DEFAULTS.items():
@@ -156,6 +158,87 @@ class Character:
             result[key] = getattr(self, key)
         return result
 
+    def update(self):
+        """Updates various attributes of the character.
+        """
+        self.strmod = (self.strength - 10) // 2
+        self.dexmod = (self.dexterity - 10) // 2
+        self.conmod = (self.constitution - 10) // 2
+        self.intmod = (self.intelligence - 10) // 2
+        self.wismod = (self.wisdom - 10) // 2
+        self.chamod = (self.charisma - 10) // 2
+
+        self.gear = [
+            self.leftHand,
+            self.rightHand,
+            self.head,
+            self.body,
+            self.legs,
+            self.belt,
+            self.boots,
+            self.gloves,
+            self.back,
+        ]
+
+        self.armor = [
+            self.head,
+            self.body,
+            self.legs,
+            self.belt,
+            self.boots,
+            self.gloves,
+            self.back,
+        ]
+
+        self.gearweight = 0.0
+        # character data
+        for item in self.gear and self.inventory:
+            if hasattr(item, "weight"):
+                self.gearweight += item.weight
+
+            # TODO recursive function to calculate gear weight from nested items
+            for storeditem in item.storage:
+                if hasattr(storeditem, "weight"):
+                    gearweight += storeditem.weight
+
+        self.armorAC = 0
+        for item in self.armor:
+            if hasattr(item, "bonusAC"):
+                armorAC += item.bonusAC
+        self.AC = 6 + self.dexmod + self.armorAC
+
+        self.attributes = [
+            self.strength,
+            self.dexterity,
+            self.constitution,
+            self.intelligence,
+            self.wisdom,
+            self.charisma,
+        ]
+        self.skills = [
+            self.acting,
+            self.anthropology,
+            self.xenoanthropology,
+            self.diplomacy,
+            self.medicine,
+            self.vehicles,
+            self.technology,
+            self.xenotechnology,
+            self.sleightofhand,
+            self.stealth,
+            self.insight,
+            self.perception,
+            self.survival,
+            self.tactics,
+            self.athletics,
+            self.acrobatics,
+        ]
+
+        # hp = hitdie+mod for level 1, add smaller bonus for each level
+        # standard 5e formula is:
+        # self.hp = (self.hitdie + self.conmod) + (self.level - 1) * (self.hitdie // 2 + 1 + self.conmod)
+        self.maxhp = (self.hitdie + self.conmod) + ((self.level - 1) * self.conmod)
+
     def equip(self, item, slot):
         """Equips the provided item in the provided slot.
 
@@ -164,10 +247,11 @@ class Character:
             slot {str} -- The slot to equip into, the string is case sensitive.
         """
 
-        # TODO: error handling
-        if exec('self.'+slot) in self.gear:
-            exec('self.'+slot+'= item')
-        
+        # TODO: error handling, also this doesn't check if the slot is in self.gear yet
+        if hasattr(self, slot):
+            setattr(self, slot, item)
+        else:
+            print("invalid equip slot")
 
         self.update()
 
@@ -179,29 +263,13 @@ class Character:
             slot {str} -- The slot to un-equip from, the string is case sensitive.
         """
 
-        # TODO: replace this the same way equip was replaced, deprecating SLOTS
-        if slot in SLOTS:
-            if self.gear[SLOTS.index(slot)] is not None:
-                self.inventory.append(self.gear[SLOTS.index(slot)])
-                self.gear[SLOTS.index(slot)] is None
+        if hasattr(self, slot):
+            self.inventory.append(eval('self.'+slot))
+            setattr(self, slot, None)
+        else:
+            print("invalid unequip slot")
 
-        self.updateSlots()
         self.update()
-
-    def updateSlots(self):
-        """Updates the character's slots from gear.
-        """
-        (
-            self.leftHand,
-            self.rightHand,
-            self.head,
-            self.body,
-            self.legs,
-            self.belt,
-            self.boots,
-            self.gloves,
-            self.back,
-        ) = (x for x in self.gear)
 
     def heal(self, hp=None):
         """Heals the character. The hp provided should always be >= 0
@@ -258,13 +326,13 @@ class Character:
             else:
                 print("ope")
 
-        if hand == "right":
+        if hand == "right" or hand == "rightHand":
             if self.rightHand is not None:
                 self.rightHand = item
             else:
                 print("ope")
 
-        if hand == "left":
+        if hand == "left" or hand == "leftHand":
             if self.leftHand is not None:
                 self.leftHand = item
             else:
@@ -378,89 +446,6 @@ class Character:
         """
         return sum([randint(1, die) for x in range(dice)]) + self.dexmod
 
-    def update(self):
-        """Updates various attributes of the character.
-        """
-        self.strmod = (self.strength - 10) // 2
-        self.dexmod = (self.dexterity - 10) // 2
-        self.conmod = (self.constitution - 10) // 2
-        self.intmod = (self.intelligence - 10) // 2
-        self.wismod = (self.wisdom - 10) // 2
-        self.chamod = (self.charisma - 10) // 2
-
-        self.gear = [
-            self.leftHand,
-            self.rightHand,
-            self.head,
-            self.body,
-            self.legs,
-            self.belt,
-            self.boots,
-            self.gloves,
-            self.back,
-        ]
-
-        self.armor = [
-            self.head,
-            self.body,
-            self.legs,
-            self.belt,
-            self.boots,
-            self.gloves,
-            self.back,
-        ]
-
-        # character data
-        self.gearweight = 0.0
-        for item in self.gear and self.inventory:
-            if hasattr(item, "weight"):
-                gearweight += item.weight
-
-            # TODO recursive function to calculate gear weight from nested items
-            for storeditem in item.storage:
-                if hasattr(storeditem, "weight"):
-                    gearweight += storeditem.weight
-
-        self.armorAC = 0
-        for item in self.armor:
-            if hasattr(item, "bonusAC"):
-                armorAC += item.bonusAC
-        self.AC = 6 + self.dexmod + self.armorAC
-
-        self.attributes = [
-            self.strength,
-            self.dexterity,
-            self.constitution,
-            self.intelligence,
-            self.wisdom,
-            self.charisma,
-        ]
-        self.skills = [
-            self.acting,
-            self.anthropology,
-            self.xenoanthropology,
-            self.diplomacy,
-            self.medicine,
-            self.vehicles,
-            self.technology,
-            self.xenotechnology,
-            self.sleightofhand,
-            self.stealth,
-            self.insight,
-            self.perception,
-            self.survival,
-            self.tactics,
-            self.athletics,
-            self.acrobatics,
-        ]
-
-        # hp = hitdie+mod for level 1, add smaller bonus for each level
-        # standard 5e formula is:
-        # self.hp = (self.hitdie + self.conmod) + (self.level - 1) * (self.hitdie // 2 + 1 + self.conmod)
-        self.maxhp = (self.hitdie + self.conmod) + (self.level - 1) * (
-            self.conmod
-        )
-
     def randomizeAttributes(self):
         """Randomizes the attributes of the character.
         """
@@ -567,10 +552,12 @@ class Character:
 
             if s == "":
                 break
+
+            # TODO: replace clunky implementation with hasattr
             # SKILLS is a copy of self.skills with strings instead of variables;
             # self.skills[SKILLS.index(s)] selects the appropriate skill via user input
             if s not in SKILLS:
-                print("that is not a skill")
+                print("that's not a skill")
 
             # check to make sure the skill isn't maxed out
             elif self.skills[SKILLS.index(s)] < 5:

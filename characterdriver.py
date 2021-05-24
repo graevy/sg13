@@ -1,9 +1,9 @@
-from character import *
-from item import *
+import character
+import item
 
-sword = Weapon("boof", 1)
+sword = item.Weapon("boof", 1)
 
-avery = Character({'avery'})
+avery = character.Character({'avery'})
 
 avery.equip(sword, "leftHand")
 avery.unequip('leftHand')

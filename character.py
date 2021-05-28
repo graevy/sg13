@@ -57,7 +57,7 @@ class Character:
 
     def __init__(self, data, **kwargs):
         self.data = data
-        # constructor fails if these aren't defined, trying to learn why
+        # TODO constructor fails if these aren't defined, trying to learn why
         self.leftHand = None
         self.rightHand = None
 
@@ -430,7 +430,6 @@ class Character:
                 points -= 1 if self.attributes[s] < 13 else 2
             else:
                 print("attribute at starting cap (15)")
-
 
 
     def levelUp(self):

@@ -4,57 +4,17 @@ import math
 from random import randint
 
 # TODO: simplify constructor?
-# def __init__(self, data):
-#     self.data = data
-#     for key, value in data.items():
-#         setattr(self, key, value)
-    
-#     self.inventory = []
-#     self.update()
+# def __init__(self, data, **kwargs):
+#    self.data = data
+#    for key, value in data.items():
+#            if key in resources.validCharacterArguments:
+#                setattr(self, key, value)
+#    for value in kwargs:
+#        setattr(self, value)
+#    self.suffix = "'s'" if self.name[-1] == "s" or "x" else "s"
+#    self.inventory = []
+#    self.update()
 
-# TODO: convert lists to dicts for printing. this will break almost all the functions,
-# but simplify and secure the class
-
-# reference tables. move to resources?
-ATTRIBUTES = [
-    "strength",
-    "dexterity",
-    "constitution",
-    "intelligence",
-    "wisdom",
-    "charisma",
-]
-SKILLS = [
-    "acting",
-    "anthropology",
-    "xenoanthropology",
-    "diplomacy",
-    "medicine",
-    "vehicles",
-    "technology",
-    "xenotechnology",
-    "sleightofhand",
-    "stealth",
-    "insight",
-    "perception",
-    "survival",
-    "tactics",
-    "athletics",
-    "acrobatics",
-]
-
-# almost deprecated
-SLOTS = [
-    "leftHand",
-    "rightHand",
-    "head",
-    "body",
-    "legs",
-    "belt",
-    "boots",
-    "gloves",
-    "back",
-]
 DEFAULTS = {
     "name": "NPC",
     "race": "human",
@@ -106,7 +66,7 @@ class Character:
     """Generic character class.
     """
     
-    # by far the worst part of the code to date
+    # by far the worst part of the code
     def __init__(self, data, **kwargs):
         """Character constructor.
 
@@ -122,12 +82,13 @@ class Character:
         # Pull the name and default value from the DEFAULTS dict
         for key, value in DEFAULTS.items():
             # This conditional ladder exists in case character creation gets improperly extended
+            
             # Check if the input has that attribute,
             if key in data:
-                # data[key] instead of value, because we're indexing the DEFAULTS dict
+                # data[key] instead of value, because we're indexing the DEFAULTS dict in this loop
                 setattr(self, key, data[key])
                 # isn't this redundant?
-                self.data[key] = data[key]
+                # self.data[key] = data[key]
             # otherwise maybe it's a kwarg,
             else:
                 if key in kwargs:
@@ -135,7 +96,10 @@ class Character:
                 # last ditch effort, maybe it's custom
                 else:
                     setattr(self, key, value)
-        # (inventory has to exist for update to work)
+
+        self.suffix = "'s'" if self.name[-1] == "s" or "x" else "s"
+        
+        # (update needs inventory initialized)
         self.inventory = []
         # Let update do the rest of the construction
         self.update()
@@ -161,35 +125,35 @@ class Character:
         self.wismod = (self.wisdom - 10) // 2
         self.chamod = (self.charisma - 10) // 2
 
-        self.gear = [
-            self.leftHand,
-            self.rightHand,
-            self.head,
-            self.body,
-            self.legs,
-            self.belt,
-            self.boots,
-            self.gloves,
-            self.back,
-        ]
+        self.gear = {
+            'leftHand':self.leftHand,
+            'rightHand':self.rightHand,
+            'head':self.head,
+            'body':self.body,
+            'legs':self.legs,
+            'belt':self.belt,
+            'boots':self.boots,
+            'gloves':self.gloves,
+            'back':self.back
+        }
 
-        self.armor = [
-            self.head,
-            self.body,
-            self.legs,
-            self.belt,
-            self.boots,
-            self.gloves,
-            self.back,
-        ]
+        self.armor = {
+            'head':self.head,
+            'body':self.body,
+            'legs':self.legs,
+            'belt':self.belt,
+            'boots':self.boots,
+            'gloves':self.gloves,
+            'back':self.back
+        }
 
         self.gearweight = 0.0
         # character data
-        for item in self.gear and self.inventory:
+        for item in self.gear.values() and self.inventory:
             if hasattr(item, "weight"):
                 self.gearweight += item.weight
 
-            # TODO recursive function to calculate gear weight from nested items
+            # TODO recursive function to calculate gear weight
             for storeditem in item.storage:
                 if hasattr(storeditem, "weight"):
                     gearweight += storeditem.weight
@@ -200,32 +164,33 @@ class Character:
                 armorAC += item.bonusAC
         self.AC = 6 + self.dexmod + self.armorAC
 
-        self.attributes = [
-            self.strength,
-            self.dexterity,
-            self.constitution,
-            self.intelligence,
-            self.wisdom,
-            self.charisma,
-        ]
-        self.skills = [
-            self.acting,
-            self.anthropology,
-            self.xenoanthropology,
-            self.diplomacy,
-            self.medicine,
-            self.vehicles,
-            self.technology,
-            self.xenotechnology,
-            self.sleightofhand,
-            self.stealth,
-            self.insight,
-            self.perception,
-            self.survival,
-            self.tactics,
-            self.athletics,
-            self.acrobatics,
-        ]
+        self.attributes = {
+            'strength':self.strength,
+            'dexterity':self.dexterity,
+            'constitution':self.constitution,
+            'intelligence':self.intelligence,
+            'wisdom':self.wisdom,
+            'charisma':self.charisma
+        }
+
+        self.skills = {
+            'acting':self.acting,
+            'anthropology':self.anthropology,
+            'xenoanthropology':self.xenoanthropology,
+            'diplomacy':self.diplomacy,
+            'medicine':self.medicine,
+            'vehicles':self.vehicles,
+            'technology':self.technology,
+            'xenotechnology':self.xenotechnology,
+            'sleightofhand':self.sleightofhand,
+            'stealth':self.stealth,
+            'insight':self.insight,
+            'perception':self.perception,
+            'survival':self.survival,
+            'tactics':self.tactics,
+            'athletics':self.athletics,
+            'acrobatics':self.acrobatics
+        }
 
         # hp = hitdie+mod for level 1, add smaller bonus for each level
         # standard 5e formula is:
@@ -240,8 +205,7 @@ class Character:
             slot {str} -- The slot to equip into, the string is case sensitive.
         """
 
-        # TODO: this doesn't check if the slot is in self.gear yet
-        if hasattr(self, slot):
+        if slot in self.gear.keys():
             setattr(self, slot, item)
         else:
             print("invalid equip slot")
@@ -255,7 +219,7 @@ class Character:
             slot {str} -- The slot to un-equip from, the string is case sensitive.
         """
 
-        if hasattr(self, slot):
+        if slot in self.gear.keys():
             self.inventory.append(getattr(self, slot))
             setattr(self, slot, None)
         else:
@@ -316,7 +280,7 @@ class Character:
             elif self.leftHand is not None:
                 self.leftHand = item
             else:
-                print("full hands")
+                print("hands full")
 
         if hand == "right" or hand == "rightHand":
             if self.rightHand is not None:
@@ -353,47 +317,36 @@ class Character:
         print("Inventory:")
         for item in self.inventory:
             print("    " + item.name)
-            # dmfunctions.printcontents(item)
         print("")
 
     def showGear(self):
         """Prints the character's gear.
         """
-        slotindex = 0
-        print("Gear:")
-        for item in self.gear:
-            print(SLOTS[slotindex] + ": " + str(item))
-            slotindex += 1
-            # dmfunctions.printcontents(item)
+        # TODO: recursion
+        print(self.name + " has an AC of " + str(self.AC) + " and is wearing: ")
+        for slot, item in self.gear.items():
+            print(slot + ": " + str(item))
         print("")
 
     def showAttributes(self):
         """Prints the attributes of the character.
         """
-        print("Attributes:")
-        for attribute in ATTRIBUTES:
-            print(attribute + ": " + str(eval("self." + attribute)))
+        print(self.name + self.suffix + " attributes are: ")
+        for name, attribute in self.attributes.items():
+            print(name + ": " + str(attribute))
         print("")
 
     def showSkills(self):
         """Prints the skills of the character.
         """
-        print("Skills:")
-        #for k, v in self.skills:
-        #    print(
-        #        k + ": " + str(v))
-        for skill in SKILLS:
-            print(skill + ": " + str(eval("self." + skill)))
+        print(self.name + self.suffix + " skills are: ")
+        for name, skill in self.skills.items():
+            print(name + ": " + str(skill))
         print("")
 
-    # this should really just use code from showSkills, showAttributes, etc
     def show(self):
         """Prints the current status of the character.
         """
-        if self.name[-1] == "s":
-            suffix = "'"
-        else:
-            suffix = "'s"
 
         print(
             self.name
@@ -415,21 +368,11 @@ class Character:
             + str(self.maxhp)
             + " max health."
         )
-        print(self.name + suffix + " attributes are: ")
-        for attribute in ATTRIBUTES:
-            print("    " + attribute + ": " + str(eval("self." + attribute)))
-        # skills
-        print(self.name + suffix + " skills are:")
-        for skill in SKILLS:
-            print("    " + skill + ": " + str(eval("self." + skill)))
-        print(self.name + " has an AC of " + str(self.AC) + " and is wearing: ")
-        for slot in SLOTS:
-            try:
-                print("    " + slot + ": " + eval("self." + slot).name)
-            except:
-                print("    " + slot + ": None")
-        print(self.name + suffix + " inventory:")
+        self.showAttributes()
+        self.showSkills()
+        self.showGear()
         self.showInventory()
+
         print(
             self.name
             + " has "
@@ -465,7 +408,7 @@ class Character:
             self.charisma,
         ) = (
             sum(sorted([randint(1, 6) for x in range(4)])[1:])
-            for x in self.attributes
+            for x in self.attributes.values()
         )
 
         self.update()
@@ -483,24 +426,42 @@ class Character:
             self.intelligence,
             self.wisdom,
             self.charisma,
-        ) = (8 for x in self.attributes)
+        ) = (8 for x in self.attributes.values())
         self.update()
+
+        def bug_player():
+            s = input("type an attribute to increment: ".lower())
+            if s not in self.attributes.keys():
+                print("invalid attribute. attributes are: " + str(self.attributes.keys())[11:-2])
+                return False
+            return s
+
+        # it's possible in some point totals to have all attributes above 12 and still have 1 point left; buying any more attributes is impossible
+        def is_stalled():
+            if points != 1:
+                return False
+            for attribute in self.attributes.values():
+                if attribute < 13:
+                    return False
+            return True
 
         while points > 0:
 
-            s = input("type an attribute to increment 1: ").lower()
-            if s not in ATTRIBUTES:
-                print("invalid attribute. attributes are: " + str(ATTRIBUTES))
-                continue
-            if self.attributes[ATTRIBUTES.index(s)] >= 15:
-                self.attributes[ATTRIBUTES.index(s)] += 1
+            s = bug_player()
 
-                if self.attributes[ATTRIBUTES.index(s)] > 13:
-                    points -= 2
-                else:
-                    points -= 1
+            # s is only False when you put in a bad attribute
+            if not s:
+                continue
+            if is_stalled():
+                self.attributepoints += 1
+                break
+
+            if self.attributes[s] < 15:
+                points -= 1 if self.attributes[s] < 13 else 2
             else:
                 print("attribute at starting cap (15)")
+
+
 
     def levelUp(self):
         """Levels up the character.
@@ -508,7 +469,7 @@ class Character:
         self.level += 1
 
         # level attributes
-        if not self.level % 4:
+        if  self.level % 4 == 0:
             self.attributepoints += 2
             print(
                 "current attributes: strength "
@@ -526,15 +487,16 @@ class Character:
             )
 
         while self.attributepoints > 0:
-            s = input(
-                "type an attribute (or leave blank to exit) to increase by 1: "
-            )
+            s = input("type an attribute (or leave blank to exit) to increase by 1: ").lower()
 
             if s == "":
                 break
 
-            if self.attributes[ATTRIBUTES.index(s)] < 20:
-                self.attributes[ATTRIBUTES.index(s)] += 1
+            if s not in self.attributes.keys():
+                print("invalid attribute. attributes are: " + str(self.attributes.keys())[11:-2])
+
+            if self.attributes[s] < 20:
+                self.attributes[s] += 1
                 self.attributepoints -= 1
             else:
                 print("attribute maxed; pick a different attribute")
@@ -548,7 +510,7 @@ class Character:
             self.intelligence,
             self.wisdom,
             self.charisma,
-        ) = (x for x in self.attributes)
+        ) = (x for x in self.attributes.values())
 
         # update character now in case int is increased enough to effect skillpoints
         self.update()
@@ -564,24 +526,21 @@ class Character:
             if s == "":
                 break
 
-            # TODO: replace clunky implementation with hasattr
-            # SKILLS is a copy of self.skills with strings instead of attributes;
-            # self.skills[SKILLS.index(s)] selects the appropriate skill via user input
-            if s not in SKILLS:
+            if s not in self.skills.keys():
                 print("that's not a skill")
 
             # check to make sure the skill isn't maxed out
-            elif self.skills[SKILLS.index(s)] < 5:
+            elif self.skills[s] < 5:
                 # skills above 2 cost 2 to level instead of 1
-                if self.skills[SKILLS.index(s)] > 2:
+                if self.skills[s] > 2:
                     if self.skillpoints > 1:
-                        self.skills[SKILLS.index(s)] += 1
+                        self.skills[s] += 1
                         self.skillpoints -= 2
                     else:
                         print("not enough to points level this skill")
                 # base case: increment skill and decrement skillpoints
                 else:
-                    self.skills[SKILLS.index(s)] += 1
+                    self.skills[s] += 1
                     self.skillpoints -= 1
             else:
                 print("skill maxed; pick a different skill")
@@ -603,7 +562,6 @@ class Character:
             self.tactics,
             self.athletics,
             self.acrobatics,
-        ) = (x for x in self.skills)
+        ) = (x for x in self.skills.values())
 
-        # update character again
         self.update()

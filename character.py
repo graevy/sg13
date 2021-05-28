@@ -192,7 +192,7 @@ class Character:
             'acrobatics':self.acrobatics
         }
 
-        # hp = hitdie+mod for level 1, add smaller bonus for each level
+        # hp = hitdie+mod for level 1, conmod for each other level
         # standard 5e formula is:
         # self.hp = (self.hitdie + self.conmod) + (self.level - 1) * (self.hitdie // 2 + 1 + self.conmod)
         self.maxhp = (self.hitdie + self.conmod) + ((self.level - 1) * self.conmod)
@@ -408,7 +408,7 @@ class Character:
             self.charisma,
         ) = (
             sum(sorted([randint(1, 6) for x in range(4)])[1:])
-            for x in self.attributes.values()
+            for x in self.attributes
         )
 
         self.update()

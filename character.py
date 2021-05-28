@@ -55,9 +55,9 @@ class Character:
     """
     
 
-    # TODO: simplify constructor?
     def __init__(self, data, **kwargs):
         self.data = data
+        # constructor fails if these aren't defined, trying to learn why
         self.leftHand = None
         self.rightHand = None
 
@@ -69,9 +69,9 @@ class Character:
         for key in kwargs:
            setattr(self, key, kwargs[key])
 
-        self.suffix = "'s'" if self.name[-1] == "s" or "x" else "s"
+        self.suffix = "'s" if self.name[-1] == "s" or "x" else "s"
         self.inventory = []
-        # update builds lists like self.gear, self.attributes, etc
+        # update() builds lists like self.gear, self.attributes, etc
         self.update()
 
     def getJSON(self):

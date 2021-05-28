@@ -169,25 +169,25 @@ scanner = item.Item(
     weight=0.3,
 )
 
-# in case i fuck up the jsons irreversably, here's the old strings. lists should be converted to dicts
+# in case i fuck up the jsons irreversably, here's the old strings.
 
 # characters by faction
-# metuu = character.Character("Met'uu", race='jaffa', strength=14, dexterity=12, constitution=14, intelligence=16, wisdom=16, charisma=8,
+# metuu = character.Character({}, "Met'uu", race='jaffa', strength=14, dexterity=12, constitution=14, intelligence=16, wisdom=16, charisma=8,
 # xenotechnology=3, stealth=3, anthropology=3, xenoanthropology=2, perception=3, acrobatics=1, survival=1, tactics=1, medicine=1, level=4)
 
-# victoria = character.Character('Cadet Victoria Romanenkov', strength=12, dexterity=15, constitution=13, intelligence=14, wisdom=12, charisma=16,
+# victoria = character.Character({}, 'Cadet Victoria Romanenkov', strength=12, dexterity=15, constitution=13, intelligence=14, wisdom=12, charisma=16,
 # perception=1, technology=2, medicine=1, sleightofhand=1, tactics=3, stealth=2, athletics=1, diplomacy=2, level=1)
 
-# steve = character.Character('Dr. Steven Hartman', race='human', strength=12, dexterity=14, constitution=14, intelligence=16, wisdom=14, charisma=13,
+# steve = character.Character({}, 'Dr. Steven Hartman', race='human', strength=12, dexterity=14, constitution=14, intelligence=16, wisdom=14, charisma=13,
 # vehicles=2, insight=1, xenotechnology=4, technology=4, perception=3, sleightofhand=2, diplomacy=1, survival=1, tactics=1, level=4)
 
-# sabrac = character.Character('Sabrac', race='jaffa', strength=16, dexterity=10, constitution=16, intelligence=10, wisdom=14, charisma=10)
+# sabrac = character.Character({}, 'Sabrac', race='jaffa', strength=16, dexterity=10, constitution=16, intelligence=10, wisdom=14, charisma=10)
 
 # sg13 = [metuu, victoria, steve, sabrac]
 
-# j = character.Character('J', faction='sg31', strength=10, dexterity=14, constitution=10, intelligence=16, wisdom=12, charisma=10)
-# s = character.Character('S', faction='sg31', strength=14, dexterity=14, constitution=12, intelligence=8, wisdom=12, charisma=8)
-# o3 = character.Character('O3', faction='sg31', strength=10, dexterity=12, constitution=14, intelligence=14, wisdom=16, charisma=14)
-# m = character.Character('M', faction='sg31', strength=16, dexterity=12, constitution=12, intelligence=8, wisdom=10, charisma=10)
+# j = character.Character({}, 'J', faction='sg31', strength=10, dexterity=14, constitution=10, intelligence=16, wisdom=12, charisma=10)
+# s = character.Character({}, 'S', faction='sg31', strength=14, dexterity=14, constitution=12, intelligence=8, wisdom=12, charisma=8)
+# o3 = character.Character({}, 'O3', faction='sg31', strength=10, dexterity=12, constitution=14, intelligence=14, wisdom=16, charisma=14)
+# m = character.Character({}, 'M', faction='sg31', strength=16, dexterity=12, constitution=12, intelligence=8, wisdom=10, charisma=10)
 
 # sg31 = [j, s, o3, m]

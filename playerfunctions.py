@@ -72,25 +72,33 @@ def stow(char, item, storageItem=None):
     char.stow(item, storageItem=storageItem)
 
 
-# TODO: testing
+# TODO: return quantative vs qualitative values depending on mode parameter
 def odds(dc, dice=3, die=6):
-    """return odds of succeeding a dice check"""
+    """return odds of succeeding a dice check
+
+    Args:
+        dc (int): Dice check to pass/fail
+        dice (int, optional): Number of dice. Defaults to 3.
+        die (int, optional): Number of sides per die. Defaults to 6.
+
+    Returns:
+        [str]: Percent chance of success
+    """
     # calculate mean, standard deviation, and then odds
 
-    # calculate mean
-    mean = (dice * die + die) / (2 * dice)
+    # calculate mean. dice*die is max, dice is min, dice*(die+1) is max+min
+    mean = (dice * (die + 1)) / 2
 
-    # calculate standard deviation
-
-    # discrete uniform variance formula
+    # calculate standard deviation via discrete uniform variance formula:
+    # (n^2 - 1) / 12
     dievariance = (die ** 2 - 1) / 12
     dicevariance = dievariance * dice
     stdev = dicevariance ** 0.5
 
     # calculate odds
-    zscore = (dc - mean) / stdev
-    odds = NormalDist(mu=mean, sigma=stdev).cdf(zscore)
+    odds = NormalDist(mu=mean, sigma=stdev).cdf(dc)
+    percentSuccess = 100 - int(round(odds, 2) * 100)
 
-    return odds
+    return (str(percentSuccess) + '%')
 
     # in python 2, (1 + erf(x/root2))/2 can be substituted for normaldist.cdf

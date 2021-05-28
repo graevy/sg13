@@ -51,7 +51,7 @@ def groupinitiative(characters):
 
 
 def hurt(char, amount):
-    char.hp -= amount
+    char.hurt(amount)
 
 
 def heal(char, amount=None):
@@ -67,7 +67,7 @@ def levelUp(char):
 
 # TODO: create faction lists from factions dict, pass to savecharacters
 def load():
-    """builds factions, a dictionary of (name,list)s. don't use mid-session"""
+    """builds factions, a dictionary of {name,characterList}s. don't use mid-session"""
     factions = {}
 
     for faction in os.listdir("./factions"):
@@ -88,37 +88,68 @@ def load():
 
     return factions
 
+###################################################
+# Not sure if I want to use this implementation yet
 
-def savecharacters(characters):
+# def savecharacter(character):
+#     # create directory if it doesn't exist
+#     if not os.path.exists(".\\factions\\" + character.faction):
+#         os.makedirs(".\\factions\\" + character.faction)
 
-    for char in characters:
+#     # create file if it doesn't exist
+#     Path(
+#         ".\\factions\\" + character.faction + "\\" + character.name + ".json"
+#     ).touch()
 
-        # characters must have a faction
-        if char.faction == (None or ""):
-            print(char.name + " has no faction, and wasn't saved.")
+#     # write
+#     with open(
+#         ".\\factions\\" + character.faction + "\\" + character.name + ".json",
+#         "w+",
+#         encoding="utf-8",
+#         errors="ignore",
+#     ) as f:
+#         json.dump(character.getJSON(), f)
 
-        # create directory if it doesn't exist
-        elif not os.path.exists(".\\factions\\" + char.faction):
-            os.makedirs(".\\factions\\" + char.faction)
+# def savefaction(faction):
+#     for char in faction.values():
+#         savecharacter(char)
 
-        # create file if it doesn't exist
-        Path(
-            ".\\factions\\" + char.faction + "\\" + char.name + ".json"
-        ).touch()
+# def savefactions(factions)
+#       for faction in factions.values():
+#           savefaction(faction)
+###################################################
 
-        # write
-        with open(
-            ".\\factions\\" + char.faction + "\\" + char.name + ".json",
-            "w+",
-            encoding="utf-8",
-            errors="ignore",
-        ) as f:
-            json.dump(char.getJSON(), f)
+def savefactions(factions):
+    """Saves all factions' characters' jsons to local dir
 
+    Args:
+        factions (dict): a dictionary of {faction:characterlist}s
+    """
 
-# def savefactions(factions):
-#     for key,value in factions.iteritems():
-#         savecharacters(value)
+    for factionName, faction in factions.items():
+        for char in faction:
+
+            # if this somehow happens it needs to get fixed on write
+            if char.faction != factionName:
+                char.faction = factionName
+
+            # create directory if it doesn't exist
+            if not os.path.exists(".\\factions\\" + char.faction):
+                os.makedirs(".\\factions\\" + char.faction)
+
+            # create file if it doesn't exist
+            Path(
+                ".\\factions\\" + char.faction + "\\" + char.name + ".json"
+            ).touch()
+
+            # write
+            with open(
+                ".\\factions\\" + char.faction + "\\" + char.name + ".json",
+                "w+",
+                encoding="utf-8",
+                errors="ignore",
+            ) as f:
+                json.dump(char.getJSON(), f)
 
 # TODO: dual wield penalty
 def attack(attacker, defender, weapon, distance=0, cover=None):

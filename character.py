@@ -3,19 +3,7 @@
 import math
 from random import randint
 
-# TODO: simplify constructor?
-# def __init__(self, data, **kwargs):
-#    self.data = data
-#    for key, value in data.items():
-#            if key in resources.validCharacterArguments:
-#                setattr(self, key, value)
-#    for value in kwargs:
-#        setattr(self, value)
-#    self.suffix = "'s'" if self.name[-1] == "s" or "x" else "s"
-#    self.inventory = []
-#    self.update()
-
-DEFAULTS = {
+characterCreationDefaults = {
     "name": "NPC",
     "race": "human",
     "clas": "soldier",
@@ -58,7 +46,7 @@ DEFAULTS = {
     "gloves": None,
     "back": None,
     "attributepoints": 0,
-    "skillpoints": 0,
+    "skillpoints": 0
 }
 
 
@@ -66,42 +54,24 @@ class Character:
     """Generic character class.
     """
     
-    # by far the worst part of the code
+
+    # TODO: simplify constructor?
     def __init__(self, data, **kwargs):
-        """Character constructor.
-
-        Arguments:
-            data {dict} -- A dictionary with any number of the attributes for the character.
-        """
-
         self.data = data
-        # fails if these aren't initialized o.o
         self.leftHand = None
         self.rightHand = None
 
-        # Pull the name and default value from the DEFAULTS dict
-        for key, value in DEFAULTS.items():
-            # This conditional ladder exists in case character creation gets improperly extended
-            
-            # Check if the input has that attribute,
-            if key in data:
-                # data[key] instead of value, because we're indexing the DEFAULTS dict in this loop
-                setattr(self, key, data[key])
-                # isn't this redundant?
-                # self.data[key] = data[key]
-            # otherwise maybe it's a kwarg,
-            else:
-                if key in kwargs:
-                    setattr(self, key, kwargs[key])
-                # last ditch effort, maybe it's custom
-                else:
-                    setattr(self, key, value)
+        for k, v in characterCreationDefaults.items():
+            setattr(self, k, v)
+        for k, v in data.items():
+               if k in characterCreationDefaults.keys():
+                   setattr(self, k, v)
+        for key in kwargs:
+           setattr(self, key, kwargs[key])
 
         self.suffix = "'s'" if self.name[-1] == "s" or "x" else "s"
-        
-        # (update needs inventory initialized)
         self.inventory = []
-        # Let update do the rest of the construction
+        # update builds lists like self.gear, self.attributes, etc
         self.update()
 
     def getJSON(self):
@@ -111,7 +81,7 @@ class Character:
             dict -- A dictionary version of the character's data.
         """
         result = {}
-        for key in DEFAULTS:
+        for key in characterCreationDefaults.keys():
             result[key] = getattr(self, key)
         return result
 
@@ -565,3 +535,40 @@ class Character:
         ) = (x for x in self.skills.values())
 
         self.update()
+
+# old character constructor
+    # by far the worst part of the code
+    # def __init__(self, data, **kwargs):
+    #     """Character constructor.
+
+    #     Arguments:
+    #         data {dict} -- A dictionary with any number of the attributes for the character.
+    #     """
+
+    #     self.data = data
+    #     # fails if these aren't initialized o.o
+    #     self.leftHand = None
+    #     self.rightHand = None
+
+    #     # Pull the name and default value from the defaults dict
+    #     for key, value in characterCreationDefaults.items():
+    #         # This conditional ladder exists in case character creation gets improperly extended
+            
+    #         # Check if the input has that attribute,
+    #         if key in data:
+    #             # data[key] instead of value, because we're indexing the defaults dict in this loop
+    #             setattr(self, key, data[key])
+    #         # otherwise maybe it's a kwarg,
+    #         else:
+    #             if key in kwargs:
+    #                 setattr(self, key, kwargs[key])
+    #             # last ditch effort, maybe it's custom
+    #             else:
+    #                 setattr(self, key, value)
+
+    #     self.suffix = "'s'" if self.name[-1] == "s" or "x" else "s"
+        
+    #     # (update needs inventory initialized)
+    #     self.inventory = []
+    #     # Let update do the rest of the construction
+    #     self.update()

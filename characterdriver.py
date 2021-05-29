@@ -14,12 +14,10 @@ avery.hurt(2)
 avery.equip(sword, 'leftHand')
 avery.unequip('leftHand')
 
-print(avery.attributes)
+avery.levelUp()
+
 # avery.showAttributes()
 # avery.showSkills()
 # avery.showGear()
 # avery.showInventory()
 # avery.show()
-
-ashrak = resources.ashrak
-ashrak.show()

@@ -57,7 +57,7 @@ class Character:
 
     def __init__(self, data, **kwargs):
         self.data = data
-        # constructor fails if these aren't defined, trying to learn why
+        # TODO constructor fails if these aren't defined, trying to learn why
         self.leftHand = None
         self.rightHand = None
 
@@ -406,7 +406,8 @@ class Character:
                 return False
             return s
 
-        # it's possible in some point totals to have all attributes above 12 and still have 1 point left; buying any more attributes is impossible
+        # it's possible in some point totals to have all attributes above 12 and still have 1 point left;
+        # buying any more attributes becomes impossible
         def is_stalled():
             if points != 1:
                 return False
@@ -430,7 +431,6 @@ class Character:
                 points -= 1 if self.attributes[s] < 13 else 2
             else:
                 print("attribute at starting cap (15)")
-
 
 
     def levelUp(self):
@@ -490,17 +490,24 @@ class Character:
 
         while self.skillpoints > 0:
             s = input(
-                "type a skill (or leave blank to exit) to increase by 1: "
+                "You have "+str(self.skillpoints)+" skill points. \n"+\
+                "Type skills to list skills. Leave blank to exit (saving points). \n" +\
+                "Type a skill to increase: "
             )
 
             if s == "":
                 break
 
+            if s == 'skills':
+                self.showSkills()
+                continue
+
             if s not in self.skills.keys():
                 print("that's not a skill")
+                continue
 
             # check to make sure the skill isn't maxed out
-            elif self.skills[s] < 5:
+            if self.skills[s] < 5:
                 # skills above 2 cost 2 to level instead of 1
                 if self.skills[s] > 2:
                     if self.skillpoints > 1:
@@ -536,7 +543,7 @@ class Character:
 
         self.update()
 
-# old character constructor
+# old character constructor i'm keeping for reference
     # by far the worst part of the code
     # def __init__(self, data, **kwargs):
     #     """Character constructor.

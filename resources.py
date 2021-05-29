@@ -8,6 +8,86 @@ import item
 # generic NPCs
 # TODO: equip NPCs
 
+# items
+# TODO: create premade item packs for sgc personnel
+
+backpack = item.Armor("Backpack", "Weatherproofed", weight=2.1)
+boots = item.Armor("Boots", "Combat boots", weight=0.7)
+gloves = item.Armor("Gloves", weight=0.1)
+bdupants = item.Armor(
+    "BDU Pants", "Standard battle dress uniform pants", weight=1.0
+)
+bdushirt = item.Armor(
+    "BDU Shirt", "Standard battle dress uniform shirt", weight=1.0
+)
+
+p90 = item.Weapon(
+    "FN P90",
+    "5.7x28mm FMJ",
+    weight=3.0,
+    range=200,
+    damage=12,
+    proficiency="dexterity",
+    cqcpenalty=1,
+)
+m24 = item.Weapon(
+    "M24",
+    "7.62x51mm",
+    weight=7.0,
+    range=800,
+    damage=20,
+    proficiency="dexterity",
+    cqcpenalty=3,
+)
+zat = item.Weapon(
+    "Zat'nik'tel",
+    weight=1.0,
+    range=75,
+    damage=0,
+    proficiency="dexterity",
+    cqcpenalty=1,
+)
+matok = item.Weapon(
+    "Ma'tok",
+    weight=5.0,
+    range=50,
+    damage=30,
+    proficiency="strength",
+    cqcpenalty=0,
+)
+
+grenade = item.Item("Frag Grenade", "Made in the USA", weight=0.4)
+c4 = item.Item("C4", "Single c4 brick", weight=0.2)
+
+gdo = item.Item("GDO", "Iris GDO", weight=0.2)
+compass = item.Item("Compass", "magnets", weight=0.1)
+canteen = item.Item("Canteen", "2 liters", weight=2.1)
+binoculars = item.Item("Binoculars", "Passive rangefinding, variable zoom", weight=0.7)
+mre = item.Item("MRE", "Meal ready to eat", weight=0.6)
+radio = item.Item("Radio", "50km unobscured maximum range", weight=0.1)
+flashlight = item.Item("Flashlight", weight=0.4)
+laptop = item.Item("Laptop", "Dell Latitude D600", weight=2.0)
+notebook = item.Item("Notebook", weight=0.3)
+camcorder = item.Item("Camcorder", weight=0.2)
+iodine = item.Item("Iodine", "For water purification", weight=0.1)
+harness = item.Item("Harness", "For climbing", weight=0.8)
+
+scanner = item.Item(
+    "Alteran Scanner",
+    "Ranges: 50m lifesigns, 300m misc. heat, 1-100km em/radiation depending on strength. Ranges tripled but detectable in active mode.",
+    weight=0.3,
+)
+
+
+ashrakhelmet = item.Armor("Ashrak Helmet", "Goa'uld HUD", weight=2, bonusAC=1)
+ashrakchest = item.Armor("Ashrak Chestplate", "Painful to wear", weight=4, bonusAC=2)
+ashraklegs = item.Armor("Ashrak Legplates", "More painful to wear", weight=3, bonusAC=1)
+ashrakboots = item.Armor("Ashrak Boots", "Made for larger feet", weight=2)
+ashrakmatok = item.Weapon("Ashrak Wrist-Mounted Ma'tok", "Unwieldy", weight=0, range=50, damage=30, proficiency="dexterity", proficiencytype="ranged")
+
+
+
+
 airman = character.Character(
     {},
     name="airman",
@@ -99,75 +179,29 @@ goauld = character.Character(
     acrobatics=2,
 )
 
-# items
-# TODO: create premade item packs for sgc personnel
-
-backpack = item.Armor("Backpack", "Weatherproofed", weight=2.1)
-boots = item.Armor("Boots", "Combat boots", weight=0.7)
-gloves = item.Armor("Gloves", weight=0.1)
-bdupants = item.Armor(
-    "BDU Pants", "Standard battle dress uniform pants", weight=1.0
-)
-bdushirt = item.Armor(
-    "BDU Shirt", "Standard battle dress uniform shirt", weight=1.0
-)
-
-p90 = item.Weapon(
-    "FN P90",
-    "5.7x28mm FMJ",
-    weight=3.0,
-    range=200,
-    damage=12,
-    proficiency="dexterity",
-    cqcpenalty=1,
-)
-m24 = item.Weapon(
-    "M24",
-    "7.62x51mm",
-    weight=7.0,
-    range=800,
-    damage=20,
-    proficiency="dexterity",
-    cqcpenalty=3,
-)
-zat = item.Weapon(
-    "Zat'nik'tel",
-    weight=1.0,
-    range=75,
-    damage=0,
-    proficiency="dexterity",
-    cqcpenalty=1,
-)
-matok = item.Weapon(
-    "Ma'tok",
-    weight=5.0,
-    range=50,
-    damage=30,
-    proficiency="strength",
-    cqcpenalty=0,
+ashrak = character.Character({}, name='ashrak', 
+race='ashrak', 
+clas='soldier', 
+hitdie=20, 
+hp=20, 
+strength=16, 
+dexterity=12, 
+constitution=20, 
+intelligence=6, 
+wisdom=12, 
+charisma=4,
+tactics=1,
+athletics=5,
+acrobatics=2,
+leftHand=ashrakmatok,
+rightHand=ashrakmatok,
+head=ashrakhelmet,
+chest=ashrakchest,
+legs=ashraklegs,
+boots=ashrakboots
 )
 
-grenade = item.Item("Frag Grenade", "Made in the USA", weight=0.4)
-c4 = item.Item("C4", "Single c4 brick", weight=0.2)
 
-gdo = item.Item("GDO", "Iris GDO", weight=0.2)
-compass = item.Item("Compass", "magnets", weight=0.1)
-canteen = item.Item("Canteen", "2 liters", weight=2.1)
-binoculars = item.Item("Binoculars", "Passive rangefinding, variable zoom", weight=0.7)
-mre = item.Item("MRE", "Meal ready to eat", weight=0.6)
-radio = item.Item("Radio", "50km unobscured maximum range", weight=0.1)
-flashlight = item.Item("Flashlight", weight=0.4)
-laptop = item.Item("Laptop", "Dell Latitude D600", weight=2.0)
-notebook = item.Item("Notebook", weight=0.3)
-camcorder = item.Item("Camcorder", weight=0.2)
-iodine = item.Item("Iodine", "For water purification", weight=0.1)
-harness = item.Item("Harness", "For climbing", weight=0.8)
-
-scanner = item.Item(
-    "Alteran Scanner",
-    "Ranges: 50m lifesigns, 300m misc. heat, 1-100km em/radiation depending on strength. Ranges tripled but detectable in active mode.",
-    weight=0.3,
-)
 
 # in case i fuck up the jsons irreversably, here's the old strings.
 

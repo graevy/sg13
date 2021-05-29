@@ -19,4 +19,7 @@ print(avery.attributes)
 # avery.showSkills()
 # avery.showGear()
 # avery.showInventory()
-avery.show()
+# avery.show()
+
+ashrak = resources.ashrak
+ashrak.show()

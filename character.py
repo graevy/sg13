@@ -39,7 +39,7 @@ characterCreationDefaults = {
     "leftHand": None,
     "rightHand": None,
     "head": None,
-    "body": None,
+    "chest": None,
     "legs": None,
     "belt": None,
     "boots": None,
@@ -99,7 +99,7 @@ class Character:
             'leftHand':self.leftHand,
             'rightHand':self.rightHand,
             'head':self.head,
-            'body':self.body,
+            'chest':self.chest,
             'legs':self.legs,
             'belt':self.belt,
             'boots':self.boots,
@@ -109,7 +109,7 @@ class Character:
 
         self.armor = {
             'head':self.head,
-            'body':self.body,
+            'chest':self.chest,
             'legs':self.legs,
             'belt':self.belt,
             'boots':self.boots,

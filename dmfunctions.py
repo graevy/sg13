@@ -35,6 +35,30 @@ def advantage(dice=1, die=20):
     """rolls advantage for (dice)d(die)"""
     return max(roll(dice, die), roll(dice, die))
 
+def createCharacter(data):
+    return character.Character(data)
+
+def manuallyCreateCharacter():
+    """walks through character creation manually for each variable"""
+
+    data = character.characterCreationDefaults
+
+    print("leave blank to use default value")
+    for k, v in character.characterCreationDefaults.items():
+        try:
+            s = input(str(k)+' ? ')
+            if s == '':
+                continue
+            # Dynamic type casting is apparently supported by python, by just slapping a class object in front of another object
+            data[k] = type(v)(s)
+            print(k+'data assigned')
+        except (TypeError, ValueError):
+            # TODO: continue statement, but from the same iteration instead of the next
+            print("invalid parameter")
+
+    print(data)
+    return character.Character(data)
+
 
 # TODO: expanded 5e longrest implementation
 def longrest(characters):
@@ -64,60 +88,6 @@ def heal(char, amount=None):
 def levelUp(char):
     char.levelUp()
 
-
-# TODO: create faction lists from factions dict, pass to savecharacters
-def load():
-    """builds factions, a dictionary of {name,characterList}s. don't use mid-session"""
-    factions = {}
-
-    for faction in os.listdir("./factions"):
-
-        factions[faction] = []
-
-        for char in os.listdir("./factions/" + faction):
-
-            with open(
-                "./factions/" + faction + "/" + char,
-                "r",
-                encoding="utf-8",
-                errors="ignore",
-            ) as f:
-                data = json.load(f)
-                # This is why I used a dictionary constructor ;)
-                factions[faction].append(character.Character(data))
-
-    return factions
-
-###################################################
-# Not sure if I want to use this implementation yet
-
-# def savecharacter(character):
-#     # create directory if it doesn't exist
-#     if not os.path.exists(".\\factions\\" + character.faction):
-#         os.makedirs(".\\factions\\" + character.faction)
-
-#     # create file if it doesn't exist
-#     Path(
-#         ".\\factions\\" + character.faction + "\\" + character.name + ".json"
-#     ).touch()
-
-#     # write
-#     with open(
-#         ".\\factions\\" + character.faction + "\\" + character.name + ".json",
-#         "w+",
-#         encoding="utf-8",
-#         errors="ignore",
-#     ) as f:
-#         json.dump(character.getJSON(), f)
-
-# def savefaction(faction):
-#     for char in faction.values():
-#         savecharacter(char)
-
-# def savefactions(factions)
-#       for faction in factions.values():
-#           savefaction(faction)
-###################################################
 
 def savefactions(factions):
     """Saves all factions' characters' jsons to local dir
@@ -150,6 +120,58 @@ def savefactions(factions):
                 errors="ignore",
             ) as f:
                 json.dump(char.getJSON(), f)
+
+# TODO: support for complex faction names eg "sgc/sg13". currently thinking about using os.walk
+# def load():
+#     """builds factions, a dict of {name,characterList}s. don't use mid-session"""
+
+#     if 'factions' in (locals() or globals()):
+#         print("load() was used while factions var exists; exiting to prevent overwrite")
+#         return
+#     else:
+#         factions = {}
+
+#     for root, faction, character in os.walk("./factions"):
+
+#         factions[faction] = []
+
+#         with open(
+#             "./factions/" + faction + "/" + char,
+#             "r",
+#             encoding="utf-8",
+#             errors="ignore",
+#         ) as f:
+#             data = json.load(f)
+#             factions[faction].append(character.Character(data))
+
+#     return factions
+
+def load():
+    """builds factions, a dict of {name,characterList}s. don't use mid-session"""
+
+    if 'factions' in (locals() or globals()):
+        print("load() was used while factions var exists; exiting to prevent overwrite")
+        return
+    else:
+        factions = {}
+
+    for faction in os.listdir("./factions"):
+
+        factions[faction] = []
+
+        for char in os.listdir("./factions/" + faction):
+
+            with open(
+                "./factions/" + faction + "/" + char,
+                "r",
+                encoding="utf-8",
+                errors="ignore",
+            ) as f:
+                data = json.load(f)
+                factions[faction].append(character.Character(data))
+
+    return factions
+
 
 # TODO: dual wield penalty
 def attack(attacker, defender, weapon, distance=0, cover=None):
@@ -223,3 +245,35 @@ def attack(attacker, defender, weapon, distance=0, cover=None):
 
     else:
         print("miss!")
+
+
+###################################################
+# Not sure if I want to use this implementation yet
+
+# def savecharacter(character):
+#     # create directory if it doesn't exist
+#     if not os.path.exists(".\\factions\\" + character.faction):
+#         os.makedirs(".\\factions\\" + character.faction)
+
+#     # create file if it doesn't exist
+#     Path(
+#         ".\\factions\\" + character.faction + "\\" + character.name + ".json"
+#     ).touch()
+
+#     # write
+#     with open(
+#         ".\\factions\\" + character.faction + "\\" + character.name + ".json",
+#         "w+",
+#         encoding="utf-8",
+#         errors="ignore",
+#     ) as f:
+#         json.dump(character.getJSON(), f)
+
+# def savefaction(faction):
+#     for char in faction.values():
+#         savecharacter(char)
+
+# def savefactions(factions)
+#       for faction in factions.values():
+#           savefaction(faction)
+###################################################

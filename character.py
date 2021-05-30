@@ -57,9 +57,6 @@ class Character:
 
     def __init__(self, data, **kwargs):
         self.data = data
-        # TODO constructor fails if these aren't defined, trying to learn why
-        self.leftHand = None
-        self.rightHand = None
 
         for k, v in characterCreationDefaults.items():
             setattr(self, k, v)
@@ -175,7 +172,7 @@ class Character:
             slot {str} -- The slot to equip into, the string is case sensitive.
         """
 
-        if slot in self.gear.keys():
+        if slot in self.gear.keys() and getattr(self, slot) is None:
             setattr(self, slot, item)
         else:
             print("invalid equip slot")
@@ -189,7 +186,7 @@ class Character:
             slot {str} -- The slot to un-equip from, the string is case sensitive.
         """
 
-        if slot in self.gear.keys():
+        if slot in self.gear.keys() and getattr(self, slot) is not None:
             self.inventory.append(getattr(self, slot))
             setattr(self, slot, None)
         else:
@@ -235,36 +232,6 @@ class Character:
         elif hp is not None:
             self.hp = self.hp - hp if self.hp >= hp else 0
 
-    def grab(self, item, hand=None):
-        """Grabs the provided item, optionally specify a hand to grab with.
-
-        Arguments:
-            item {Object} -- The item instance to grab.
-
-        Keyword Arguments:
-            hand {str} -- String name of the hand to grab with. (default: {None})
-        """
-        if hand is None:
-            if self.rightHand is not None:
-                self.rightHand = item
-            elif self.leftHand is not None:
-                self.leftHand = item
-            else:
-                print("hands full")
-
-        if hand == "right" or hand == "rightHand":
-            if self.rightHand is not None:
-                self.rightHand = item
-            else:
-                print("full right hand")
-
-        if hand == "left" or hand == "leftHand":
-            if self.leftHand is not None:
-                self.leftHand = item
-            else:
-                print("full left hand")
-
-        self.update()
 
     def stow(self, item, storageItem=None):
         """Stores an item in the inventory, or in another item.

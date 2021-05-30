@@ -11,6 +11,7 @@ import item
 # items
 # TODO: create premade item packs for sgc personnel
 
+helmet = item.Armor("Helmet", "Ballistic Infantry Helmet", weight=1.6, bonusAC=1)
 backpack = item.Armor("Backpack", "Weatherproofed", weight=2.1)
 boots = item.Armor("Boots", "Combat boots", weight=0.7)
 gloves = item.Armor("Gloves", weight=0.1)
@@ -103,6 +104,7 @@ airman = character.Character(
     tactics=3,
     athletics=3,
     acrobatics=3,
+
 )
 
 jaffa = character.Character(
@@ -179,26 +181,28 @@ goauld = character.Character(
     acrobatics=2,
 )
 
-ashrak = character.Character({}, name='ashrak', 
-race='ashrak', 
-clas='soldier', 
-hitdie=20, 
-hp=20, 
-strength=16, 
-dexterity=12, 
-constitution=20, 
-intelligence=6, 
-wisdom=12, 
-charisma=4,
-tactics=1,
-athletics=5,
-acrobatics=2,
-leftHand=ashrakmatok,
-rightHand=ashrakmatok,
-head=ashrakhelmet,
-chest=ashrakchest,
-legs=ashraklegs,
-boots=ashrakboots
+ashrak = character.Character(
+    {},
+    name='ashrak', 
+    race='ashrak', 
+    clas='soldier', 
+    hitdie=20, 
+    hp=20, 
+    strength=16, 
+    dexterity=12, 
+    constitution=20, 
+    intelligence=6, 
+    wisdom=12, 
+    charisma=4,
+    tactics=1,
+    athletics=5,
+    acrobatics=2,
+    leftHand=ashrakmatok,
+    rightHand=ashrakmatok,
+    head=ashrakhelmet,
+    chest=ashrakchest,
+    legs=ashraklegs,
+    boots=ashrakboots
 )
 
 
@@ -206,22 +210,23 @@ boots=ashrakboots
 # in case i fuck up the jsons irreversably, here's the old strings.
 
 # characters by faction
-# metuu = character.Character({}, "Met'uu", race='jaffa', strength=14, dexterity=12, constitution=14, intelligence=16, wisdom=16, charisma=8,
+# metuu = character.Character({}, name="Met'uu", race='jaffa', strength=14, dexterity=12, constitution=14, intelligence=16, wisdom=16, charisma=8,
 # xenotechnology=3, stealth=3, anthropology=3, xenoanthropology=2, perception=3, acrobatics=1, survival=1, tactics=1, medicine=1, level=4)
 
-# victoria = character.Character({}, 'Cadet Victoria Romanenkov', strength=12, dexterity=15, constitution=13, intelligence=14, wisdom=12, charisma=16,
+# victoria = character.Character({}, name='Cadet Victoria Romanenkov', strength=12, dexterity=15, constitution=13, intelligence=14, wisdom=12, charisma=16,
 # perception=1, technology=2, medicine=1, sleightofhand=1, tactics=3, stealth=2, athletics=1, diplomacy=2, level=1)
 
-# steve = character.Character({}, 'Dr. Steven Hartman', race='human', strength=12, dexterity=14, constitution=14, intelligence=16, wisdom=14, charisma=13,
+# steve = character.Character({}, name='Dr. Steven Hartman', race='human', strength=12, dexterity=14, constitution=14, intelligence=16, wisdom=14, charisma=13,
 # vehicles=2, insight=1, xenotechnology=4, technology=4, perception=3, sleightofhand=2, diplomacy=1, survival=1, tactics=1, level=4)
 
-# sabrac = character.Character({}, 'Sabrac', race='jaffa', strength=16, dexterity=10, constitution=16, intelligence=10, wisdom=14, charisma=10)
+# sabrac = character.Character({}, name='Sabrac', race='jaffa', strength=16, dexterity=10, constitution=16, intelligence=10, wisdom=14, charisma=10)
+
 
 # sg13 = [metuu, victoria, steve, sabrac]
 
-# j = character.Character({}, 'J', faction='sg31', strength=10, dexterity=14, constitution=10, intelligence=16, wisdom=12, charisma=10)
-# s = character.Character({}, 'S', faction='sg31', strength=14, dexterity=14, constitution=12, intelligence=8, wisdom=12, charisma=8)
-# o3 = character.Character({}, 'O3', faction='sg31', strength=10, dexterity=12, constitution=14, intelligence=14, wisdom=16, charisma=14)
-# m = character.Character({}, 'M', faction='sg31', strength=16, dexterity=12, constitution=12, intelligence=8, wisdom=10, charisma=10)
+# j = character.Character({}, name='J', faction='trust/sg31', strength=10, dexterity=14, constitution=10, intelligence=16, wisdom=12, charisma=10)
+# s = character.Character({}, name='S', faction='trust/sg31', strength=14, dexterity=14, constitution=12, intelligence=8, wisdom=12, charisma=8)
+# o3 = character.Character({}, name='O3', faction='trust/sg31', strength=10, dexterity=12, constitution=14, intelligence=14, wisdom=16, charisma=14)
+# m = character.Character({}, name='M', faction='trust/sg31', strength=16, dexterity=12, constitution=12, intelligence=8, wisdom=10, charisma=10)
 
-# sg31 = [j, s, o3, m]
+# trust = [j, s, o3, m]

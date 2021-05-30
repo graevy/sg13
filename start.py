@@ -1,8 +1,10 @@
 import character
-import dmfunctions
 import playerfunctions
+import dmfunctions
 import item
 import resources
+
+from importlib import reload
 
 print("\nPackages imported")
 

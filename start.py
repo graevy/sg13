@@ -14,7 +14,6 @@ print("Factions loaded:")
 
 print(factions.keys())
 
-
 for faction, characters in factions.items():
     exec(str(faction)+'=characters')
 

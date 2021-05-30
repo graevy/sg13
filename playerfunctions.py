@@ -65,7 +65,11 @@ def unequip(char, item, slot):
 
 
 def grab(char, item, hand=None):
-    char.grab(item, hand=hand)
+    if hand[:3].lower() == 'left':
+        hand = 'leftHand'
+    if hand[:3].lower() == 'right':
+        hand = 'rightHand'
+    char.equip(item, slot=hand)
 
 
 def stow(char, item, storageItem=None):

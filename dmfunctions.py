@@ -35,30 +35,37 @@ def advantage(dice=1, die=20):
     """rolls advantage for (dice)d(die)"""
     return max(roll(dice, die), roll(dice, die))
 
-def createCharacter(data):
-    return character.Character(data)
 
-def manuallyCreateCharacter():
-    """walks through character creation manually for each variable"""
+def create(mode='basic', **kwargs):
+    """Character creation function
 
-    data = character.characterCreationDefaults
+    Args:
+        **kwargs (dict, optional): Optionally include kwargs. Defaults to {}.
+        mode (str, optional): 'full' for every value, 'basic' for important values. Defaults to 'basic'.
+    """
 
-    print("leave blank to use default value")
-    for k, v in character.characterCreationDefaults.items():
-        try:
-            s = input(str(k)+' ? ')
-            if s == '':
-                continue
-            # Dynamic type casting is apparently supported by python, by just slapping a class object in front of another object
-            data[k] = type(v)(s)
-            print(k+'data assigned')
-        except (TypeError, ValueError):
-            # TODO: continue statement, but from the same iteration instead of the next
-            print("invalid parameter")
+    # if you want full control you can edit each value
+    if mode == 'full':
+        things = list(character.characterCreationDefaults.items())
+    if mode == 'basic':
+        things = list(character.characterCreationDefaults.items())[:9]
 
-    print(data)
-    return character.Character(data)
+    for k,v in things:
+        # manually enter each value that data doesn't have
+        if k not in kwargs.keys():
+            try:
+                s = input(str(k)+' ? ')
+                if s == '':
+                    continue
+                # Dynamic type casting is apparently supported by python
+                # you just slap a class object in front of another object
+                kwargs[k] = type(v)(s)
+                print(k+' data assigned')
 
+            except (TypeError, ValueError):
+                # TODO: continue statement, but from the same iteration instead of the next
+                print(" invalid parameter")
+    return character.Character(kwargs)
 
 # TODO: expanded 5e longrest implementation
 def longrest(characters):
@@ -121,7 +128,7 @@ def savefactions(factions):
             ) as f:
                 json.dump(char.getJSON(), f)
 
-# TODO: support for complex faction names eg "sgc/sg13". currently thinking about using os.walk
+# TODO: support for complex faction names eg "sgc/sg13". currently thinking about using os.walk or recursion
 # def load():
 #     """builds factions, a dict of {name,characterList}s. don't use mid-session"""
 
@@ -277,3 +284,30 @@ def attack(attacker, defender, weapon, distance=0, cover=None):
 #       for faction in factions.values():
 #           savefaction(faction)
 ###################################################
+
+
+# old character creation functions
+
+# def createCharacter(data):
+#     return character.Character(data)
+
+# def manuallyCreateCharacter():
+#     """walks through character creation manually for each variable"""
+
+#     data = character.characterCreationDefaults
+
+#     print("leave blank to use default value")
+#     for k, v in character.characterCreationDefaults.items():
+#         try:
+#             s = input(str(k)+' ? ')
+#             if s == '':
+#                 continue
+#             # Dynamic type casting is apparently supported by python, by just slapping a class object in front of another object
+#             data[k] = type(v)(s)
+#             print(k+' data assigned')
+#         except (TypeError, ValueError):
+#             # TODO: continue statement, but from the same iteration instead of the next
+#             print(" invalid parameter")
+
+#     print(data)
+#     return character.Character(data)

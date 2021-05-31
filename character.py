@@ -10,8 +10,8 @@ characterCreationDefaults = {
     "faction": "sgc",
     "level": 1,
     "hitdie": 8,
-    "temphp": 0,
     "hp": 8,
+    "temphp": 0,
     "speed": 10,
     "strength": 10,
     "dexterity": 10,
@@ -66,7 +66,7 @@ class Character:
         for key in kwargs:
            setattr(self, key, kwargs[key])
 
-        self.suffix = "'s" if self.name[-1] == "s" or "x" else "s"
+        self.suffix = "'" if self.name[-1] == "s" or "x" else "'s"
         self.inventory = []
         # update() builds lists like self.gear, self.attributes, etc
         self.update()

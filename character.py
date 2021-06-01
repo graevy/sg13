@@ -25,7 +25,6 @@ characterCreationDefaults = {
 class Character:
     """Generic character class.
     """
-    
 
     def __init__(self, data, **kwargs):
         self.data = data
@@ -163,6 +162,12 @@ class Character:
         Arguments:
             slot {str} -- The slot to un-equip from.
         """
+        slot = slot.lower().strip()
+
+        if slot == ("left" or "lefthand"):
+            slot = "leftHand"
+        if slot == ("right" or "righthand"):
+            slot = "rightHand"
 
         if slot in self.gear.keys() and getattr(self, slot) is not None:
             self.inventory.append(getattr(self, slot))
@@ -205,7 +210,6 @@ class Character:
                 self.hp -= hpDamage
         # Check for temp hp, will not roll over if trying to subtract more than the current temphp
         elif temphp is not None:
-            # This is a ternary, if the condition is true, the left side will be assigned, otherwise the right will
             self.temphp = self.temphp - temphp if self.temphp >= temphp else 0
         elif hp is not None:
             self.hp = self.hp - hp if self.hp >= hp else 0

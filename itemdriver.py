@@ -10,3 +10,8 @@ driver.storage = [resources.p90, resources.gdo, bagbag]
 
 # TODO: recursion seems to fail
 driver.show()
+
+a = item.Armor('test', 'a test thing', bonusAC=1)
+print(a.name)
+b = item.Weapon('foo', 'bar')
+print(b.range)

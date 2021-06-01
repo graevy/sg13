@@ -55,12 +55,12 @@ def update(char):
 
 
 def equip(char, item, slot):
-    """slot is a (camel)case-sensitive string"""
+    """slot is a string"""
     char.equip(item, slot)
 
 
 def unequip(char, item, slot):
-    """slot is a (camel)case-sensitive string"""
+    """slot is a string"""
     char.unequip(item, slot)
 
 

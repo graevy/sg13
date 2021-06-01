@@ -4,49 +4,21 @@ import math
 from random import randint
 
 characterCreationDefaults = {
-    "name": "NPC",
-    "race": "human",
-    "clas": "soldier",
-    "faction": "sgc",
-    "level": 1,
-    "hitdie": 8,
-    "hp": 8,
-    "temphp": 0,
-    "speed": 10,
-    "strength": 10,
-    "dexterity": 10,
-    "constitution": 10,
-    "intelligence": 10,
-    "wisdom": 10,
-    "charisma": 10,
-    "acting": 0,
-    "anthropology": 0,
-    "xenoanthropology": 0,
-    "sleightofhand": 0,
-    "stealth": 0,
-    "diplomacy": 0,
-    "medicine": 0,
-    "vehicles": 0,
-    "xenotechnology": 0,
-    "technology": 0,
-    "insight": 0,
-    "perception": 0,
-    "survival": 0,
-    "tactics": 0,
-    "athletics": 0,
-    "acrobatics": 0,
-    "inspiration": 0,
-    "leftHand": None,
-    "rightHand": None,
-    "head": None,
-    "chest": None,
-    "legs": None,
-    "belt": None,
-    "boots": None,
-    "gloves": None,
-    "back": None,
-    "attributepoints": 0,
-    "skillpoints": 0
+    # basic information
+    "name": "NPC", "race": "human", "clas": "soldier", "faction": "sgc",
+    # stats
+    "level": 1, "hitdie": 8, "hp": 8, "temphp": 0, "speed": 10,
+    # attributes
+    "strength": 10, "dexterity": 10, "constitution": 10, "intelligence": 10, "wisdom": 10, "charisma": 10,
+    # skills
+    "acting": 0, "anthropology": 0, "xenoanthropology": 0, "sleightofhand": 0, "stealth": 0, "diplomacy": 0, "medicine": 0, "vehicles": 0,
+    "xenotechnology": 0, "technology": 0, "insight": 0, "perception": 0, "survival": 0, "tactics": 0, "athletics": 0, "acrobatics": 0, "inspiration": 0,
+    # hands
+    "leftHand": None, "rightHand": None,
+    # gear
+    "head": None, "chest": None, "legs": None, "belt": None, "boots": None, "gloves": None, "back": None,
+    # levelup info
+    "attributepoints": 0, "skillpoints": 0
 }
 
 
@@ -169,8 +141,14 @@ class Character:
 
         Arguments:
             item {Object} -- The item instance to equip.
-            slot {str} -- The slot to equip into, the string is case sensitive.
+            slot {str} -- The slot to equip into.
         """
+        slot = slot.lower().strip()
+
+        if slot == ("left" or "lefthand"):
+            slot = "leftHand"
+        if slot == ("right" or "righthand"):
+            slot = "rightHand"
 
         if slot in self.gear.keys() and getattr(self, slot) is None:
             setattr(self, slot, item)
@@ -183,7 +161,7 @@ class Character:
         """Un-equips the provided item from the slot.
 
         Arguments:
-            slot {str} -- The slot to un-equip from, the string is case sensitive.
+            slot {str} -- The slot to un-equip from.
         """
 
         if slot in self.gear.keys() and getattr(self, slot) is not None:

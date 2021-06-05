@@ -1,21 +1,19 @@
 import character
 import item
+from copy import deepcopy
 
 
 # items
 # TODO: create premade item packs for sgc personnel (mostly done)
-# TODO: gear should be instantiated items. maybe make each item entry a list of kwargs that gets passed to item instead
+# TODO: move individual items into json files and load on demand
 
 helmet = item.Armor("Helmet", "Ballistic Infantry Helmet", weight=1.6, bonusAC=1)
 backpack = item.Armor("Backpack", "Weatherproofed", weight=2.1)
 boots = item.Armor("Boots", "Combat boots", weight=0.7)
 gloves = item.Armor("Gloves", weight=0.1)
-bdupants = item.Armor(
-    "BDU Pants", "Standard battle dress uniform pants", weight=1.0
-)
-bdushirt = item.Armor(
-    "BDU Shirt", "Standard battle dress uniform shirt", weight=1.0
-)
+bdupants = item.Armor("BDU Pants", "Standard battle dress uniform pants", weight=1.0)
+belt = item.Armor("Infantry Belt", "Pouched belt with holster", weight=0.6)
+bdushirt = item.Armor("BDU Shirt", "Standard battle dress uniform shirt", weight=1.0)
 
 p90 = item.Weapon(
     "FN P90",
@@ -83,7 +81,7 @@ ashrakmatok = item.Weapon("Ashrak Wrist-Mounted Ma'tok", "Unwieldy", weight=0, r
 
 jaffahelmet = item.Armor("Jaffa Cap", "Humbling", weight=1, bonusAC=1)
 jaffachest = item.Armor("Jaffa Hauberk", "Surprisingly light", weight=1, bonusAC=2)
-jaffabelt = item.Armor("Jaffa Belt", "Alloyed Plate", weight=1, storage=[zat])
+jaffabelt = item.Armor("Jaffa Belt", "Alloyed Plate", weight=1, storage=[deepcopy(zat)])
 jaffalegs = item.Armor("Jaffa Chainskirt", "Sturdy", weight=2, bonusAC=1)
 jaffaboots = item.Armor("Jaffa Boots", "Alloyed Plate", weight=2)
 
@@ -103,7 +101,11 @@ airman = character.Character(
     tactics=3,
     athletics=3,
     acrobatics=3,
-
+    head=deepcopy(helmet),
+    chest=deepcopy(bdushirt),
+    belt=deepcopy(belt),
+    legs=deepcopy(bdupants),
+    boots=deepcopy(boots)
 )
 
 jaffa = character.Character(
@@ -125,12 +127,11 @@ jaffa = character.Character(
     tactics=1,
     athletics=2,
     acrobatics=1,
-    head=jaffahelmet,
-    chest=jaffachest,
-    belt=jaffabelt,
-    legs=jaffalegs,
-    boots=jaffaboots
-
+    head=deepcopy(jaffahelmet),
+    chest=deepcopy(jaffachest),
+    belt=deepcopy(jaffabelt),
+    legs=deepcopy(jaffalegs),
+    boots=deepcopy(jaffaboots)
 )
 
 asgard = character.Character(
@@ -202,12 +203,12 @@ ashrak = character.Character(
     tactics=1,
     athletics=5,
     acrobatics=2,
-    leftHand=ashrakmatok,
-    rightHand=ashrakmatok,
-    head=ashrakhelmet,
-    chest=ashrakchest,
-    legs=ashraklegs,
-    boots=ashrakboots
+    leftHand=deepcopy(ashrakmatok),
+    rightHand=deepcopy(ashrakmatok),
+    head=deepcopy(ashrakhelmet),
+    chest=deepcopy(ashrakchest),
+    legs=deepcopy(ashraklegs),
+    boots=deepcopy(ashrakboots)
 )
 
 

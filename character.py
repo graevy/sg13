@@ -365,6 +365,7 @@ class Character:
                     return False
             return True
 
+        self.showAttributes()
         while points > 0:
 
             s = bug_player()
@@ -373,15 +374,24 @@ class Character:
             if not s:
                 continue
             if is_stalled():
-                self.attributepoints += 1
                 break
 
-            if self.attributes[s] < 15:
-                points -= 1 if self.attributes[s] < 13 else 2
+            if self.attributes[s] < 13:
+                # can create negative attribute points. not a huge deal
+                points -= 1
+                self.attributes[s] += 1
+                print('Attribute {} increased by 1. {} points remaining.'.format(s, str(points)))
+            elif self.attributes[s] < 15:
+                if points > 1:
+                    points -= 2
+                    self.attributes[s] += 1
+                    print('Attribute {} increased by 1. {} points remaining.'.format(s, str(points)))
+                else:
+                    print('Not enough points to level {}. {} points remaining.'.format(s, str(points)))
             else:
                 print("attribute at starting cap (15)")
 
-
+    # TODO: this could be a lot neater
     def levelUp(self):
         """Levels up the character.
         """
@@ -437,6 +447,7 @@ class Character:
         # levelup skills
         self.skillpoints += 3 + self.intmod
 
+        self.showSkills()
         while self.skillpoints > 0:
             s = input(
                 "You have "+str(self.skillpoints)+" skill points. \n"+\

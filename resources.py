@@ -2,14 +2,9 @@ import character
 import item
 
 
-# factions
-# factions = dmfunctions.loadcharacters()
-
-# generic NPCs
-# TODO: equip NPCs
-
 # items
-# TODO: create premade item packs for sgc personnel
+# TODO: create premade item packs for sgc personnel (mostly done)
+# TODO: gear should be instantiated items. maybe make each item entry a list of kwargs that gets passed to item instead
 
 helmet = item.Armor("Helmet", "Ballistic Infantry Helmet", weight=1.6, bonusAC=1)
 backpack = item.Armor("Backpack", "Weatherproofed", weight=2.1)
@@ -86,7 +81,11 @@ ashraklegs = item.Armor("Ashrak Legplates", "More painful to wear", weight=3, bo
 ashrakboots = item.Armor("Ashrak Boots", "Made for larger feet", weight=2)
 ashrakmatok = item.Weapon("Ashrak Wrist-Mounted Ma'tok", "Unwieldy", weight=0, range=50, damage=30, proficiency="dexterity", proficiencytype="ranged")
 
-
+jaffahelmet = item.Armor("Jaffa Cap", "Humbling", weight=1, bonusAC=1)
+jaffachest = item.Armor("Jaffa Hauberk", "Surprisingly light", weight=1, bonusAC=2)
+jaffabelt = item.Armor("Jaffa Belt", "Alloyed Plate", weight=1, storage=[zat])
+jaffalegs = item.Armor("Jaffa Chainskirt", "Sturdy", weight=2, bonusAC=1)
+jaffaboots = item.Armor("Jaffa Boots", "Alloyed Plate", weight=2)
 
 
 airman = character.Character(
@@ -126,6 +125,12 @@ jaffa = character.Character(
     tactics=1,
     athletics=2,
     acrobatics=1,
+    head=jaffahelmet,
+    chest=jaffachest,
+    belt=jaffabelt,
+    legs=jaffalegs,
+    boots=jaffaboots
+
 )
 
 asgard = character.Character(

@@ -67,8 +67,10 @@ def unequip(char, item, slot):
 def grab(char, item, hand=None):
     if hand[:3].lower() == 'left':
         hand = 'leftHand'
-    if hand[:3].lower() == 'right':
+    elif hand[:3].lower() == 'right':
         hand = 'rightHand'
+    else:
+        print("invalid hand slot")
     char.equip(item, slot=hand)
 
 

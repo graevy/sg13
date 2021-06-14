@@ -180,9 +180,16 @@ def load():
     return factions
 
 
-# TODO: dual wield penalty
 def attack(attacker, defender, weapon, distance=0, cover=None):
-    """master attack function"""
+    """attacker rolls against defender with weapon from distance
+
+    Args:
+        attacker (Character): Character attacking
+        defender (Character): Character defending
+        weapon (Weapon): Attacker's weapon
+        distance (int, optional): Attack distance. Defaults to 0.
+        cover (int, optional): % defender is covered. Defaults to None.
+    """
     # factoring in distance
     distance = input("distance? blank=ignore")
 
@@ -197,7 +204,8 @@ def attack(attacker, defender, weapon, distance=0, cover=None):
         distancemod = 0
 
     # factoring in cover
-    cover = input("cover? 25, 50, or 75; blank=0")
+    if cover is None:
+        cover = input("cover? 25, 50, or 75; blank=0")
 
     if cover == "":
         cover = 0
@@ -218,6 +226,10 @@ def attack(attacker, defender, weapon, distance=0, cover=None):
     # hit calculation
     hitcalc = roll3d6() + mod
 
+    # dual wield penalty
+    if attacker.leftHand is not None and attacker.rightHand is not None:
+        hitcalc -= 2
+
     # qc penalty for long range weapons
     if weapon.cqcpenalty > 0 and distance > 3:
         hitcalc -= 2 * weapon.cqcpenalty
@@ -235,20 +247,11 @@ def attack(attacker, defender, weapon, distance=0, cover=None):
             * distancemod
         )
 
-        print(
-            attacker.name
-            + " rolled "
-            + str(hitcalc)
-            + " to hit "
-            + defender.name
-            + " for "
-            + str(damage)
-            + "!"
-        )
+        print(f"{attacker.name} rolled {hitcalc} to hit {defender.name} for {damage}")
 
         defender.hurt(totalDamage=damage)
 
-        print(defender.name + " is at " + str(defender.hp) + " health.")
+        print(f"{defender.name} is at {defender.hp} health")
 
     else:
         print("miss!")

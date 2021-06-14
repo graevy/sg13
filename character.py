@@ -87,14 +87,9 @@ class Character:
 
         self.gearweight = 0.0
         # character data
-        for item in self.gear.values() and self.inventory:
+        for item in list(self.gear.values()) + self.inventory:
             if hasattr(item, "weight"):
-                self.gearweight += item.weight
-
-            # TODO recursive function to calculate gear weight
-            for storeditem in item.storage:
-                if hasattr(storeditem, "weight"):
-                    gearweight += storeditem.weight
+                self.gearweight += item.getWeight()
 
         self.armorAC = 0
         for item in self.armor:
@@ -144,9 +139,9 @@ class Character:
         """
         slot = slot.lower().strip()
 
-        if slot == ("left" or "lefthand"):
+        if slot[:4] == "left":
             slot = "leftHand"
-        if slot == ("right" or "righthand"):
+        if slot[:5] == "right":
             slot = "rightHand"
 
         if slot in self.gear.keys() and getattr(self, slot) is None:
@@ -164,9 +159,9 @@ class Character:
         """
         slot = slot.lower().strip()
 
-        if slot == ("left" or "lefthand"):
+        if slot[:4] == "left":
             slot = "leftHand"
-        if slot == ("right" or "righthand"):
+        if slot[:5] == "right":
             slot = "rightHand"
 
         if slot in self.gear.keys() and getattr(self, slot) is not None:
@@ -234,6 +229,7 @@ class Character:
         """
         print("Inventory:")
         for item in self.inventory:
+            print(item.name)
             item.show()
 
     def showGear(self):
@@ -274,8 +270,8 @@ class Character:
         self.showGear()
         self.showInventory()
 
-        print(f"{self.name} has {self.inspiration} inspiration points, \
-        {self.attributepoints} attribute points, and {self.skillpoints} skill points.")
+        print(f"{self.name} has {self.inspiration} inspiration points, " + \
+        f"{self.attributepoints} attribute points, and {self.skillpoints} skill points.")
 
     def initiative(self, dice=3, die=6):
         """Rolls initiative for the character.

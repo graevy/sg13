@@ -17,6 +17,13 @@ class Item:
         for item in self.storage:
             item.show(spacing)
 
+    def getWeight(self):
+        """recursively gets item and storage weight
+        """
+        weight = self.weight
+        for item in self.storage:
+            weight += item.getWeight()
+        return weight
 
 class Weapon(Item):
     def __init__(self, name, description=None, weight=0.0, storage=[], \

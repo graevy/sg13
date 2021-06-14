@@ -10,6 +10,7 @@ driver = resources.bdupants
 driver.storage = [resources.p90, resources.gdo, bagbag]
 
 driver.show()
+print(driver.getWeight())
 
 # a = item.Armor('test', 'a test thing', bonusAC=1)
 # print(a.name)

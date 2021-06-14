@@ -14,10 +14,10 @@ avery.hurt(2)
 avery.equip(sword, 'leftHand')
 avery.unequip('leftHand')
 
-avery.levelUp()
+# avery.levelUp()
 
 # avery.showAttributes()
 # avery.showSkills()
 # avery.showGear()
 # avery.showInventory()
-# avery.show()
+avery.show()

@@ -32,12 +32,12 @@ class Character:
         for k, v in characterCreationDefaults.items():
             setattr(self, k, v)
         for k, v in data.items():
-               if k in characterCreationDefaults.keys():
-                   setattr(self, k, v)
+            if k in characterCreationDefaults.keys():
+                setattr(self, k, v)
         for key in kwargs:
-           setattr(self, key, kwargs[key])
+            setattr(self, key, kwargs[key])
 
-        self.suffix = "'" if self.name[-1] == "s" or "x" else "'s"
+        self.suffix = "'" if self.name[-1] == ("s" or "x") else "'s"
         self.inventory = []
         # update() builds lists like self.gear, self.attributes, etc
         self.update()
@@ -232,34 +232,34 @@ class Character:
     def showInventory(self):
         """Prints the character's inventory.
         """
-        # TODO: recursion
         print("Inventory:")
         for item in self.inventory:
-            print(f"    {item.name}\n")
+            item.show()
 
     def showGear(self):
         """Prints the character's gear.
         """
-        # TODO: recursion
-        print(f"{self.name} has an AC of {self.AC} and is wearing: ")
+        print(f"{self.name} has an AC of {self.AC} and is wearing:")
         for slot, item in self.gear.items():
             print(f"{slot}: {item}")
+            if item is not None:
+                item.show(spacing='    ')
         print("")
 
     def showAttributes(self):
         """Prints the attributes of the character.
         """
-        print(self.name + self.suffix + " attributes are: ")
+        print(self.name + self.suffix + " attributes are:")
         for name, attribute in self.attributes.items():
-            print(name + ": " + str(attribute))
+            print(f"{name}: {attribute}")
         print("")
 
     def showSkills(self):
         """Prints the skills of the character.
         """
-        print(self.name + self.suffix + " skills are: ")
+        print(self.name + self.suffix + " skills are:")
         for name, skill in self.skills.items():
-            print(name + ": " + str(skill))
+            print(f"{name}: {skill}")
         print("")
 
     def show(self):

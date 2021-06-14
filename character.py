@@ -235,16 +235,15 @@ class Character:
         # TODO: recursion
         print("Inventory:")
         for item in self.inventory:
-            print("    " + item.name)
-        print("")
+            print(f"    {item.name}\n")
 
     def showGear(self):
         """Prints the character's gear.
         """
         # TODO: recursion
-        print(self.name + " has an AC of " + str(self.AC) + " and is wearing: ")
+        print(f"{self.name} has an AC of {self.AC} and is wearing: ")
         for slot, item in self.gear.items():
-            print(slot + ": " + str(item))
+            print(f"{slot}: {item}")
         print("")
 
     def showAttributes(self):
@@ -267,41 +266,16 @@ class Character:
         """Prints the current status of the character.
         """
 
-        print(
-            self.name
-            + " is a level "
-            + str(self.level)
-            + " "
-            + self.race
-            + " "
-            + self.clas
-            + "."
-        )
-        print(
-            self.name
-            + " has "
-            + str(self.hp)
-            + " health, "
-            + str(self.temphp)
-            + " temp health, and "
-            + str(self.maxhp)
-            + " max health."
-        )
+        print(f"{self.name} is a level {self.level} {self.race} {self.clas}.")
+        print(f"{self.name} has {self.hp} health, {self.temphp} temp health, and {self.maxhp} max health.")
+
         self.showAttributes()
         self.showSkills()
         self.showGear()
         self.showInventory()
 
-        print(
-            self.name
-            + " has "
-            + str(self.inspiration)
-            + " inspiration points, "
-            + str(self.attributepoints)
-            + " attribute points, and "
-            + str(self.skillpoints)
-            + " skill points."
-        )
+        print(f"{self.name} has {self.inspiration} inspiration points, \
+        {self.attributepoints} attribute points, and {self.skillpoints} skill points.")
 
     def initiative(self, dice=3, die=6):
         """Rolls initiative for the character.
@@ -366,6 +340,7 @@ class Character:
             return True
 
         self.showAttributes()
+
         while points > 0:
 
             s = bug_player()
@@ -376,20 +351,19 @@ class Character:
             if is_stalled():
                 break
 
-            if self.attributes[s] < 13:
-                # can create negative attribute points. not a huge deal
-                points -= 1
-                self.attributes[s] += 1
-                print('Attribute {} increased by 1. {} points remaining.'.format(s, str(points)))
-            elif self.attributes[s] < 15:
-                if points > 1:
+            if self.attributes[s] < 15:
+                if self.attributes[s] < 13:
+                    points -= 1
+                    self.attributes[s] += 1
+                    print(f'Attribute {s} increased by 1. {points} points remaining.')
+                elif points > 1:
                     points -= 2
                     self.attributes[s] += 1
-                    print('Attribute {} increased by 1. {} points remaining.'.format(s, str(points)))
                 else:
-                    print('Not enough points to level {}. {} points remaining.'.format(s, str(points)))
+                    print(f'Not enough points to level {s}. {points} points remaining.')
             else:
-                print("attribute at starting cap (15)")
+                print(f"attribute {s} at starting cap (15)")
+
 
     # TODO: this could be a lot neater
     def levelUp(self):
@@ -401,19 +375,10 @@ class Character:
         if  self.level % 4 == 0:
             self.attributepoints += 2
             print(
-                "current attributes: strength "
-                + str(self.strength)
-                + ", dexterity "
-                + str(self.dexterity)
-                + ", constitution "
-                + str(self.constitution)
-                + ", intelligence "
-                + str(self.intelligence)
-                + ", wisdom "
-                + str(self.wisdom)
-                + ", charisma "
-                + str(self.charisma)
-            )
+                f"current attributes: {self.strength} strength, {self.dexterity} dexterity, \
+                {self.constitution} constitution, {self.intelligence} intelligence, \
+                {self.wisdom} wisdom, {self.charisma} charisma"
+                )
 
         while self.attributepoints > 0:
             s = input("type an attribute (or leave blank to exit) to increase by 1: ").lower()
@@ -450,7 +415,7 @@ class Character:
         self.showSkills()
         while self.skillpoints > 0:
             s = input(
-                "You have "+str(self.skillpoints)+" skill points. \n"+\
+                f"You have {self.skillpoints} skill points. \n"+\
                 "Type skills to list skills. Leave blank to exit (saving points). \n" +\
                 "Type a skill to increase: "
             )

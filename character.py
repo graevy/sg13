@@ -235,7 +235,7 @@ class Character:
     def showGear(self):
         """Prints the character's gear.
         """
-        print(f"{self.name} has an AC of {self.AC} and is wearing:")
+        print(f"{self.name}{self.suffix} AC is {self.AC} and is wearing:")
         for slot, item in self.gear.items():
             print(f"{slot}: {item}")
             if item is not None:

@@ -132,7 +132,7 @@ def savefactions(factions):
 # def load():
 #     """builds factions, a dict of {name,characterList}s. don't use mid-session"""
 
-#     if 'factions' in (locals() or globals()):
+#     if 'factions' in locals() or 'factions' in globals():
 #         print("load() was used while factions var exists; exiting to prevent overwrite")
 #         return
 #     else:
@@ -156,7 +156,7 @@ def savefactions(factions):
 def load():
     """builds factions, a dict of {name,characterList}s. don't use mid-session"""
 
-    if 'factions' in (locals() or globals()):
+    if 'factions' in locals() or 'factions' in globals():
         print("load() was used while factions var exists; exiting to prevent overwrite")
         return
     else:

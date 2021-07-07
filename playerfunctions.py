@@ -78,8 +78,7 @@ def stow(char, item, storageItem=None):
     char.stow(item, storageItem=storageItem)
 
 
-# TODO: return quantative vs qualitative values depending on mode parameter
-def odds(dc, dice=3, die=6):
+def oddsNum(dc, dice=3, die=6):
     """return odds of succeeding a dice check
 
     Args:
@@ -105,6 +104,20 @@ def odds(dc, dice=3, die=6):
     odds = NormalDist(mu=mean, sigma=stdev).cdf(dc)
     percentSuccess = 100 - int(round(odds, 2) * 100)
 
-    return (str(percentSuccess) + '%')
-
+    return f"{percentSuccess}%"
     # in python 2, (1 + erf(x/root2))/2 can be substituted for normaldist.cdf
+
+def odds(dc, dice=3, die=6):
+    n = int(oddsNum(dc, dice, die)[:-1])
+
+    if n >= 50:
+        if n >= 80:
+            if n >= 95:
+                return "almost certain"
+            return "very likely"
+        return "probable"
+    elif n < 20:
+        if n < 5:
+            return "remote"
+        return "unlikely"
+    return "possible"

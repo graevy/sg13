@@ -178,12 +178,12 @@ class Character:
         Keyword Arguments:
             hp {int} -- The amount to heal, default is a full heal. (default: {None})
         """
-        if hp is not None and hp > 0:
+        if hp is not None and hp >= 0:
             self.hp = hp
         else:
             self.hp = self.maxhp
-        self.temphp = 0
 
+    # TODO: temphp handling is pretty awkward here
     def hurt(self, hp=None, temphp=None, totalDamage=None):
         """Hurts the character. All args should be >= 0.
 

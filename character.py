@@ -308,7 +308,7 @@ class Character:
             self.intelligence,
             self.wisdom,
             self.charisma,
-        ) = (8 for x in self.attributes.values())
+        ) = [8 for x in self.attributes.values()]
         self.update()
 
         def bug_player():
@@ -393,7 +393,7 @@ class Character:
             self.intelligence,
             self.wisdom,
             self.charisma,
-        ) = (x for x in self.attributes.values())
+        ) = [x for x in self.attributes.values()]
 
         # update character now in case int is increased enough to effect skillpoints
         self.update()
@@ -453,7 +453,7 @@ class Character:
             self.tactics,
             self.athletics,
             self.acrobatics,
-        ) = (x for x in self.skills.values())
+        ) = [x for x in self.skills.values()]
 
         self.update()
 

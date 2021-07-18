@@ -1,6 +1,7 @@
 # pylint: disable=no-member
+# pylint: disable=access-member-before-definition
+# (pylint doesn't like the constructor's update shortcut)
 
-import math
 from random import randint
 
 characterCreationDefaults = {
@@ -172,43 +173,35 @@ class Character:
 
         self.update()
 
-    def heal(self, hp=None):
-        """Heals the character. The hp provided should always be >= 0
+    def heal(self, h=None):
+        """Heals the character for h health.
 
-        Keyword Arguments:
-            hp {int} -- The amount to heal, default is a full heal. (default: {None})
+        Args:
+            h (int, optional): Hitpoints to heal; leave blank to full heal. Defaults to None.
         """
-        if hp is not None and hp >= 0:
-            self.hp = hp
-        else:
+        # if we're doing a basic full heal...
+        if h == None:
             self.hp = self.maxhp
+        # else, make sure we won't go over max health
+        elif self.hp + h > self.maxhp:
+            self.hp = self.maxhp
+        # otherwise, just add the hp
+        else:
+            self.hp += h
 
-    # TODO: temphp handling is pretty awkward here
-    def hurt(self, hp=None, temphp=None, totalDamage=None):
-        """Hurts the character. All args should be >= 0.
+    def hurt(self, d):
+        """Hurts the character for d damage.
 
-        Keyword Arguments:
-            hp {int} -- Optional, how much to subtract from hp. (default: {None})
-            temphp {int} -- Optional, how much to subtract from temphp. (default: {None})
-            totalDamage {int} -- Preferred, how much total damage to do. (default: {None})
+        Args:
+            d (int): damage to deal
         """
-        # If total damage is used.
-        if totalDamage is not None:
-            # Figure out how much of the damage rolls over.
-            hpDamage = totalDamage - self.temphp
-            # If nothing rolls over (temphp >= totalDamage) it's really easy.
-            if hpDamage <= 0:
-                self.temphp -= totalDamage
-            else:
-                # Otherwise subtract the roll over amount
-                self.temphp = 0
-                self.hp -= hpDamage
-        # Check for temp hp, will not roll over if trying to subtract more than the current temphp
-        elif temphp is not None:
-            self.temphp = self.temphp - temphp if self.temphp >= temphp else 0
-        elif hp is not None:
-            self.hp = self.hp - hp if self.hp >= hp else 0
-
+        if d > self.temphp:
+            d -= self.temphp
+            self.temphp = 0
+            self.hp -= d
+        else:
+            self.temphp -= d
+            
 
     def stow(self, item, storageItem=None):
         """Stores an item in the inventory, or in another item.

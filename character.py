@@ -24,23 +24,25 @@ characterCreationDefaults = {
 
 
 class Character:
-    """Generic character class.
+    """Generic character class. Construct with data, an {attrname: value} dict.
+    Optionally construct with an unpacked *dict.
     """
 
     def __init__(self, data, **kwargs):
         self.data = data
 
         for k, v in characterCreationDefaults.items():
-            setattr(self, k, v)
-        for k, v in data.items():
-            if k in characterCreationDefaults.keys():
+            if k not in data.keys():
                 setattr(self, k, v)
-        for key in kwargs:
-            setattr(self, key, kwargs[key])
+            else:
+                setattr(self, k, data[k])
+
+        for k in kwargs:
+            setattr(self, k, kwargs[k])
 
         self.suffix = "'" if self.name[-1] == ("s" or "x") else "'s"
         self.inventory = []
-        # update() builds lists like self.gear, self.attributes, etc
+        # update builds lists like self.gear, self.attributes, etc
         self.update()
 
     def getJSON(self):

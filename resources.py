@@ -4,8 +4,10 @@ from copy import deepcopy
 
 
 # items
-# TODO: create premade item packs for sgc personnel (mostly done)
-# TODO: move individual items into json files and load on demand
+# TODO: this whole resource structure is a mess. I'm going to have to
+# move individual items into json files and load on demand
+# most of these variables don't need to be instantiated into classes either
+# they can just be dicts passed to constructors as needed
 
 helmet = item.Armor("Helmet", "Ballistic Infantry Helmet", weight=1.6, bonusAC=1)
 backpack = item.Armor("Backpack", "Weatherproofed", weight=2.1)

@@ -1,6 +1,6 @@
 import character
 import resources
-from random import randint
+from random import randint,uniform
 import json
 import os
 from pathlib import Path
@@ -49,35 +49,50 @@ def create(mode='basic', **kwargs):
         things = list(character.characterCreationDefaults.items())
     if mode == 'basic':
         things = list(character.characterCreationDefaults.items())[:9]
+    else:
+        return "invalid mode parameter"
 
     for k,v in things:
         # manually enter each value that data doesn't have
         if k not in kwargs.keys():
-            try:
-                s = input(str(k)+' ? ')
-                if s == '':
-                    continue
-                # Dynamic type casting is apparently supported by python
-                # you just slap a class object in front of another object
-                kwargs[k] = type(v)(s)
-                print(k+' data assigned')
+            # only way to restart a loop iteration is to nest an infinite loop and break it on a success
+            # thank you python
+            while True:
+                try:
+                    s = input(str(k)+' ? ')
+                    if s == '':
+                        continue
+                    # Dynamic type casting is apparently supported by python
+                    # you just slap a class object in front of another object
+                    # thank you C
+                    kwargs[k] = type(v)(s)
+                    print(k+' data assigned')
+                    break
 
-            except (TypeError, ValueError):
-                # TODO: continue statement, but from the same iteration instead of the next
-                print(" invalid parameter")
+                except (TypeError, ValueError):
+                    print(" invalid parameter")
+
     return character.Character(kwargs)
 
 # TODO: expanded 5e longrest implementation
-def longrest(characters):
-    """pass a list of character objects to reset their hp"""
-    for char in characters:
-        char.heal()
+def longrest(*characterLists):
+    """pass lists of character objects to reset their hp"""
+    for characterList in characterLists:
+        for character in characterList:
+            character.heal()
 
 
-def groupinitiative(characters):
+def initiative(*characterLists):
+    """generates initiative rolls from lists of characters.
+    send (list)(factions.values()) to use every character, for example
+
+    Returns:
+        list: a list of (initiative roll, character name) tuples
+    """
     order = []
-    for char in characters:
-        order.append({char.name, char.initiative()})
+    for characterList in characterLists:
+        for character in characterList:
+            order.append(character.initiative(), character.name)
     return sorted(order)
 
 
@@ -95,6 +110,42 @@ def heal(char, amount=None):
 def levelUp(char):
     char.levelUp()
 
+
+def dismember(char):
+    char.attributes[randint(0,5)] -= randint(1,2)
+
+
+# TODO
+def henchmen(n, attributes, faction=[], *namefiles):
+    for henchman in range(n):
+        # this is an entire section dedicated to naming npcs extensibly
+        # completely untested
+        if namefiles:
+            name = ''
+            for namefile in namefiles:
+                # cool algorithm I stole from sof
+                line_num = 0
+                selected_line = ''
+                with open(namefile, 'r') as f:
+                    while True:
+                        line = f.readline()
+                        if not line: break
+                        line_num += 1
+                        # here's the meat. it's equally likely to spit out each item
+                        # even without knowing the total number of items
+                        # so we get O(n/2) instead of O(2n) by running over the file twice, and
+                        # O(1) space complexity instead of O(n) by not saving file metadata
+                        if random.uniform(0, line_num) < 1:
+                            selected_line = line
+
+                name += selected_line.strip() + ' '
+            name = name.strip()
+        else:
+            name = 'NPC'
+
+        faction.append(character.Character(attributes))
+
+    return faction
 
 def savefactions(factions):
     """Saves all factions' characters' jsons to local dir
@@ -121,9 +172,10 @@ def savefactions(factions):
 
             # write
             with open(
-                ".\\factions\\" + char.faction + "\\" + char.name + ".json",
+                f".\\factions\\{char.faction}\\{char.name}.json",
                 "w+",
                 encoding="utf-8",
+                # lol
                 errors="ignore",
             ) as f:
                 json.dump(char.getJSON(), f)
@@ -180,7 +232,7 @@ def load():
     return factions
 
 
-def attack(attacker, defender, weapon, distance=0, cover=None):
+def attack(attacker, defender, weapon=attacker.rightHand, distance=0, cover=0):
     """attacker rolls against defender with weapon from distance
 
     Args:
@@ -191,28 +243,22 @@ def attack(attacker, defender, weapon, distance=0, cover=None):
         cover (int, optional): % defender is covered. Defaults to None.
     """
     # factoring in distance
-    distance = input("distance? blank=ignore")
 
-    if distance == "":
-        distance = 0
+    if distance == 0:
         distancemod = 1
-
-    distance = int(distance)
-    # 2 is an arbitrary exponent to scale down weapon efficacy at range. change if needed
-    distancemod = 1 - (distance / weapon.range) ** 2
-    if distancemod < 0:
-        distancemod = 0
+    else:
+        distance = int(distance)
+        # 2 is an arbitrary exponent to scale down weapon efficacy at range. change if needed
+        distancemod = 1 - (distance / weapon.range) ** 2
+        if distancemod < 0:
+            distancemod = 0
 
     # factoring in cover
-    if cover is None:
-        cover = input("cover? 25, 50, or 75; blank=0")
-
-    if cover == "":
-        cover = 0
+    if cover == 0:
         covermod = 0
-
-    cover = int(cover)
-    covermod = cover / 25
+    else:
+        cover = int(cover)
+        covermod = cover // 25
 
     # weapon mods to hit
     mod = 0
@@ -239,12 +285,8 @@ def attack(attacker, defender, weapon, distance=0, cover=None):
         # damage calculation
         damage = (
             round(
-                (
-                    randint(1, weapon.damage // 2)
-                    + randint(1, weapon.damage // 2)
-                )
+                roll(2, weapon.damage // 2) * distancemod
             )
-            * distancemod
         )
 
         print(f"{attacker.name} rolled {hitcalc} to hit {defender.name} for {damage}")

@@ -82,7 +82,7 @@ def longrest(*characterLists):
             character.heal()
 
 
-def initiative(*characterLists):
+def groupInitiative(*characterLists):
     """generates initiative rolls from lists of characters.
     send (list)(factions.values()) to use every character, for example
 
@@ -92,8 +92,9 @@ def initiative(*characterLists):
     order = []
     for characterList in characterLists:
         for character in characterList:
-            order.append(character.initiative(), character.name)
-    return sorted(order)
+            order.append((character.initiative(), character.name))
+    order = sorted(order, reverse=True)
+    return order
 
 
 def hurt(char, amount):
@@ -113,37 +114,57 @@ def levelUp(char):
 
 def dismember(char):
     char.attributes[randint(0,5)] -= randint(1,2)
+    char.update()
 
 
-# TODO
-def henchmen(n, attributes, faction=[], *namefiles):
+# so this actually worked first try
+def nameCharacter(*namefiles):
+    """generates a random character name from files of random names
+
+    Returns:
+        str: the full name
+    """
+    name = ''
+    for namefile in namefiles:
+        # cool algorithm courtesy of the Python Cookbook
+        lineIndex = 0
+        selected_line = ''
+        with open(namefile, 'r') as f:
+            while True:
+                line = f.readline()
+                if not line: break
+                lineIndex += 1
+                # here's the meat. it's equally likely to spit out each item
+                # even without knowing the total number of items
+                # so we get O(n/2) instead of O(2n) by not running over the file twice, and
+                # O(1) space complexity instead of O(n) by not saving file metadata
+                if uniform(0, lineIndex) < 1:
+                    selected_line = line
+
+        name += selected_line.strip() + ' '
+
+    return name.strip()
+
+
+def henchmen(n, attributes={}, faction=[], *namefiles):
+    """generates henchmen for use in combat encounters
+
+    Args:
+        n (int): number of henchmen
+        attributes (dict, optional): a data dict containing elements for character construction
+        faction (list, optional): a faction list to put henchmen inside
+        namefiles (str, optional): text files to source random character names from
+
+    Returns:
+        (list): a list containing all the henchmen
+    """
     for henchman in range(n):
-        # this is an entire section dedicated to naming npcs extensibly
-        # completely untested
         if namefiles:
-            name = ''
-            for namefile in namefiles:
-                # cool algorithm I stole from sof
-                line_num = 0
-                selected_line = ''
-                with open(namefile, 'r') as f:
-                    while True:
-                        line = f.readline()
-                        if not line: break
-                        line_num += 1
-                        # here's the meat. it's equally likely to spit out each item
-                        # even without knowing the total number of items
-                        # so we get O(n/2) instead of O(2n) by running over the file twice, and
-                        # O(1) space complexity instead of O(n) by not saving file metadata
-                        if random.uniform(0, line_num) < 1:
-                            selected_line = line
-
-                name += selected_line.strip() + ' '
-            name = name.strip()
+            name = nameCharacter(*namefiles)
         else:
             name = 'NPC'
 
-        faction.append(character.Character(attributes))
+        faction.append(character.Character(attributes, name=name))
 
     return faction
 
@@ -232,7 +253,7 @@ def load():
     return factions
 
 
-def attack(attacker, defender, weapon=attacker.rightHand, distance=0, cover=0):
+def attack(attacker, defender, weapon=None, distance=0, cover=0):
     """attacker rolls against defender with weapon from distance
 
     Args:
@@ -242,8 +263,7 @@ def attack(attacker, defender, weapon=attacker.rightHand, distance=0, cover=0):
         distance (int, optional): Attack distance. Defaults to 0.
         cover (int, optional): % defender is covered. Defaults to None.
     """
-    # factoring in distance
-
+    # factoring distance
     if distance == 0:
         distancemod = 1
     else:
@@ -253,12 +273,22 @@ def attack(attacker, defender, weapon=attacker.rightHand, distance=0, cover=0):
         if distancemod < 0:
             distancemod = 0
 
-    # factoring in cover
+    # factoring cover
     if cover == 0:
         covermod = 0
     else:
         cover = int(cover)
         covermod = cover // 25
+
+    # fetch weapon
+    if weapon is None:
+        if attacker.rightHand is None:
+            if attacker.leftHand is None:
+                return "no valid attacker wep" # TODO: unarmed combat
+            else:
+                weapon = attacker.leftHand
+        else:
+            weapon = attacker.rightHand
 
     # weapon mods to hit
     mod = 0
@@ -281,6 +311,7 @@ def attack(attacker, defender, weapon=attacker.rightHand, distance=0, cover=0):
         hitcalc -= 2 * weapon.cqcpenalty
         print("close combat weapon penalty applied")
 
+    # does the attack hit?
     if hitcalc > (defender.AC + covermod):
         # damage calculation
         damage = (

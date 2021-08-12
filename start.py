@@ -1,6 +1,6 @@
 import character
 import playerfunctions
-import dmfunctions
+from dmfunctions import *
 import item
 import resources
 
@@ -8,7 +8,7 @@ from importlib import reload
 
 print("\nPackages imported")
 
-factions = dmfunctions.load()
+factions = load()
 
 print("Factions loaded:")
 

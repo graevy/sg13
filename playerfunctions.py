@@ -51,7 +51,7 @@ def show(char):
 
 def update(char):
     """debug tool"""
-    return char.update()
+    char.update()
 
 
 def equip(char, item, slot):

@@ -41,7 +41,7 @@ def initiative(char, dice=3, die=6):
 
 def printContents(item):
     for thing in item.storage:
-        print(item.name + ": " + thing.name)
+        print(f"{item.name}: {thing.name}")
         printContents(thing)
 
 
@@ -57,17 +57,19 @@ def update(char):
 def equip(char, item, slot):
     """slot is a string"""
     char.equip(item, slot)
+    char.update()
 
 
 def unequip(char, item, slot):
     """slot is a string"""
     char.unequip(item, slot)
+    char.update()
 
 
 def grab(char, item, hand=None):
-    if hand[:3].lower() == 'left':
+    if hand[:4].lower() == 'left':
         hand = 'leftHand'
-    elif hand[:3].lower() == 'right':
+    elif hand[:5].lower() == 'right':
         hand = 'rightHand'
     else:
         print("invalid hand slot")

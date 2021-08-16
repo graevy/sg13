@@ -31,14 +31,14 @@ class Character:
     def __init__(self, data, **kwargs):
         self.data = data
 
-        for k, v in characterCreationDefaults.items():
-            if k not in data.keys():
-                setattr(self, k, v)
+        for key, value in characterCreationDefaults.items():
+            if key not in data.keys():
+                setattr(self, key, value)
             else:
-                setattr(self, k, data[k])
+                setattr(self, key, data[key])
 
-        for k in kwargs:
-            setattr(self, k, kwargs[k])
+        for key in kwargs:
+            setattr(self, key, kwargs[key])
 
         self.suffix = "'" if self.name[-1] == ("s" or "x") else "'s"
         self.inventory = []
@@ -469,7 +469,7 @@ class Character:
     #     """
 
     #     self.data = data
-    #     # fails if these aren't initialized o.o
+    #     # namespace hell
     #     self.leftHand = None
     #     self.rightHand = None
 

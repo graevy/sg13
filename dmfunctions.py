@@ -6,6 +6,10 @@ import os
 from pathlib import Path
 
 
+# TODO:
+# faction saving function needs to get redone for linux
+# I'm putting off fixing it until I redo the whole thing for complex factions
+
 def roll(dice=1, die=20):
     """custom roll, takes (dice)d(die)"""
     return sum([randint(1, die) for x in range(dice)])
@@ -127,21 +131,24 @@ def nameCharacter(*namefiles):
     name = ''
     for namefile in namefiles:
         # cool algorithm courtesy of the Python Cookbook
+        # it's equally likely to spit out each item
+        # even without knowing the total number of items
+        # so we get O(n) instead of O(2n) by not running over the file twice, and
+        # O(1) space instead of O(n) by not loading file data
         lineIndex = 0
-        selected_line = ''
+        selectedLine = ''
         with open(namefile, 'r') as f:
             while True:
                 line = f.readline()
                 if not line: break
                 lineIndex += 1
-                # here's the meat. it's equally likely to spit out each item
-                # even without knowing the total number of items
-                # so we get O(n/2) instead of O(2n) by not running over the file twice, and
-                # O(1) space complexity instead of O(n) by not saving file metadata
+                # the cool part
+                # first name has a 1/1 chance of being selected
+                # the 8000th name has a 1/8000 chance of overwriting previous selection
                 if uniform(0, lineIndex) < 1:
-                    selected_line = line
+                    selectedLine = line
 
-        name += selected_line.strip() + ' '
+        name += selectedLine.strip() + ' '
 
     return name.strip()
 
@@ -158,11 +165,13 @@ def henchmen(n, attributes={}, faction=[], *namefiles):
     Returns:
         (list): a list containing all the henchmen
     """
+    idx = 0
     for henchman in range(n):
         if namefiles:
             name = nameCharacter(*namefiles)
         else:
-            name = 'NPC'
+            idx += 1
+            name = f'NPC {idx}'
 
         faction.append(character.Character(attributes, name=name))
 

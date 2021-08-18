@@ -2,7 +2,6 @@ import character
 import resources
 from random import randint,uniform
 from statistics import NormalDist
-from math import floor
 import json
 import os
 from pathlib import Path
@@ -42,7 +41,7 @@ def advantage(dice=1, die=20):
     return max(roll(dice, die), roll(dice, die))
 
 
-def create(mode='basic', **kwargs):
+def create(full=False, **kwargs):
     """Character creation function
 
     Args:
@@ -51,28 +50,26 @@ def create(mode='basic', **kwargs):
     """
 
     # if you want full control you can edit each value
-    if mode == 'full':
-        things = list(character.characterCreationDefaults.items())
-    if mode == 'basic':
-        things = list(character.characterCreationDefaults.items())[:9]
+    if full:
+        defaults = list(character.characterCreationDefaults.items())
     else:
-        return "invalid mode parameter"
+        defaults = list(character.characterCreationDefaults.items())[:9]
 
-    for k,v in things:
+    for key, value in defaults:
         # manually enter each value that data doesn't have
-        if k not in kwargs.keys():
+        if key not in kwargs.keys():
             # only way to restart a loop iteration is to nest an infinite loop and break it on a success
             # thank you python
             while True:
                 try:
-                    s = input(str(k)+' ? ')
+                    s = input(f'{key} ? ')
                     if s == '':
                         continue
                     # Dynamic type casting is apparently supported by python
                     # you just slap a class object in front of another object
                     # thank you C
-                    kwargs[k] = type(v)(s)
-                    print(k+' data assigned')
+                    kwargs[key] = type(value)(s)
+                    print(f'{key} data assigned')
                     break
 
                 except (TypeError, ValueError):
@@ -134,12 +131,13 @@ def setDC(successOdds=None, dice=3, die=6, roundDown=True):
     # calculate a DC using the inverse cumulative distribution function
     dc = NormalDist(mu=mean, sigma=stDev).inv_cdf(successOdds)
 
-    # rotate around the mean (17 becomes 4, 11 becomes 10, etc)
-    # (alternatively: dc = dice*die - dc + dice)
+    # rotate around the 10.5 mean (17 becomes 4, 11 becomes 10, etc)
+    # alternatively: dc = dice*(die+1) - dc
     dc = -(dc - mean) + mean
 
     if roundDown:
-        return f"{floor(dc)} (rounded down from {dc})"
+        # casting floats to ints truncates in python. don't have to import math
+        return f"{int(dc)} (rounded down from {dc})"
     return f"{round(dc)} (rounded from {dc})"
 
 def hurt(char, amount):
@@ -162,7 +160,7 @@ def dismember(char):
     char.update()
 
 
-# so this actually worked first try
+# so this actually worked first try. no new testing needed :)
 def nameCharacter(*namefiles):
     """generates a random character name from files of random names
 
@@ -175,13 +173,14 @@ def nameCharacter(*namefiles):
         # it's equally likely to spit out each item
         # even without knowing the total number of items
         # so we get O(n) instead of O(2n) by not running over the file twice, and
-        # O(1) space instead of O(n) by not loading file data
+        # O(1) space by not loading file data
         lineIndex = 0
-        selectedLine = ''
+        selectedLine = None
         with open(namefile, 'r') as f:
             while True:
                 line = f.readline()
-                if not line: break
+                if not line:
+                    break
                 lineIndex += 1
                 # the cool part
                 # first name has a 1/1 chance of being selected
@@ -217,6 +216,10 @@ def henchmen(n, attributes={}, faction=[], *namefiles):
         faction.append(character.Character(attributes, name=name))
 
     return faction
+
+# everything below here is from my original 2019 codebase
+# i've improved a lot since then. i gave it a facelift, but
+# it's a lot less readable. it works, so i'm not touching it
 
 def savefactions(factions):
     """Saves all factions' characters' jsons to local dir
@@ -279,7 +282,7 @@ def savefactions(factions):
 def load():
     """builds factions, a dict of {name,characterList}s. don't use mid-session"""
 
-    if 'factions' in locals() or 'factions' in globals():
+    if isinstance(factions, dict):
         print("load() was used while factions var exists; exiting to prevent overwrite")
         return
     else:
@@ -317,8 +320,7 @@ def attack(attacker, defender, weapon=None, distance=0, cover=0):
     if distance == 0:
         distancemod = 1
     else:
-        distance = int(distance)
-        # 2 is an arbitrary exponent to scale down weapon efficacy at range. change if needed
+        # 2 is arbitrary
         distancemod = 1 - (distance / weapon.range) ** 2
         if distancemod < 0:
             distancemod = 0
@@ -327,8 +329,7 @@ def attack(attacker, defender, weapon=None, distance=0, cover=0):
     if cover == 0:
         covermod = 0
     else:
-        cover = int(cover)
-        covermod = cover // 25
+        covermod = int(cover // 25)
 
     # fetch weapon
     if weapon is None:

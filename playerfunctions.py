@@ -98,12 +98,12 @@ def oddsNum(dc, dice=3, die=6):
 
     # calculate standard deviation via discrete uniform variance formula:
     # (n^2 - 1) / 12
-    dievariance = (die ** 2 - 1) / 12
-    dicevariance = dievariance * dice
-    stdev = dicevariance ** 0.5
+    dieVariance = (die ** 2 - 1) / 12
+    diceVariance = dieVariance * dice
+    stDev = diceVariance ** 0.5
 
     # calculate odds
-    odds = NormalDist(mu=mean, sigma=stdev).cdf(dc)
+    odds = NormalDist(mu=mean, sigma=stDev).cdf(dc)
     percentSuccess = 100 - int(round(odds, 2) * 100)
 
     return f"{percentSuccess}%"

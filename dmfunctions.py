@@ -1,6 +1,8 @@
 import character
 import resources
 from random import randint,uniform
+from statistics import NormalDist
+from math import floor
 import json
 import os
 from pathlib import Path
@@ -100,6 +102,45 @@ def groupInitiative(*characterLists):
     order = sorted(order, reverse=True)
     return order
 
+
+def setDC(successOdds=None, dice=3, die=6, roundDown=True):
+    """returns the DC of a % success chance
+
+    Args:
+        successOdds (int, optional): the 0-99 chance of action success. Defaults to None.
+        dice (int, optional): number of dice to roll. Defaults to 3.
+        die (int, optional): faces per die. Defaults to 6.
+        roundDown (bool, optional): floors the DC -- use this for lower variance rolls. Defaults to True.
+
+    Returns:
+        int: the corresponding DC
+    """
+    if successOdds is None:
+        successOdds = int(input(r"What % success do you want? (int): ").strip())
+
+    successOdds /= 100
+
+    # calculate mean, standard deviation, and then DC
+
+    # calculate mean. dice*die is max, dice is min, dice*(die+1) is max+min
+    mean = (dice * (die + 1)) / 2
+
+    # calculate standard deviation via discrete uniform variance formula
+    # (n^2 - 1) / 12
+    dieVariance = (die ** 2 - 1) / 12
+    diceVariance = dieVariance * dice
+    stDev = diceVariance ** 0.5
+
+    # calculate a DC using the inverse cumulative distribution function
+    dc = NormalDist(mu=mean, sigma=stDev).inv_cdf(successOdds)
+
+    # rotate around the mean (17 becomes 4, 11 becomes 10, etc)
+    # (alternatively: dc = dice*die - dc + dice)
+    dc = -(dc - mean) + mean
+
+    if roundDown:
+        return f"{floor(dc)} (rounded down from {dc})"
+    return f"{round(dc)} (rounded from {dc})"
 
 def hurt(char, amount):
     char.hurt(amount)

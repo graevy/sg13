@@ -6,3 +6,6 @@ class Faction:
     def __init__(self, name, parent=None, children=[], characters=[]):
         self.name, self.parent, self.children, self.characters = \
             name, parent, children, characters
+
+    def makeChild(self, name, children=[], characters=[]):
+        return Faction(name, parent=self, children=children, characters=characters)

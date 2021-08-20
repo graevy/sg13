@@ -13,13 +13,15 @@ characterCreationDefaults = {
     "strength": 10, "dexterity": 10, "constitution": 10, "intelligence": 10, "wisdom": 10, "charisma": 10,
     # skills
     "acting": 0, "anthropology": 0, "xenoanthropology": 0, "sleightofhand": 0, "stealth": 0, "diplomacy": 0, "medicine": 0, "vehicles": 0,
-    "xenotechnology": 0, "technology": 0, "insight": 0, "perception": 0, "survival": 0, "tactics": 0, "athletics": 0, "acrobatics": 0, "inspiration": 0,
+    "xenotechnology": 0, "technology": 0, "insight": 0, "perception": 0, "survival": 0, "tactics": 0, "athletics": 0, "acrobatics": 0,
     # hands
     "leftHand": None, "rightHand": None,
     # gear
     "head": None, "chest": None, "legs": None, "belt": None, "boots": None, "gloves": None, "back": None,
     # levelup info
-    "attributepoints": 0, "skillpoints": 0
+    "attributepoints": 0, "skillpoints": 0,
+    # inspiration
+    "inspiration": 0
 }
 
 

@@ -7,10 +7,6 @@ import os
 from pathlib import Path
 
 
-# TODO:
-# faction saving function needs to get redone for linux
-# I'm putting off fixing it until I redo the whole thing for complex factions
-
 def roll(dice=1, die=20):
     """custom roll, takes (dice)d(die)"""
     return sum([randint(1, die) for x in range(dice)])
@@ -45,15 +41,15 @@ def create(full=False, **kwargs):
     """Character creation function
 
     Args:
-        **kwargs (dict, optional): Optionally include kwargs. Defaults to {}.
-        mode (str, optional): 'full' for every value, 'basic' for important values. Defaults to 'basic'.
+        **kwargs (dict, optional): Optionally include attributes as kwargs. Defaults to {}.
+        full (bool, optional): If you want to edit each attribute, full=True. Defaults to False.
     """
 
     # if you want full control you can edit each value
-    if full:
-        defaults = list(character.characterCreationDefaults.items())
-    else:
+    if not full:
         defaults = list(character.characterCreationDefaults.items())[:9]
+    else:
+        defaults = list(character.characterCreationDefaults.items())
 
     for key, value in defaults:
         # manually enter each value that data doesn't have
@@ -100,7 +96,7 @@ def groupInitiative(*characterLists):
     return order
 
 
-def setDC(successOdds=None, dice=3, die=6, roundDown=True):
+def setDc(successOdds=None, dice=3, die=6, roundDown=True):
     """returns the DC of a % success chance
 
     Args:
@@ -217,93 +213,81 @@ def henchmen(n, attributes={}, faction=[], *namefiles):
 
     return faction
 
-# everything below here is from my original 2019 codebase
-# i've improved a lot since then. i gave it a facelift, but
-# it's a lot less readable. it works, so i'm not touching it
 
-def savefactions(factions):
-    """Saves all factions' characters' jsons to local dir
-
-    Args:
-        factions (dict): a dictionary of {faction:characterlist}s
-    """
-
-    for factionName, faction in factions.items():
-        for char in faction:
-
-            # if this somehow happens it needs to get fixed on write
-            if char.faction != factionName:
-                char.faction = factionName
-
-            # create directory if it doesn't exist
-            if not os.path.exists(".\\factions\\" + char.faction):
-                os.makedirs(".\\factions\\" + char.faction)
-
-            # create file if it doesn't exist
-            Path(
-                ".\\factions\\" + char.faction + "\\" + char.name + ".json"
-            ).touch()
-
-            # write
-            with open(
-                f".\\factions\\{char.faction}\\{char.name}.json",
-                "w+",
-                encoding="utf-8",
-                # lol
-                errors="ignore",
-            ) as f:
-                json.dump(char.getJSON(), f)
-
-# TODO: support for complex faction names eg "sgc/sg13". currently thinking about using os.walk or recursion
-# def load():
-#     """builds factions, a dict of {name,characterList}s. don't use mid-session"""
-
-#     if 'factions' in locals() or 'factions' in globals():
-#         print("load() was used while factions var exists; exiting to prevent overwrite")
-#         return
-#     else:
-#         factions = {}
-
-#     for root, faction, character in os.walk("./factions"):
-
-#         factions[faction] = []
-
-#         with open(
-#             "./factions/" + faction + "/" + char,
-#             "r",
-#             encoding="utf-8",
-#             errors="ignore",
-#         ) as f:
-#             data = json.load(f)
-#             factions[faction].append(character.Character(data))
-
-#     return factions
-
+# TODO: second pass at this. doesn't do n-depth yet, and 
+# i'm thinking a faction class is better to use here
 def load():
     """builds factions, a dict of {name,characterList}s. don't use mid-session"""
 
-    if isinstance(factions, dict):
+    # can't really use isinstance() here :(
+    if 'factions' in globals() or 'factions' in locals():
         print("load() was used while factions var exists; exiting to prevent overwrite")
         return
     else:
         factions = {}
 
-    for faction in os.listdir("./factions"):
+    # root.split("/") looks like [".", "factions", "faction1", "faction2", etc], so pruning it here saves a headache
+    walker = ((root.split("/")[2:], dirs, files) for root,dirs,files in os.walk("./factions"))
 
-        factions[faction] = []
+    # first yield is sort of like a file header for the directory, so it gets its own statement
+    for elem in next(walker)[1]:
+        factions[elem] = {}
+        # factions is currently e.g. {'sgc':{}, 'trust':{}}
 
-        for char in os.listdir("./factions/" + faction):
+    while True:
+        try:
+            step = next(walker)
+            root, dirs, files = step
+            # "if the root isn't just a single faction name, e.g. ['sgc', 'sg14']:"
+            if len(root) > 1:
+                # set a key, value pair. factions['sgc']['sg14'] = []
+                factions[root[0]][root[-1]] = []
 
-            with open(
-                "./factions/" + faction + "/" + char,
-                "r",
-                encoding="utf-8",
-                errors="ignore",
-            ) as f:
-                data = json.load(f)
-                factions[faction].append(character.Character(data))
+                # now add each character to the faction list
+                for charFile in files: #     sgc        sg13    
+                    with open(f"./factions/{root[0]}/{root[-1]}/{charFile}", "r", encoding="utf-8", errors="ignore") as f:
+                        factions[root[0]][root[-1]].append(character.Character(json.load(f)))
+
+        except StopIteration:
+            break
 
     return factions
+
+
+def save(factions):
+    """writes all character data to local jsons
+
+    Args:
+        factions (dict): arbitrarily nested dicts eventually containing a faction list full of character objects
+    """
+    def getCharactersFromDicts(iterable, path='./factions/'):
+        # put every nested dict on the stack
+        if isinstance(iterable, dict):
+            for key, value in iterable.items():
+                getCharactersFromDicts(value, path=(f"{path}{key}/"))
+
+        # we've hit a faction list
+        if isinstance(iterable, list):
+            for char in iterable:
+                # create directories if they don't exist
+                if not os.path.exists(path):
+                    os.makedirs(path)
+
+                # create file if it doesn't exist
+                Path(f'{path}{char.name}.json').touch()
+
+                # character faction should be updated on each save
+                # path[11:] does "./factions/xyz" -> "xyz"
+                char.faction = path[11:]
+
+                # write character to file
+                with open(f'{path}{char.name}.json', 'w+', encoding='utf-8', errors='ignore') as f:
+                    json.dump(char.getJSON(), f)
+    getCharactersFromDicts(factions)
+
+# everything below here is from my original 2019 codebase
+# i've improved a lot since then. i gave it a facelift, but
+# it's a lot less readable. it works, so i'm not touching it
 
 
 def attack(attacker, defender, weapon=None, distance=0, cover=0):

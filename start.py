@@ -1,6 +1,6 @@
 import character
-import playerfunctions
-from dmfunctions import *
+import playertools
+from dmtools import *
 import item
 import resources
 

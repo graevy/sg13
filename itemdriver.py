@@ -1,6 +1,6 @@
 import resources
 import item
-import dmfunctions
+import dmtools
 from copy import deepcopy
 
 bag = deepcopy(resources.backpack)

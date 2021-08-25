@@ -4,7 +4,6 @@ from random import randint,uniform
 from statistics import NormalDist
 import json
 import os
-from pathlib import Path
 
 
 def roll(dice=1, die=20):
@@ -47,13 +46,13 @@ def create(full=False, **kwargs):
 
     # if you want full control you can edit each value
     if not full:
-        defaults = list(character.characterCreationDefaults.items())[:9]
+        defaults = list(character.characterCreationDefaults.items())[:7]
     else:
         defaults = list(character.characterCreationDefaults.items())
 
     for key, value in defaults:
         # manually enter each value that data doesn't have
-        if key not in kwargs.keys():
+        if key not in kwargs:
             # only way to restart a loop iteration is to nest an infinite loop and break it on a success
             # thank you python
             while True:
@@ -83,10 +82,9 @@ def longrest(*characterLists):
 
 def groupInitiative(*characterLists):
     """generates initiative rolls from lists of characters.
-    send (list)(factions.values()) to use every character, for example
 
     Returns:
-        list: a list of (initiative roll, character name) tuples
+        list: of (initiative roll, character name) tuples
     """
     order = []
     for characterList in characterLists:
@@ -168,7 +166,7 @@ def nameCharacter(*namefiles):
         # cool algorithm courtesy of the Python Cookbook
         # it's equally likely to spit out each item
         # even without knowing the total number of items
-        # so we get O(n) instead of O(2n) by not running over the file twice, and
+        # still linear time complexity, but
         # O(1) space by not loading file data
         lineIndex = 0
         selectedLine = None
@@ -180,13 +178,18 @@ def nameCharacter(*namefiles):
                 lineIndex += 1
                 # the cool part
                 # first name has a 1/1 chance of being selected
-                # the 8000th name has a 1/8000 chance of overwriting previous selection
+                # the nth name has a 1/n chance of overwriting previous selection
                 if uniform(0, lineIndex) < 1:
                     selectedLine = line
 
+        # (spaces between firstname nthname lastname)
         name += selectedLine.strip() + ' '
 
-    return name.strip()
+        # after too much reading i learned that uniform(0,1) can't ever equal 1
+        # but uniform(0,n) can equal n in most other cases
+        # so this algorithm can't TypeError
+
+    return name.strip() # to remove the trailing space
 
 
 def henchmen(n, attributes={}, faction=[], *namefiles):
@@ -234,27 +237,25 @@ def load():
         factions[elem] = {}
         # factions is currently e.g. {'sgc':{}, 'trust':{}}
 
-    while True:
-        try:
-            step = next(walker)
-            root, dirs, files = step
-            # "if the root isn't just a single faction name, e.g. ['sgc', 'sg14']:"
-            if len(root) > 1:
-                # set a key, value pair. factions['sgc']['sg14'] = []
-                factions[root[0]][root[-1]] = []
-
-                # now add each character to the faction list
-                for charFile in files: #     sgc        sg13    
-                    with open(f"./factions/{root[0]}/{root[-1]}/{charFile}", "r", encoding="utf-8", errors="ignore") as f:
-                        factions[root[0]][root[-1]].append(character.Character(json.load(f)))
-
-        except StopIteration:
-            break
+    # TODO: this is sloppy, even with the syntax cleaned up.
+    # it's a good candidate for recursion
+    for elem in walker:
+        root, dirs, files = elem
+        # "if the root isn't just a single faction name, e.g. ['sgc', 'sg14']:"
+        if len(root) > 1:
+            # set a key, value pair. factions['sgc']['sg14'] = []
+            factions[root[0]][root[-1]] = []
+            # now add each character to the faction list
+            for charFile in files: #     sgc        sg13 
+                with open(f"./factions/{root[0]}/{root[-1]}/{charFile}", "r", encoding="utf-8") as f:
+                    factions[root[0]][root[-1]].append(character.Character(json.load(f)))
 
     return factions
 
 
-def save(factions):
+# i can't think of any real improvements to the save function now other than custom objects
+# works in linux, haven't tested on windows B)
+def save(factions=None):
     """writes all character data to local jsons
 
     Args:
@@ -263,7 +264,7 @@ def save(factions):
     def getCharactersFromDicts(iterable, path='./factions/'):
         # put every nested dict on the stack
         if isinstance(iterable, dict):
-            for key, value in iterable.items():
+            for key, value in iterable.items(): # e.g. path="./factions/sgc/" first
                 getCharactersFromDicts(value, path=(f"{path}{key}/"))
 
         # we've hit a faction list
@@ -273,23 +274,26 @@ def save(factions):
                 if not os.path.exists(path):
                     os.makedirs(path)
 
-                # create file if it doesn't exist
-                Path(f'{path}{char.name}.json').touch()
-
                 # character faction should be updated on each save
-                # path[11:] does "./factions/xyz" -> "xyz"
-                char.faction = path[11:]
+                # it is purely cosmetic at this point, though
+                # path[10:-1] does "./factions/xyz/" -> "/xyz"
+                char.faction = path[10:-1]
 
                 # write character to file
+                # open(, 'w+') makes the file if it doesn't exist. no more pathlib import
+                # TODO: why did blair ignore encoding errors in the original function?
                 with open(f'{path}{char.name}.json', 'w+', encoding='utf-8', errors='ignore') as f:
                     json.dump(char.getJSON(), f)
+
+    # not tested
+    if factions == None:
+        factions = eval('factions', globals())
     getCharactersFromDicts(factions)
 
-# everything below here is from my original 2019 codebase
+
+# from my original 2019 codebase
 # i've improved a lot since then. i gave it a facelift, but
 # it's a lot less readable. it works, so i'm not touching it
-
-
 def attack(attacker, defender, weapon=None, distance=0, cover=0):
     """attacker rolls against defender with weapon from distance
 
@@ -363,38 +367,6 @@ def attack(attacker, defender, weapon=None, distance=0, cover=0):
 
     else:
         print("miss!")
-
-
-###################################################
-# Not sure if I want to use this implementation yet
-
-# def savecharacter(character):
-#     # create directory if it doesn't exist
-#     if not os.path.exists(".\\factions\\" + character.faction):
-#         os.makedirs(".\\factions\\" + character.faction)
-
-#     # create file if it doesn't exist
-#     Path(
-#         ".\\factions\\" + character.faction + "\\" + character.name + ".json"
-#     ).touch()
-
-#     # write
-#     with open(
-#         ".\\factions\\" + character.faction + "\\" + character.name + ".json",
-#         "w+",
-#         encoding="utf-8",
-#         errors="ignore",
-#     ) as f:
-#         json.dump(character.getJSON(), f)
-
-# def savefaction(faction):
-#     for char in faction.values():
-#         savecharacter(char)
-
-# def savefactions(factions)
-#       for faction in factions.values():
-#           savefaction(faction)
-###################################################
 
 
 # old character creation functions

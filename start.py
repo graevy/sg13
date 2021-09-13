@@ -1,10 +1,4 @@
-import character
-import playertools
-from dmtools import *
-import item
-import resources
-
-from importlib import reload
+from dmtools import load
 
 print("\nPackages imported")
 

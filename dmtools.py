@@ -154,9 +154,9 @@ def dismember(char):
     char.update()
 
 
-# so this actually worked first try. no new testing needed :)
 def nameCharacter(*namefiles):
-    """generates a random character name from files of random names
+    """generates a random character name from files of random names,
+    best for naming one character. use nameCharacters for multiple
 
     Returns:
         str: the full name
@@ -186,35 +186,80 @@ def nameCharacter(*namefiles):
         name += selectedLine.strip() + ' '
 
         # after too much reading i learned that uniform(0,1) can't ever equal 1
-        # but uniform(0,n) can equal n in most other cases
+        # but uniform(0,n) can equal n in most other cases, varying by machine
         # so this algorithm can't TypeError
 
-    return name.strip() # to remove the trailing space
+    return name[:-1] # remove the trailing space
+    # i actually tested the timing on name[:-1] vs name.rstrip() using my timing module
+    # slicing the last character off is something like 15% faster on average,
+    # until you get out to names longer than ~40 characters
+    # slicing saved something like 90ns on average. i am drunk with power
 
 
-def henchmen(n, attributes={}, faction=[], *namefiles):
+# i thought i was smart by using the cool space-less algorithm for naming,
+# but really, loading everything into memory is faster for most batch operations
+# so now it's unnecessarily complicated. there's a lesson here
+def nameCharacters(characters, *namefiles):
+    """space-complex algorithm to name large groups of characters from namefiles
+
+    Args:
+        characters (list): of character objects to name
+    """
+
+    # store all possible names in lists
+    namefileTuplesList = []
+    for namefile in namefiles:
+        entry = []
+        idx = 0
+        with open(namefile, 'r') as f:
+            while True:
+                idx += 1
+                line = f.readline()
+                if not line:
+                    break
+                entry.append(line)
+        namefileTuplesList.append((idx, entry))
+
+    # name all characters from those lists
+    # using enumerate to auto-generate names if not provided
+    for idx,character in enumerate(characters):
+        name = ''
+        if namefiles:
+            for namefileLength,namefileArray in namefileTuplesList:
+                name += namefileArray[random.randint(0,namefileLength)] + ' '
+            character.name = name.strip()
+        else:
+            character.name = f"NPC {idx+1}"
+
+
+# TODO: new implementation untested
+def henchmen(n, *namefiles, attributes={}, faction=[]):
     """generates henchmen for use in combat encounters
 
     Args:
         n (int): number of henchmen
+        namefiles (str, optional): text files to source random character names from
         attributes (dict, optional): a data dict containing elements for character construction
         faction (list, optional): a faction list to put henchmen inside
-        namefiles (str, optional): text files to source random character names from
 
     Returns:
-        (list): a list containing all the henchmen
+        (list): faction list, containing all the henchmen
     """
     idx = 0
-    for henchman in range(n):
-        if namefiles:
-            name = nameCharacter(*namefiles)
-        else:
-            idx += 1
-            name = f'NPC {idx}'
-
-        faction.append(character.Character(attributes, name=name))
-
-    return faction
+    # use nameCharacter if n is 1
+    if n  == 1:
+        faction.append(character.Character(attributes, name=nameCharacter(*namefiles)))
+        return faction
+    # use nameCharacters otherwise
+    else:
+        # create list of henchmen,
+        characters = [character.Character(attributes) for x in range(n)]
+        # name them all,
+        nameCharacters(characters, *namefiles)
+        # add them to the faction,
+        faction += characters
+        # send it
+        return faction
 
 
 # TODO: second pass at this. doesn't do n-depth yet, and 
@@ -246,8 +291,9 @@ def load():
             # set a key, value pair. factions['sgc']['sg14'] = []
             factions[root[0]][root[-1]] = []
             # now add each character to the faction list
-            for charFile in files: #     sgc        sg13 
+            for charFile in files: #     sgc        sg13            "default encoding is platform dependent"
                 with open(f"./factions/{root[0]}/{root[-1]}/{charFile}", "r", encoding="utf-8") as f:
+                    # honestly sorry about how dense this became
                     factions[root[0]][root[-1]].append(character.Character(json.load(f)))
 
     return factions

@@ -90,8 +90,8 @@ class Character:
             'back':self.back
         }
 
-        self.gearweight = 0.0
         # character data
+        self.gearweight = 0.0
         for item in list(self.gear.values()) + self.inventory:
             if hasattr(item, "weight"):
                 self.gearweight += item.getWeight()
@@ -280,7 +280,7 @@ class Character:
         Returns:
             int -- The initiative roll.
         """
-        return (sum([randint(1, die) for x in range(dice)]) + self.dexmod)
+        return sum([randint(1, die) for x in range(dice)]) + self.dexmod
 
     def randomizeAttributes(self):
         """Randomizes character attributes. 4d6 minus lowest roll per attribute
@@ -299,6 +299,7 @@ class Character:
 
         self.update()
 
+    # everything below is from 2019. it's pretty sloppy and largely deprecated
     def pointBuyAttributes(self, points=27):
         """Starts the point buy process for the character.
 
@@ -312,7 +313,7 @@ class Character:
             self.intelligence,
             self.wisdom,
             self.charisma,
-        ) = [8 for x in self.attributes.values()]
+        ) = (8 for x in self.attributes.values())
         self.update()
 
         def bug_player():
@@ -358,7 +359,6 @@ class Character:
                 print(f"attribute {s} at starting cap (15)")
 
 
-    # TODO: this could be a lot neater
     def levelUp(self):
         """Levels up the character.
         """
@@ -397,7 +397,7 @@ class Character:
             self.intelligence,
             self.wisdom,
             self.charisma,
-        ) = [x for x in self.attributes.values()]
+        ) = (x for x in self.attributes.values())
 
         # update character now in case int is increased enough to effect skillpoints
         self.update()
@@ -457,7 +457,7 @@ class Character:
             self.tactics,
             self.athletics,
             self.acrobatics,
-        ) = [x for x in self.skills.values()]
+        ) = (x for x in self.skills.values())
 
         self.update()
 

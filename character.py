@@ -34,7 +34,7 @@ class Character:
         self.data = data
 
         for key, value in characterCreationDefaults.items():
-            if key not in data.keys():
+            if key not in data:
                 setattr(self, key, value)
             else:
                 setattr(self, key, data[key])
@@ -54,7 +54,7 @@ class Character:
             dict -- A dictionary version of the character's data.
         """
         result = {}
-        for key in characterCreationDefaults.keys():
+        for key in characterCreationDefaults:
             result[key] = getattr(self, key)
         return result
 

@@ -1,5 +1,6 @@
 import character
 import resources
+import faction
 from random import randint,uniform
 from statistics import NormalDist
 import json
@@ -227,7 +228,7 @@ def nameCharacters(characters, *namefiles):
         if namefiles:
             for namefileLength,namefileArray in namefileTuplesList:
                 name += namefileArray[random.randint(0,namefileLength)] + ' '
-            character.name = name.strip()
+            character.name = name[:-1]
         else:
             character.name = f"NPC {idx+1}"
 
@@ -262,8 +263,8 @@ def henchmen(n, *namefiles, attributes={}, faction=[]):
         return faction
 
 
-# TODO: second pass at this. doesn't do n-depth yet, and 
-# i'm thinking a faction class is better to use here
+# 3rd iteration of this function. I finally did n-depth,
+# and deprecated the faction class for json serialization
 def load():
     """builds factions, a dict of {name,characterList}s. don't use mid-session"""
 
@@ -271,47 +272,52 @@ def load():
     if 'factions' in globals() or 'factions' in locals():
         print("load() was used while factions var exists; exiting to prevent overwrite")
         return
-    else:
-        factions = {}
 
-    # root.split("/") looks like [".", "factions", "faction1", "faction2", etc], so pruning it here saves a headache
-    walker = ((root.split("/")[2:], dirs, files) for root,dirs,files in os.walk("./factions"))
+    sep = os.sep
 
-    # first yield is sort of like a file header for the directory, so it gets its own statement
-    for elem in next(walker)[1]:
-        factions[elem] = {}
-        # factions is currently e.g. {'sgc':{}, 'trust':{}}
+    # TODO: list probably not ideal data structure for this
+    def populateFactions(dirList, cd, files):
+        # dirList is the directory list from root from walker. cd is the current dictionary
+        # base case: load everything into directory
+        if len(dirList) < 2:
+            faction = []
+            for fileStr in files:
+                with open(fileStr, 'r') as f:
+                    faction.append(character.Character(json.load(f)))
+            cd[dirList[0]] = faction
+            return
+        # otherwise, keep traversing
+        if dirList[0] not in cd:
+            cd[dirList[0]] = {}
+        populateFactions(dirList=dirList[1:], cd=cd[dirList[0]], files=files)
 
-    # TODO: this is sloppy, even with the syntax cleaned up.
-    # it's a good candidate for recursion
-    for elem in walker:
-        root, dirs, files = elem
-        # "if the root isn't just a single faction name, e.g. ['sgc', 'sg14']:"
-        if len(root) > 1:
-            # set a key, value pair. factions['sgc']['sg14'] = []
-            factions[root[0]][root[-1]] = []
-            # now add each character to the faction list
-            for charFile in files: #     sgc        sg13            "default encoding is platform dependent"
-                with open(f"./factions/{root[0]}/{root[-1]}/{charFile}", "r", encoding="utf-8") as f:
-                    # honestly sorry about how dense this became
-                    factions[root[0]][root[-1]].append(character.Character(json.load(f)))
+    walker = ((root, dirs, files) for root,dirs,files in os.walk(f".{sep}factions"))
+
+    # first yield is sort of like a file header for the directory (it has no root), so it gets its own statement
+    factions = {key:{} for key in next(walker)[1]} # factions is currently e.g. {'sgc':{}, 'trust':{}}
+
+    for root, dirs, files in walker:
+        if files:
+            files = [root+sep+fileStr for fileStr in files]
+            # root.split(sep) looks like [".", "factions", "faction1", "faction2", etc]
+            faction = populateFactions(dirList=root.split(sep)[2:], cd=factions, files=files)
 
     return factions
 
 
-# i can't think of any real improvements to the save function now other than custom objects
-# works in linux, haven't tested on windows B)
+# i can't think of any real improvements to the save function now
 def save(factions=None):
     """writes all character data to local jsons
 
     Args:
-        factions (dict): arbitrarily nested dicts eventually containing a faction list full of character objects
+        factions (dict): arbitrarily nested dicts eventually containing lists full of character objects
     """
-    def getCharactersFromDicts(iterable, path='./factions/'):
+    sep = os.sep
+    def getCharactersFromDicts(iterable, path=f'.{sep}factions{sep}'):
         # put every nested dict on the stack
         if isinstance(iterable, dict):
             for key, value in iterable.items(): # e.g. path="./factions/sgc/" first
-                getCharactersFromDicts(value, path=(f"{path}{key}/"))
+                getCharactersFromDicts(value, path=(path+key+sep))
 
         # we've hit a faction list
         if isinstance(iterable, list):
@@ -323,7 +329,7 @@ def save(factions=None):
                 # character faction should be updated on each save
                 # it is purely cosmetic at this point, though
                 # path[10:-1] does "./factions/xyz/" -> "/xyz"
-                char.faction = path[10:-1]
+                char.faction = path[10:-1].replace('\\','/') # i hate windows
 
                 # write character to file
                 # open(, 'w+') makes the file if it doesn't exist. no more pathlib import

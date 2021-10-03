@@ -5,7 +5,7 @@
 from random import randint
 
 characterCreationDefaults = {
-    # basic information
+    # basic information                  v (intentionally misspelt)
     "name": "NPC", "race": "human", "clas": "soldier", "faction": "sgc",
     # stats
     "level": 1, "hitdie": 8, "hp": 8, "temphp": 0, "speed": 10,
@@ -31,10 +31,9 @@ class Character:
     """
 
     def __init__(self, data, **kwargs):
-        self.data = data
 
         for key, value in characterCreationDefaults.items():
-            if key not in data.keys():
+            if key not in data: # * (see EOF)
                 setattr(self, key, value)
             else:
                 setattr(self, key, data[key])
@@ -48,18 +47,15 @@ class Character:
         self.update()
 
     def getJSON(self):
-        """Creates and returns a JSON writable version of the character.
+        """Creates and returns a (JSON serializable) dict of the character.
 
         Returns:
-            dict -- A dictionary version of the character's data.
+            dict -- A dictionary version of the character's attributes.
         """
-        result = {}
-        for key in characterCreationDefaults.keys():
-            result[key] = getattr(self, key)
-        return result
+        return {key:getattr(self,key) for key in characterCreationDefaults}
 
     def update(self):
-        """Updates various attributes of the character.
+        """Updates and recalculates various attributes of the character.
         """
         self.strmod = (self.strength - 10) // 2
         self.dexmod = (self.dexterity - 10) // 2
@@ -149,7 +145,7 @@ class Character:
         if slot[:5] == "right":
             slot = "rightHand"
 
-        if slot in self.gear.keys() and getattr(self, slot) is None:
+        if slot in self.gear and getattr(self, slot) is None:
             setattr(self, slot, item)
         else:
             print("invalid equip slot")
@@ -169,7 +165,7 @@ class Character:
         if slot[:5] == "right":
             slot = "rightHand"
 
-        if slot in self.gear.keys() and getattr(self, slot) is not None:
+        if slot in self.gear and getattr(self, slot) is not None:
             self.inventory.append(getattr(self, slot))
             setattr(self, slot, None)
         else:
@@ -461,39 +457,6 @@ class Character:
 
         self.update()
 
-# old character constructor i'm keeping for reference
-    # by far the worst part of the code
-    # def __init__(self, data, **kwargs):
-    #     """Character constructor.
-
-    #     Arguments:
-    #         data {dict} -- A dictionary with any number of the attributes for the character.
-    #     """
-
-    #     self.data = data
-    #     # namespace hell
-    #     self.leftHand = None
-    #     self.rightHand = None
-
-    #     # Pull the name and default value from the defaults dict
-    #     for key, value in characterCreationDefaults.items():
-    #         # This conditional ladder exists in case character creation gets improperly extended
-            
-    #         # Check if the input has that attribute,
-    #         if key in data:
-    #             # data[key] instead of value, because we're indexing the defaults dict in this loop
-    #             setattr(self, key, data[key])
-    #         # otherwise maybe it's a kwarg,
-    #         else:
-    #             if key in kwargs:
-    #                 setattr(self, key, kwargs[key])
-    #             # last ditch effort, maybe it's custom
-    #             else:
-    #                 setattr(self, key, value)
-
-    #     self.suffix = "'s'" if self.name[-1] == "s" or "x" else "s"
-        
-    #     # (update needs inventory initialized)
-    #     self.inventory = []
-    #     # Let update do the rest of the construction
-    #     self.update()
+# *
+# setdefault benched at 5s/million iterations,
+# checking membership benched at 4.5s/million

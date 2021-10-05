@@ -87,19 +87,22 @@ def groupInitiative(*characterLists):
     Returns:
         list: of (initiative roll, character name) tuples
     """
-    order = []
-    for characterList in characterLists:
-        for character in characterList:
-            order.append((character.initiative(), character.name))
-    order = sorted(order, reverse=True)
-    return order
+    # it's this but faster
+    # order = []
+    # for characterList in characterLists:
+    #     for character in characterList:
+    #         order.append((character.initiative(), character.name))
+    # order = sorted(order, reverse=True)
+    # return order
+
+    return sorted([(character.initiative(), character.name) for characterList in characterLists for character in characterList], reverse=True)
 
 
-def setDc(successOdds=None, dice=3, die=6, roundDown=True):
+def setDc(successOdds, dice=3, die=6, roundDown=True):
     """returns the DC of a % success chance
 
     Args:
-        successOdds (int, optional): the 0-99 chance of action success. Defaults to None.
+        successOdds (int): the 0-99 chance of action success.
         dice (int, optional): number of dice to roll. Defaults to 3.
         die (int, optional): faces per die. Defaults to 6.
         roundDown (bool, optional): floors the DC -- use this for lower variance rolls. Defaults to True.
@@ -107,9 +110,6 @@ def setDc(successOdds=None, dice=3, die=6, roundDown=True):
     Returns:
         int: the corresponding DC
     """
-    if successOdds is None:
-        successOdds = int(input(r"What % success do you want? (int): ").strip())
-
     successOdds /= 100
 
     # calculate mean, standard deviation, and then DC
@@ -291,7 +291,7 @@ def load():
             cd[dirList[0]] = {}
         populateFactions(dirList=dirList[1:], cd=cd[dirList[0]], files=files)
 
-    walker = ((root, dirs, files) for root,dirs,files in os.walk(f".{sep}factions"))
+    walker = ((root, dirs, files) for root,dirs,files in os.walk(f".{sep}src{sep}factions"))
 
     # first yield is sort of like a file header for the directory (it has no root), so it gets its own statement
     factions = {key:{} for key in next(walker)[1]} # factions is currently e.g. {'sgc':{}, 'trust':{}}
@@ -299,8 +299,8 @@ def load():
     for root, dirs, files in walker:
         if files:
             files = [root+sep+fileStr for fileStr in files]
-            # root.split(sep) looks like [".", "factions", "faction1", "faction2", etc]
-            faction = populateFactions(dirList=root.split(sep)[2:], cd=factions, files=files)
+            # root.split(sep) looks like [".", "src", "factions", "faction1", "faction2", etc]
+            faction = populateFactions(dirList=root.split(sep)[3:], cd=factions, files=files)
 
     return factions
 
@@ -313,10 +313,10 @@ def save(factions=None):
         factions (dict): arbitrarily nested dicts eventually containing lists full of character objects
     """
     sep = os.sep
-    def getCharactersFromDicts(iterable, path=f'.{sep}factions{sep}'):
+    def getCharactersFromDicts(iterable, path=f'.{sep}src{sep}factions{sep}'):
         # put every nested dict on the stack
         if isinstance(iterable, dict):
-            for key, value in iterable.items(): # e.g. path="./factions/sgc/" first
+            for key, value in iterable.items(): # e.g. path="./src/factions/sgc/" first
                 getCharactersFromDicts(value, path=(path+key+sep))
 
         # we've hit a faction list
@@ -328,8 +328,8 @@ def save(factions=None):
 
                 # character faction should be updated on each save
                 # it is purely cosmetic at this point, though
-                # path[10:-1] does "./factions/xyz/" -> "/xyz"
-                char.faction = path[10:-1].replace('\\','/') # i hate windows
+                # path[10:-1] does "./src/factions/xyz" -> "/xyz"
+                char.faction = path[14:-1].replace('\\','/') # i hate windows
 
                 # write character to file
                 # open(, 'w+') makes the file if it doesn't exist. no more pathlib import
@@ -419,30 +419,3 @@ def attack(attacker, defender, weapon=None, distance=0, cover=0):
 
     else:
         print("miss!")
-
-
-# old character creation functions
-
-# def createCharacter(data):
-#     return character.Character(data)
-
-# def manuallyCreateCharacter():
-#     """walks through character creation manually for each variable"""
-
-#     data = character.characterCreationDefaults
-
-#     print("leave blank to use default value")
-#     for k, v in character.characterCreationDefaults.items():
-#         try:
-#             s = input(str(k)+' ? ')
-#             if s == '':
-#                 continue
-#             # Dynamic type casting is apparently supported by python, by just slapping a class object in front of another object
-#             data[k] = type(v)(s)
-#             print(k+' data assigned')
-#         except (TypeError, ValueError):
-#             # TODO: continue statement, but from the same iteration instead of the next
-#             print(" invalid parameter")
-
-#     print(data)
-#     return character.Character(data)

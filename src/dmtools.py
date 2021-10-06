@@ -1,7 +1,6 @@
 import character
 import resources
-import faction
-from random import randint,uniform
+from random import randint,uniform,choice
 from statistics import NormalDist
 import json
 import os
@@ -61,8 +60,7 @@ def create(full=False, **kwargs):
                     s = input(f'{key} ? ')
                     if s == '':
                         continue
-                    # Dynamic type casting is apparently supported by python
-                    # you just slap a class object in front of another object
+                    # dynamic type casting
                     # thank you C
                     kwargs[key] = type(value)(s)
                     print(f'{key} data assigned')
@@ -154,86 +152,61 @@ def dismember(char):
     char.attributes[randint(0,5)] -= randint(1,2)
     char.update()
 
-
-def nameCharacter(*namefiles):
-    """generates a random character name from files of random names,
-    best for naming one character. use nameCharacters for multiple
-
-    Returns:
-        str: the full name
-    """
-    name = ''
-    for namefile in namefiles:
-        # cool algorithm courtesy of the Python Cookbook
-        # it's equally likely to spit out each item
-        # even without knowing the total number of items
-        # still linear time complexity, but
-        # O(1) space by not loading file data
-        lineIndex = 0
-        selectedLine = None
-        with open(namefile, 'r') as f:
-            while True:
-                line = f.readline()
-                if not line:
-                    break
-                lineIndex += 1
-                # the cool part
-                # first name has a 1/1 chance of being selected
-                # the nth name has a 1/n chance of overwriting previous selection
-                if uniform(0, lineIndex) < 1:
-                    selectedLine = line
-
-        # (spaces between firstname nthname lastname)
-        name += selectedLine.strip() + ' '
-
-        # after too much reading i learned that uniform(0,1) can't ever equal 1
-        # but uniform(0,n) can equal n in most other cases, varying by machine
-        # so this algorithm can't TypeError
-
-    return name[:-1] # remove the trailing space
-    # i actually tested the timing on name[:-1] vs name.rstrip() using my timing module
-    # slicing the last character off is something like 15% faster on average,
-    # until you get out to names longer than ~40 characters
-    # slicing saved something like 90ns on average. i am drunk with power
-
-
-# i thought i was smart by using the cool space-less algorithm for naming,
-# but really, loading everything into memory is faster for most batch operations
-# so now it's unnecessarily complicated. there's a lesson here
-def nameCharacters(characters, *namefiles):
-    """space-complex algorithm to name large groups of characters from namefiles
+def randomNames(n, *namefiles, threshold=2):
+    """spits out random names from namefiles
 
     Args:
-        characters (list): of character objects to name
+        n (int): number of random names to return
+        *namefiles (strings): e.g. 2 namefiles produces 'john smith', 1 yields 'john'
+        threshold (int, optional): above threshold, switches to O(n) space algorithm. Defaults to 2.
+
+    Returns:
+        tuple: of ('random name' 'for each' 'namefile used') strings
     """
 
-    # store all possible names in lists
-    namefileTuplesList = []
-    for namefile in namefiles:
-        entry = []
-        idx = 0
-        with open(namefile, 'r') as f:
-            while True:
-                idx += 1
-                line = f.readline()
-                if not line:
-                    break
-                entry.append(line)
-        namefileTuplesList.append((idx, entry))
+    # use a faster space-less algorithm (crediting Python Cookbook) if few names are needed
+    if n <= threshold:
+        names = ['' for x in range(n)]
+        for idx,name in enumerate(names):
+            for namefile in namefiles:
+                lineIndex = 0
+                selectedLine = None
+                with open(namefile, 'r') as f:
+                    while True:
+                        line = f.readline()
+                        if not line: # readline() returns '' at EOF
+                            break
+                        lineIndex += 1
+                        # first line has a 1/1 chance of being selected
+                        # the nth line has a 1/n chance of overwriting previous selection
+                        if uniform(0, lineIndex) < 1:
+                            selectedLine = line
 
-    # name all characters from those lists
-    # using enumerate to auto-generate names if not provided
-    for idx,character in enumerate(characters):
-        name = ''
-        if namefiles:
-            for namefileLength,namefileArray in namefileTuplesList:
-                name += namefileArray[random.randint(0,namefileLength)] + ' '
-            character.name = name[:-1]
-        else:
-            character.name = f"NPC {idx+1}"
+                # (spaces between firstname nthname lastname)
+                names[idx] += selectedLine.rstrip() + ' '
+            names[idx].rstrip() # remove trailing space
+        return names
+        # while rstrip() was about ~15% slower than name[:-1], it's O(1)
+
+    # otherwise, store all file data in vectors for faster accesses
+    else:
+        # build a list of lists of random names from each file
+        namefileListList = []
+        for namefile in namefiles:
+            namefileList = []
+            with open(namefile, 'r') as f:
+                for line in f:
+                    namefileList.append(line) # name whitespace and trailing newline preserved
+            namefileListList.append(namefileList) # better to rstrip on assignment
+
+        # now actually create and return the random names
+        # i could've simply created a names list, and edited each value with enumerate
+        # but i'm practicing comprehension nesting. this is starting to become readable
+        return tuple((' '.join(
+            choice(namefileList).rstrip() for namefileList in namefileListList
+            ) for henchman in range(n)))
 
 
-# TODO: new implementation untested
 def henchmen(n, *namefiles, attributes={}, faction=[]):
     """generates henchmen for use in combat encounters
 
@@ -246,36 +219,38 @@ def henchmen(n, *namefiles, attributes={}, faction=[]):
     Returns:
         (list): faction list, containing all the henchmen
     """
-    idx = 0
-    # use nameCharacter if n is 1
-    if n  == 1:
-        faction.append(character.Character(attributes, name=nameCharacter(*namefiles)))
-        return faction
-    # use nameCharacters otherwise
-    else:
-        # create list of henchmen,
-        characters = [character.Character(attributes) for x in range(n)]
-        # name them all,
-        nameCharacters(characters, *namefiles)
-        # add them to the faction,
-        faction += characters
-        # send it
-        return faction
+    # i do wish python supported a "def foo(*args=(args,here)):" syntax
+    if not namefiles:
+        namefiles = tuple(('firstnames.txt','lastnames.txt'))
+
+    # create list of henchmen,
+    characters = [character.Character(attributes) for x in range(n)]
+    # generate random names,
+    names = randomNames(n, *namefiles)
+    # name the characters
+    for idx in range(n):
+        characters[idx].name = names[idx]
+    # add them to the faction,
+    faction += characters
+    # send it
+    return faction
 
 
-# 3rd iteration of this function. I finally did n-depth,
-# and deprecated the faction class for json serialization
+# 3rd iteration of this function. I finally did n-depth recursion,
+# and deprecated the faction class for easy json serialization
 def load():
     """builds factions, a dict of {name,characterList}s. don't use mid-session"""
 
     # can't really use isinstance() here :(
+    # TODO: this stopped working?
     if 'factions' in globals() or 'factions' in locals():
         print("load() was used while factions var exists; exiting to prevent overwrite")
         return
 
     sep = os.sep
 
-    # TODO: list probably not ideal data structure for this
+    # TODO: python list probably not ideal data structure for this
+    # recursive function to both load characters and populate the root factions dict
     def populateFactions(dirList, cd, files):
         # dirList is the directory list from root from walker. cd is the current dictionary
         # base case: load everything into directory
@@ -286,21 +261,25 @@ def load():
                     faction.append(character.Character(json.load(f)))
             cd[dirList[0]] = faction
             return
+
         # otherwise, keep traversing
         if dirList[0] not in cd:
             cd[dirList[0]] = {}
         populateFactions(dirList=dirList[1:], cd=cd[dirList[0]], files=files)
 
-    walker = ((root, dirs, files) for root,dirs,files in os.walk(f".{sep}src{sep}factions"))
+    # generator yielding file locations
+    #                               root            dirs       files
+    # walker output looks like ['./factions'], ['sgc','trust'], []
+    walker = ((root, dirs, files) for root,dirs,files in os.walk(f".{sep}factions"))
 
-    # first yield is sort of like a file header for the directory (it has no root), so it gets its own statement
+    # first yield is sort of like a dir head (it has no root), so it gets its own statement
     factions = {key:{} for key in next(walker)[1]} # factions is currently e.g. {'sgc':{}, 'trust':{}}
 
     for root, dirs, files in walker:
         if files:
             files = [root+sep+fileStr for fileStr in files]
-            # root.split(sep) looks like [".", "src", "factions", "faction1", "faction2", etc]
-            faction = populateFactions(dirList=root.split(sep)[3:], cd=factions, files=files)
+            # root.split(sep) looks like [".", "factions", "faction1", "faction2", etc]
+            faction = populateFactions(dirList=root.split(sep)[2:], cd=factions, files=files)
 
     return factions
 
@@ -313,10 +292,10 @@ def save(factions=None):
         factions (dict): arbitrarily nested dicts eventually containing lists full of character objects
     """
     sep = os.sep
-    def getCharactersFromDicts(iterable, path=f'.{sep}src{sep}factions{sep}'):
+    def getCharactersFromDicts(iterable, path=f'.{sep}factions{sep}'):
         # put every nested dict on the stack
         if isinstance(iterable, dict):
-            for key, value in iterable.items(): # e.g. path="./src/factions/sgc/" first
+            for key, value in iterable.items(): # e.g. path="./factions/sgc/" first
                 getCharactersFromDicts(value, path=(path+key+sep))
 
         # we've hit a faction list
@@ -328,8 +307,8 @@ def save(factions=None):
 
                 # character faction should be updated on each save
                 # it is purely cosmetic at this point, though
-                # path[10:-1] does "./src/factions/xyz" -> "/xyz"
-                char.faction = path[14:-1].replace('\\','/') # i hate windows
+                # path[10:-1] does "./factions/xyz" -> "/xyz"
+                char.faction = path[10:-1].replace('\\','/') # i hate windows
 
                 # write character to file
                 # open(, 'w+') makes the file if it doesn't exist. no more pathlib import
@@ -337,9 +316,8 @@ def save(factions=None):
                 with open(f'{path}{char.name}.json', 'w+', encoding='utf-8', errors='ignore') as f:
                     json.dump(char.getJSON(), f)
 
-    # not tested
     if factions == None:
-        factions = eval('factions', globals())
+        factions = factions
     getCharactersFromDicts(factions)
 
 

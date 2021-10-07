@@ -1,6 +1,6 @@
 import character
 import resources
-from random import randint,uniform,choice
+import random
 from statistics import NormalDist
 import json
 import os
@@ -8,22 +8,22 @@ import os
 
 def roll(dice=1, die=20):
     """custom roll, takes (dice)d(die)"""
-    return sum([randint(1, die) for x in range(dice)])
+    return sum([random.randint(1, die) for x in range(dice)])
 
 
 def roll3d20mid():
     """mid variance standard roll"""
-    return sorted([randint(1, 20) for x in range(3)])[1]
+    return sorted([random.randint(1, 20) for x in range(3)])[1]
 
 
 def roll3d6():
     """low variance standard roll"""
-    return sum([randint(1, 6) for x in range(3)])
+    return sum([random.randint(1, 6) for x in range(3)])
 
 
 def roll7d2():
     """lowest variance standard roll"""
-    return sum([randint(1, 2) for x in range(7)])
+    return sum([random.randint(1, 2) for x in range(7)])
 
 
 def disadvantage(dice=1, die=20):
@@ -93,7 +93,9 @@ def groupInitiative(*characterLists):
     # order = sorted(order, reverse=True)
     # return order
 
-    return sorted([(character.initiative(), character.name) for characterList in characterLists for character in characterList], reverse=True)
+    return sorted(
+        [(character.initiative(), character.name) for characterList in characterLists for character in characterList]
+    , reverse=True)
 
 
 def setDc(successOdds, dice=3, die=6, roundDown=True):
@@ -103,7 +105,7 @@ def setDc(successOdds, dice=3, die=6, roundDown=True):
         successOdds (int): the 0-99 chance of action success.
         dice (int, optional): number of dice to roll. Defaults to 3.
         die (int, optional): faces per die. Defaults to 6.
-        roundDown (bool, optional): floors the DC -- use this for lower variance rolls. Defaults to True.
+        roundDown (bool, optional): floors the DC -- for lower variance rolls. Defaults to True.
 
     Returns:
         int: the corresponding DC
@@ -148,11 +150,17 @@ def levelUp(char):
     char.levelUp()
 
 
-def dismember(char):
-    char.attributes[randint(0,5)] -= randint(1,2)
+def dismember(char, atMost=2):
+    """permanently randomly decrease a character's attribute
+
+    Args:
+        char (character Obj): to dismember
+        atMost (int, optional): maximum possible value to decrease by. Defaults to 2.
+    """
+    char.attributes[random.randrange(0,len(char.attributes))] -= random.randint(1,atMost)
     char.update()
 
-def randomNames(n, *namefiles, threshold=2):
+def randomNames(n, *namefiles, threshold=3):
     """spits out random names from namefiles
 
     Args:
@@ -167,7 +175,7 @@ def randomNames(n, *namefiles, threshold=2):
     # use a faster space-less algorithm (crediting Python Cookbook) if few names are needed
     if n <= threshold:
         names = ['' for x in range(n)]
-        for idx,name in enumerate(names):
+        for idx,_ in enumerate(names):
             for namefile in namefiles:
                 lineIndex = 0
                 selectedLine = None
@@ -179,16 +187,16 @@ def randomNames(n, *namefiles, threshold=2):
                         lineIndex += 1
                         # first line has a 1/1 chance of being selected
                         # the nth line has a 1/n chance of overwriting previous selection
-                        if uniform(0, lineIndex) < 1:
+                        if random.uniform(0, lineIndex) < 1:
                             selectedLine = line
 
-                # (spaces between firstname nthname lastname)
+                # (add spaces between firstname nthname lastname)
                 names[idx] += selectedLine.rstrip() + ' '
             names[idx].rstrip() # remove trailing space
         return names
-        # while rstrip() was about ~15% slower than name[:-1], it's O(1)
+        # while rstrip() is slower than name[:-1], it's O(1)
 
-    # otherwise, store all file data in vectors for faster accesses
+    # otherwise, store all file data in lists for faster accesses
     else:
         # build a list of lists of random names from each file
         namefileListList = []
@@ -219,7 +227,7 @@ def henchmen(n, *namefiles, attributes={}, faction=[]):
     Returns:
         (list): faction list, containing all the henchmen
     """
-    # i do wish python supported a "def foo(*args=(args,here)):" syntax
+    # a "def foo(*args=(args,here)):" syntax is sorely needed
     if not namefiles:
         namefiles = tuple(('firstnames.txt','lastnames.txt'))
 
@@ -239,7 +247,9 @@ def henchmen(n, *namefiles, attributes={}, faction=[]):
 # 3rd iteration of this function. I finally did n-depth recursion,
 # and deprecated the faction class for easy json serialization
 def load():
-    """builds factions, a dict of {name,characterList}s. don't use mid-session"""
+    """builds factions, a nested dict eventually containing lists of character Objs.
+    ***WILL OVERWRITE IF USED MID-SESSION***
+    """
 
     # can't really use isinstance() here :(
     # TODO: this stopped working?
@@ -249,26 +259,27 @@ def load():
 
     sep = os.sep
 
-    # TODO: python list probably not ideal data structure for this
     # recursive function to both load characters and populate the root factions dict
-    def populateFactions(dirList, cd, files):
-        # dirList is the directory list from root from walker. cd is the current dictionary
-        # base case: load everything into directory
-        if len(dirList) < 2:
+    def populateFactions(rootList, cd, files):
+        # rootList is from walker e.g. ['sgc', 'sg13']. cd is the current dictionary
+        parentDict = rootList.pop() # e.g. 'sgc' being "sg13"'s parent
+
+        # base case: rootList is empty after being popped. now dict can be populated
+        if not rootList:
             faction = []
             for fileStr in files:
                 with open(fileStr, 'r') as f:
                     faction.append(character.Character(json.load(f)))
-            cd[dirList[0]] = faction
+            cd[parentDict] = faction
             return
 
         # otherwise, keep traversing
-        if dirList[0] not in cd:
-            cd[dirList[0]] = {}
-        populateFactions(dirList=dirList[1:], cd=cd[dirList[0]], files=files)
+        if parentDict not in cd:
+            cd[parentDict] = {}
+        populateFactions(rootList=rootList, cd=cd[parentDict], files=files)
 
     # generator yielding file locations
-    #                               root            dirs       files
+    #                               root:           dirs       files
     # walker output looks like ['./factions'], ['sgc','trust'], []
     walker = ((root, dirs, files) for root,dirs,files in os.walk(f".{sep}factions"))
 
@@ -278,8 +289,14 @@ def load():
     for root, dirs, files in walker:
         if files:
             files = [root+sep+fileStr for fileStr in files]
-            # root.split(sep) looks like [".", "factions", "faction1", "faction2", etc]
-            faction = populateFactions(dirList=root.split(sep)[2:], cd=factions, files=files)
+
+            # TODO os.walk's python list is the wrong data structure here. a linked list makes the most sense, I think.
+            # a deque import is costly but scales well. realistically this doesn't matter
+
+            # root.split(sep) looks like [".", "factions", "<faction1>", "<faction2>", ...]
+            # [::-1] reverses the list; populateFactions can rootList.pop() efficiently
+            # [:1:-1] slices out the first 2 (junk) elements from the original unreversed list
+            faction = populateFactions(rootList=root.split(sep)[:1:-1], cd=factions, files=files)
 
     return factions
 
@@ -291,7 +308,7 @@ def save(factions=None):
     Args:
         factions (dict): arbitrarily nested dicts eventually containing lists full of character objects
     """
-    sep = os.sep
+    sep = os.sep # separator character e.g. '/' or '\\' (repr('\\')->'\') on windows
     def getCharactersFromDicts(iterable, path=f'.{sep}factions{sep}'):
         # put every nested dict on the stack
         if isinstance(iterable, dict):
@@ -307,12 +324,12 @@ def save(factions=None):
 
                 # character faction should be updated on each save
                 # it is purely cosmetic at this point, though
-                # path[10:-1] does "./factions/xyz" -> "/xyz"
-                char.faction = path[10:-1].replace('\\','/') # i hate windows
+                # this ultimately does "./factions/x/y/z" -> "/x/y/z"
+                char.faction = sep+sep.join(path.split(sep)[2:]).replace('\\','/') # for windows
 
                 # write character to file
                 # open(, 'w+') makes the file if it doesn't exist. no more pathlib import
-                # TODO: why did blair ignore encoding errors in the original function?
+                # TODO: why did blair ignore encoding errors?
                 with open(f'{path}{char.name}.json', 'w+', encoding='utf-8', errors='ignore') as f:
                     json.dump(char.getJSON(), f)
 

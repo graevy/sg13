@@ -324,8 +324,8 @@ def save(factions=None):
 
                 # character faction should be updated on each save
                 # it is purely cosmetic at this point, though
-                # this ultimately does "./factions/x/y/z" -> "/x/y/z"
-                char.faction = sep+sep.join(path.split(sep)[2:]).replace('\\','/') # for windows
+                # this ultimately does "./factions/x/y/z/" -> "/x/y/z"
+                char.faction = sep+sep.join(path.split(sep)[2:-1]).replace('\\','/') # for windows
 
                 # write character to file
                 # open(, 'w+') makes the file if it doesn't exist. no more pathlib import

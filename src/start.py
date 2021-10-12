@@ -1,20 +1,18 @@
-import character
-import playertools
-from dmtools import *
-import item
-import resources
+try:
+    import character
+    import playertools
+    from dmtools import *
+    import item
+    import resources
 
-from importlib import reload
+    from importlib import reload
+    print("Packages imported")
 
-print("\nPackages imported")
+except Exception as e:
+    print(f"Packages failed to import: {e}")
 
-factions = load()
-
-print("Factions loaded:")
-
-print(factions.keys())
-
-for faction, characters in factions.items():
-    exec(str(faction)+'=characters')
-
-print("Factions assigned to variables")
+try:
+    factions = load()
+    print(f"Factions loaded:\n{factions}")
+except Exception as e:
+    print(f"Factions failed to load: {e}")

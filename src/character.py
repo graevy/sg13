@@ -26,17 +26,17 @@ characterCreationDefaults = {
 
 
 class Character:
-    """Generic character class. Construct with data, an {attrname: value} dict.
+    """Generic character class. Construct with attrs, an {attrname: value} dict.
     Optionally construct with an unpacked *dict.
     """
 
-    def __init__(self, data, **kwargs):
+    def __init__(self, attrs, **kwargs):
 
         for key, value in characterCreationDefaults.items():
-            if key not in data: # * (see EOF)
+            if key not in attrs: # *
                 setattr(self, key, value)
             else:
-                setattr(self, key, data[key])
+                setattr(self, key, attrs[key])
 
         for key in kwargs:
             setattr(self, key, kwargs[key])
@@ -52,7 +52,14 @@ class Character:
         Returns:
             dict -- A dictionary version of the character's attributes.
         """
-        return {key:getattr(self,key) for key in characterCreationDefaults}
+        """
+        this doesn't use self.__dict__ because JSON serialization duplicates members
+        of compound objects like self.gear & self.attributes when dereferencing(?)
+        """
+        attrs = {key:getattr(self,key) for key in characterCreationDefaults}
+        attrs['inventory'] = [item.getJSON() for item in self.inventory]
+        attrs['gear'] = {slot:item if item else None for slot,item in self.gear.items()}
+        return attrs
 
     def update(self):
         """Updates and recalculates various attributes of the character.
@@ -138,40 +145,121 @@ class Character:
             item {Object} -- The item instance to equip.
             slot {str} -- The slot to equip into.
         """
-        slot = slot.lower().strip()
+        slot = slot.strip().lower()
 
         if slot[:4] == "left":
             slot = "leftHand"
-        if slot[:5] == "right":
+        elif slot[:5] == "right":
             slot = "rightHand"
 
-        if slot in self.gear and getattr(self, slot) is None:
-            setattr(self, slot, item)
+        if slot in self.gear:
+            if getattr(self, slot) is None:
+                setattr(self, slot, item)
+            else:
+                print(f"{self.slot} in {slot}")
         else:
-            print("invalid equip slot")
+            print(f"{slot} invalid. valid slots are:\n" +
+                "leftHand, rightHand, head, chest, legs, belt, boots, gloves, back")
 
         self.update()
 
     def unequip(self, slot):
-        """Un-equips the provided item from the slot.
+        """Un-equips an item from a slot.
 
         Arguments:
-            slot {str} -- The slot to un-equip from.
+            slot {str} -- to un-equip from.
         """
-        slot = slot.lower().strip()
+        slot = slot.strip().lower()
 
         if slot[:4] == "left":
             slot = "leftHand"
         if slot[:5] == "right":
             slot = "rightHand"
 
-        if slot in self.gear and getattr(self, slot) is not None:
-            self.inventory.append(getattr(self, slot))
-            setattr(self, slot, None)
+        if slot in self.gear:
+            if getattr(self, slot) is not None:
+                self.inventory.append(getattr(self, slot))
+                setattr(self, slot, None)
+            else:
+                print(f"{slot} empty")
         else:
-            print("invalid unequip slot")
+            print(f"{slot} invalid. valid slots are:\n" +
+                "leftHand, rightHand, head, chest, legs, belt, boots, gloves, back")
 
         self.update()
+            
+    def stow(self, item, storageItem=None):
+        """Stores an item in the inventory, or in another item.
+
+        Arguments:
+            item {Object} -- The object instance to store.
+
+        Keyword Arguments:
+            storageItem {Object} -- The optional item to store in. (default: {None})
+        """
+        if storageItem is None:
+            self.inventory.append(item)
+        else:
+            storageItem.storage.append(item)
+
+    def showInventory(self):
+        """Prints the character's inventory.
+        """
+        print("Inventory:")
+        for item in self.inventory:
+            print('    '+item.name)
+            item.show(spacing='        ')
+
+    def showGear(self):
+        """Prints the character's gear.
+        """
+        print(f"{self.name}{self.suffix} AC is {self.AC} and is wearing:")
+        for slot, item in self.gear.items():
+            print(f"    {slot}: {item}")
+            if item is not None:
+                item.show(spacing='        ')
+        print("")
+
+    def showAttributes(self):
+        """Prints the attributes of the character.
+        """
+        print(self.name + self.suffix + " attributes are:")
+        for name, attribute in self.attributes.items():
+            print(f"    {name}: {attribute}")
+
+    def showSkills(self):
+        """Prints the skills of the character.
+        """
+        print(self.name + self.suffix + " skills are:")
+        for name, skill in self.skills.items():
+            print(f"    {name}: {skill}")
+
+    def show(self):
+        """Prints the current status of the character.
+        """
+
+        print(f"{self.name} is a level {self.level} {self.race} {self.clas}.")
+        print(f"{self.name} has {self.hp} health, {self.temphp} temp health, and {self.maxhp} max health.")
+
+        self.showAttributes()
+        self.showSkills()
+        self.showGear()
+        self.showInventory()
+
+        print(f"{self.name} has {self.inspiration} inspiration points, " + \
+        f"{self.attributepoints} attribute points, and {self.skillpoints} skill points.")
+
+    def initiative(self, dice=3, die=6):
+        """Rolls initiative for the character.
+
+        Keyword Arguments:
+            dice {int} -- The number of dice to roll. (default: {3})
+            die {int} -- The number of sides each die should have. (default: {6})
+
+        Returns:
+            int -- The initiative roll.
+        """
+        return sum([randint(1, die) for x in range(dice)]) + self.dexmod
 
     def heal(self, h=None):
         """Heals the character for h health.
@@ -201,82 +289,6 @@ class Character:
             self.hp -= d
         else:
             self.temphp -= d
-            
-
-    def stow(self, item, storageItem=None):
-        """Stores an item in the inventory, or in another item.
-
-        Arguments:
-            item {Object} -- The object instance to store.
-
-        Keyword Arguments:
-            storageItem {Object} -- The optional item to store in. (default: {None})
-        """
-        if storageItem is None:
-            self.inventory.append(item)
-        else:
-            storageItem.storage.append(item)
-
-    def showInventory(self):
-        """Prints the character's inventory.
-        """
-        print("Inventory:")
-        for item in self.inventory:
-            print(item.name)
-            item.show()
-
-    def showGear(self):
-        """Prints the character's gear.
-        """
-        print(f"{self.name}{self.suffix} AC is {self.AC} and is wearing:")
-        for slot, item in self.gear.items():
-            print(f"{slot}: {item}")
-            if item is not None:
-                item.show(spacing='    ')
-        print("")
-
-    def showAttributes(self):
-        """Prints the attributes of the character.
-        """
-        print(self.name + self.suffix + " attributes are:")
-        for name, attribute in self.attributes.items():
-            print(f"{name}: {attribute}")
-        print("")
-
-    def showSkills(self):
-        """Prints the skills of the character.
-        """
-        print(self.name + self.suffix + " skills are:")
-        for name, skill in self.skills.items():
-            print(f"{name}: {skill}")
-        print("")
-
-    def show(self):
-        """Prints the current status of the character.
-        """
-
-        print(f"{self.name} is a level {self.level} {self.race} {self.clas}.")
-        print(f"{self.name} has {self.hp} health, {self.temphp} temp health, and {self.maxhp} max health.")
-
-        self.showAttributes()
-        self.showSkills()
-        self.showGear()
-        self.showInventory()
-
-        print(f"{self.name} has {self.inspiration} inspiration points, " + \
-        f"{self.attributepoints} attribute points, and {self.skillpoints} skill points.")
-
-    def initiative(self, dice=3, die=6):
-        """Rolls initiative for the character.
-
-        Keyword Arguments:
-            dice {int} -- The number of dice to roll. (default: {3})
-            die {int} -- The number of sides each die should have. (default: {6})
-
-        Returns:
-            int -- The initiative roll.
-        """
-        return sum([randint(1, die) for x in range(dice)]) + self.dexmod
 
     def randomizeAttributes(self):
         """Randomizes character attributes. 4d6 minus lowest roll per attribute

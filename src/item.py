@@ -6,13 +6,13 @@ class Item:
         self.storage = storage
 
     def __str__(self):
-        return self.name
+        return self.name+': '+self.description
 
     def show(self, spacing=''):
-        """recursively shows item storage contents
+        """recursively pretty-prints item storage contents
         """
         if self.storage:
-            print(spacing + f"{self.name} contains: {[x.name for x in self.storage]}")
+            print(spacing + f"{self.name} contains: {[item.name for item in self.storage]}")
         spacing += '    '
         for item in self.storage:
             item.show(spacing)
@@ -24,6 +24,14 @@ class Item:
         for item in self.storage:
             weight += item.getWeight()
         return weight
+
+    def getJSON(self):
+        """recursively serializes items
+        """
+        attrs = vars(self)
+        attrs['storage'] = [item.getJSON() for item in self.storage]
+        return attrs
+
 
 class Weapon(Item):
     def __init__(self, name, description=None, weight=0.0, storage=[], \
@@ -40,34 +48,3 @@ class Armor(Item):
 
         super().__init__(name, description, weight, storage)
         self.bonusAC = bonusAC
-
-##################################
-#############Old classes#############
-##################################
-
-# class Weapon(Item):
-#     def __init__(
-#         self,
-#         name,
-#         description=None,
-#         weight=0.0,
-#         range=3,
-#         damage=8,
-#         proficiency="strength",
-#         proficiencytype="melee",
-#         cqcpenalty=0,
-#         storage=[],
-#     ):
-#         Item.__init__(self, name, description=None, weight=0.0, storage=[])
-#         self.range = range
-#         self.damage = damage
-#         self.proficiency = proficiency
-#         self.proficiencytype = proficiencytype
-#         self.cqcpenalty = cqcpenalty
-
-
-# class Armor(Item):
-#     def __init__(self, name, description=None, weight=0.0, bonusAC=0, storage=[]):
-        
-#         Item.__init__(self, name, description=None, weight=0.0, storage=[])
-#         self.bonusAC = bonusAC

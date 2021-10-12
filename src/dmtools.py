@@ -2,6 +2,7 @@ import character
 import resources
 import random
 from statistics import NormalDist
+from copy import deepcopy
 import json
 import os
 
@@ -135,9 +136,9 @@ def setDc(successOdds, dice=3, die=6, roundDown=True):
         return f"{int(dc)} (rounded down from {dc})"
     return f"{round(dc)} (rounded from {dc})"
 
+# alias commands
 def hurt(char, amount):
     char.hurt(amount)
-
 
 def heal(char, amount=None):
     if amount is None:
@@ -145,10 +146,8 @@ def heal(char, amount=None):
     else:
         char.heal(amount)
 
-
 def levelUp(char):
     char.levelUp()
-
 
 def dismember(char, atMost=2):
     """permanently randomly decrease a character's attribute
@@ -227,7 +226,7 @@ def henchmen(n, *namefiles, attributes={}, faction=[]):
     Returns:
         (list): faction list, containing all the henchmen
     """
-    # a "def foo(*args=(args,here)):" syntax is sorely needed
+    # a "def foo(*args=(args,here)):" syntax is needed
     if not namefiles:
         namefiles = tuple(('firstnames.txt','lastnames.txt'))
 
@@ -244,8 +243,9 @@ def henchmen(n, *namefiles, attributes={}, faction=[]):
     return faction
 
 
-# 3rd iteration of this function. I finally did n-depth recursion,
-# and deprecated the faction class for easy json serialization
+# 4th iteration of this function. characters are now populated with gear
+# TODO os.walk's python list is the wrong data structure here. a linked list makes the most sense, I think.
+# a deque import is costly but scales well. realistically this doesn't matter
 def load():
     """builds factions, a nested dict eventually containing lists of character Objs.
     ***WILL OVERWRITE IF USED MID-SESSION***
@@ -257,26 +257,42 @@ def load():
         print("load() was used while factions var exists; exiting to prevent overwrite")
         return
 
+    def loadItem(itemJSON):
+        # this order actually matters a lot, because some weapons have bonusAC
+        if 'range' in itemJSON:
+            return item.Weapon(*itemJSON.values())
+        if 'bonusAC' in itemJSON:
+            return item.Armor(*itemJSON.values())
+        return item.Item(*itemJSON.values())
+
     sep = os.sep
 
-    # recursive function to both load characters and populate the root factions dict
+    # recursive function to both load characters (with items) and populate the root factions dict
     def populateFactions(rootList, cd, files):
-        # rootList is from walker e.g. ['sgc', 'sg13']. cd is the current dictionary
-        parentDict = rootList.pop() # e.g. 'sgc' being "sg13"'s parent
+        # rootList is from walker e.g. ['sg13', 'sgc']. cd is the current dictionary
+        outerDict = rootList.pop() # sgc will equal {'sg13':_, ...} so it's "outer"
 
         # base case: rootList is empty after being popped. now dict can be populated
         if not rootList:
             faction = []
             for fileStr in files:
                 with open(fileStr, 'r') as f:
-                    faction.append(character.Character(json.load(f)))
-            cd[parentDict] = faction
+                    # convert each serialized character into an object,
+                    charObj = character.Character(json.load(f))
+                    # convert each serialized item into an object,
+                    charObj.inventory = [loadItem(item) for item in charObj.inventory]
+                    charObj.gear = {slot:loadItem(item) if item is not None else None \
+                        for slot,item in charObj.gear.items()}
+                    # add the character to the faction,
+                    faction.append(charObj)
+            # send faction to dict
+            cd[outerDict] = faction
             return
 
         # otherwise, keep traversing
-        if parentDict not in cd:
-            cd[parentDict] = {}
-        populateFactions(rootList=rootList, cd=cd[parentDict], files=files)
+        if outerDict not in cd:
+            cd[outerDict] = {}
+        populateFactions(rootList=rootList, cd=cd[outerDict], files=files)
 
     # generator yielding file locations
     #                               root:           dirs       files
@@ -289,9 +305,6 @@ def load():
     for root, dirs, files in walker:
         if files:
             files = [root+sep+fileStr for fileStr in files]
-
-            # TODO os.walk's python list is the wrong data structure here. a linked list makes the most sense, I think.
-            # a deque import is costly but scales well. realistically this doesn't matter
 
             # root.split(sep) looks like [".", "factions", "<faction1>", "<faction2>", ...]
             # [::-1] reverses the list; populateFactions can rootList.pop() efficiently
@@ -308,8 +321,8 @@ def save(factions=None):
     Args:
         factions (dict): arbitrarily nested dicts eventually containing lists full of character objects
     """
-    sep = os.sep # separator character e.g. '/' or '\\' (repr('\\')->'\') on windows
-    def getCharactersFromDicts(iterable, path=f'.{sep}factions{sep}'):
+    sep = os.sep
+    def getCharactersFromDicts(iterable: list or dict, path=f'.{sep}factions{sep}'):
         # put every nested dict on the stack
         if isinstance(iterable, dict):
             for key, value in iterable.items(): # e.g. path="./factions/sgc/" first
@@ -317,7 +330,9 @@ def save(factions=None):
 
         # we've hit a faction list
         if isinstance(iterable, list):
-            for char in iterable:
+            for charObj in iterable:
+                # save a copy of the character, so the session can continue if needed
+                charCopy = deepcopy(charObj)
                 # create directories if they don't exist
                 if not os.path.exists(path):
                     os.makedirs(path)
@@ -325,13 +340,19 @@ def save(factions=None):
                 # character faction should be updated on each save
                 # it is purely cosmetic at this point, though
                 # this ultimately does "./factions/x/y/z/" -> "/x/y/z"
-                char.faction = sep+sep.join(path.split(sep)[2:-1]).replace('\\','/') # for windows
+                charCopy.faction = sep+sep.join(path.split(sep)[2:-1]).replace('\\','/') # for windows
+
+                # convert stored items to JSON-serializable dicts
+                charCopy.inventory = [item.getJSON() for item in charCopy.inventory]
+                charCopy.gear = {slot:item.getJSON() if item else None for slot,item in charCopy.gear.items()}
+
+                print(f"inventory/gear from save fn for {charCopy.name}\n{charCopy.inventory}\n{charCopy.gear}")
 
                 # write character to file
                 # open(, 'w+') makes the file if it doesn't exist. no more pathlib import
                 # TODO: why did blair ignore encoding errors?
-                with open(f'{path}{char.name}.json', 'w+', encoding='utf-8', errors='ignore') as f:
-                    json.dump(char.getJSON(), f)
+                with open(f'{path}{charCopy.name}.json', 'w+', encoding='utf-8', errors='ignore') as f:
+                    json.dump(charCopy.getJSON(), f)
 
     if factions == None:
         factions = factions

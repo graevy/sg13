@@ -3,21 +3,29 @@
 # (pylint doesn't like the constructor's update shortcut)
 
 from random import randint
+from copy import deepcopy
 
 characterCreationDefaults = {
-    # basic information                  v (intentionally misspelt)
-    "name": "NPC", "race": "human", "clas": "soldier", "faction": "sgc",
-    # stats
+    # biographical information           v (intentionally misspelt)
+    "name": "NPC", "race": "human", "clas": "soldier", "faction": "",
+
+    # stats                                          m/s
     "level": 1, "hitdie": 8, "hp": 8, "temphp": 0, "speed": 10,
-    # attributes
-    "strength": 10, "dexterity": 10, "constitution": 10, "intelligence": 10, "wisdom": 10, "charisma": 10,
-    # skills
+
+    "attributes": {
+    "strength": 10, "dexterity": 10, "constitution": 10, "intelligence": 10, "wisdom": 10, "charisma": 10
+    },
+
+    "skills": {
     "acting": 0, "anthropology": 0, "xenoanthropology": 0, "sleightofhand": 0, "stealth": 0, "diplomacy": 0, "medicine": 0, "vehicles": 0,
-    "xenotechnology": 0, "technology": 0, "insight": 0, "perception": 0, "survival": 0, "tactics": 0, "athletics": 0, "acrobatics": 0,
-    # hands
-    "leftHand": None, "rightHand": None,
-    # gear
+    "xenotechnology": 0, "technology": 0, "insight": 0, "perception": 0, "survival": 0, "tactics": 0, "athletics": 0, "acrobatics": 0
+    },
+
+    "slots": {
+    "leftHand": None, "rightHand": None, # hands are aliased as "left" or "right"
     "head": None, "chest": None, "legs": None, "belt": None, "boots": None, "gloves": None, "back": None,
+    },
+
     # levelup info
     "attributepoints": 0, "skillpoints": 0,
     # inspiration
@@ -31,7 +39,6 @@ class Character:
     """
 
     def __init__(self, attrs, **kwargs):
-
         for key, value in characterCreationDefaults.items():
             if key not in attrs: # *
                 setattr(self, key, value)
@@ -42,8 +49,7 @@ class Character:
             setattr(self, key, kwargs[key])
 
         self.suffix = "'" if self.name[-1] == ("s" or "x") else "'s"
-        self.inventory = []
-        # update builds lists like self.gear, self.attributes, etc
+        # update recalculates metavars
         self.update()
 
     def getJSON(self):
@@ -52,169 +58,90 @@ class Character:
         Returns:
             dict -- A dictionary version of the character's attributes.
         """
-        """
-        this doesn't use self.__dict__ because JSON serialization duplicates members
-        of compound objects like self.gear & self.attributes when dereferencing(?)
-        """
-        attrs = {key:getattr(self,key) for key in characterCreationDefaults}
-        attrs['inventory'] = [item.getJSON() for item in self.inventory]
-        attrs['gear'] = {slot:item if item else None for slot,item in self.gear.items()}
+        attrs = vars(self)
+        # item.getJSON already does recursion
+        attrs['slots'] = {slot:item.getJSON() if item else None for slot,item in self.slots.items()}
         return attrs
 
     def update(self):
         """Updates and recalculates various attributes of the character.
         """
-        self.strmod = (self.strength - 10) // 2
-        self.dexmod = (self.dexterity - 10) // 2
-        self.conmod = (self.constitution - 10) // 2
-        self.intmod = (self.intelligence - 10) // 2
-        self.wismod = (self.wisdom - 10) // 2
-        self.chamod = (self.charisma - 10) // 2
-
-        self.gear = {
-            'leftHand':self.leftHand,
-            'rightHand':self.rightHand,
-            'head':self.head,
-            'chest':self.chest,
-            'legs':self.legs,
-            'belt':self.belt,
-            'boots':self.boots,
-            'gloves':self.gloves,
-            'back':self.back
-        }
-
-        self.armor = {
-            'head':self.head,
-            'chest':self.chest,
-            'legs':self.legs,
-            'belt':self.belt,
-            'boots':self.boots,
-            'gloves':self.gloves,
-            'back':self.back
-        }
+        self.strMod = (self.attributes['strength'] - 10) // 2
+        self.dexMod = (self.attributes['dexterity'] - 10) // 2
+        self.conMod = (self.attributes['constitution'] - 10) // 2
+        self.intMod = (self.attributes['intelligence'] - 10) // 2
+        self.wisMod = (self.attributes['wisdom'] - 10) // 2
+        self.chaMod = (self.attributes['charisma'] - 10) // 2
 
         # character data
-        self.gearweight = 0.0
-        for item in list(self.gear.values()) + self.inventory:
-            if hasattr(item, "weight"):
-                self.gearweight += item.getWeight()
+        self.gearWeight = sum([item.getWeight() if item else 0 for item in self.slots.values()])
+        self.speed = 10 - self.gearWeight**1.5//150 # breakpoints at 29kg, 45, 59, 72...(150*n)**(2/3)kg
+        if self.speed < 1:
+            self.speed = 1
 
-        self.armorAC = 0
-        for item in self.armor:
-            if hasattr(item, "bonusAC"):
-                armorAC += item.bonusAC
-        self.AC = 6 + self.dexmod + self.armorAC
+        self.armorAC = sum([item.bonusAC if hasattr(item,'bonusAC') else 0 for item in self.slots.values()])
+        self.AC = 6 + self.armorAC + self.dexMod
 
-        self.attributes = {
-            'strength':self.strength,
-            'dexterity':self.dexterity,
-            'constitution':self.constitution,
-            'intelligence':self.intelligence,
-            'wisdom':self.wisdom,
-            'charisma':self.charisma
-        }
-
-        self.skills = {
-            'acting':self.acting,
-            'anthropology':self.anthropology,
-            'xenoanthropology':self.xenoanthropology,
-            'diplomacy':self.diplomacy,
-            'medicine':self.medicine,
-            'vehicles':self.vehicles,
-            'technology':self.technology,
-            'xenotechnology':self.xenotechnology,
-            'sleightofhand':self.sleightofhand,
-            'stealth':self.stealth,
-            'insight':self.insight,
-            'perception':self.perception,
-            'survival':self.survival,
-            'tactics':self.tactics,
-            'athletics':self.athletics,
-            'acrobatics':self.acrobatics
-        }
-
-        # hp = hitdie+mod for level 1, conmod for each other level
+        # hp = hitdie+mod for level 1, conMod for each other level
         # standard 5e formula is:
-        # self.hp = (self.hitdie + self.conmod) + (self.level - 1) * (self.hitdie // 2 + 1 + self.conmod)
-        self.maxhp = (self.hitdie + self.conmod) + ((self.level - 1) * self.conmod)
+        # self.hp = (self.hitdie + self.conMod) + (self.level - 1) * (self.hitdie // 2 + 1 + self.conMod)
+        self.maxhp = (self.hitdie + self.conMod) + ((self.level - 1) * self.conMod)
 
+    #############################
+    # character item handling
+    #############################
     def equip(self, item, slot):
-        """Equips the provided item in the provided slot.
+        """moves an item to a character object's slot.
 
         Arguments:
-            item {Object} -- The item instance to equip.
-            slot {str} -- The slot to equip into.
+            item {str} -- to equip
+            slot {str} -- to move to
         """
         slot = slot.strip().lower()
-
-        if slot[:4] == "left":
-            slot = "leftHand"
-        elif slot[:5] == "right":
-            slot = "rightHand"
-
-        if slot in self.gear:
-            if getattr(self, slot) is None:
-                setattr(self, slot, item)
-            else:
-                print(f"{self.slot} in {slot}")
-        else:
-            print(f"{slot} invalid. valid slots are:\n" +
-                "leftHand, rightHand, head, chest, legs, belt, boots, gloves, back")
-
-        self.update()
-
-    def unequip(self, slot):
-        """Un-equips an item from a slot.
-
-        Arguments:
-            slot {str} -- to un-equip from.
-        """
-        slot = slot.strip().lower()
-
         if slot[:4] == "left":
             slot = "leftHand"
         if slot[:5] == "right":
             slot = "rightHand"
 
-        if slot in self.gear:
-            if getattr(self, slot) is not None:
-                self.inventory.append(getattr(self, slot))
-                setattr(self, slot, None)
+        if slot in self.slots:
+            if slots[slot] is None:
+                slots[slot] = item
             else:
-                print(f"{slot} empty")
+                print(f"{slot} already contains {slots[slot]}")
         else:
             print(f"{slot} invalid. valid slots are:\n" +
                 "leftHand, rightHand, head, chest, legs, belt, boots, gloves, back")
 
         self.update()
-            
-    def stow(self, item, storageItem=None):
-        """Stores an item in the inventory, or in another item.
+    
+    # TODO P2: rework this to set item slot to none
+    def stow(self, slot, container):
+        """Stores a character object's slot's item in another item.
 
         Arguments:
-            item {Object} -- The object instance to store.
+            item {Object} -- to store.
 
         Keyword Arguments:
-            storageItem {Object} -- The optional item to store in. (default: {None})
+            container {Object} -- to store in.
         """
-        if storageItem is None:
-            self.inventory.append(item)
-        else:
-            storageItem.storage.append(item)
+        slot = slot.strip().lower()
+        if slot[:4] == "left":
+            slot = "leftHand"
+        if slot[:5] == "right":
+            slot = "rightHand"
 
-    def showInventory(self):
-        """Prints the character's inventory.
-        """
-        print("Inventory:")
-        for item in self.inventory:
-            print('    '+item.name)
-            item.show(spacing='        ')
+        container.storage.append(item)
 
-    def showGear(self):
-        """Prints the character's gear.
+        self.update()
+    
+    #############################
+    # character pretty printing
+    #############################
+    def showSlots(self):
+        """Prints the character's slot contents.
         """
         print(f"{self.name}{self.suffix} AC is {self.AC} and is wearing:")
-        for slot, item in self.gear.items():
+        for slot, item in self.slots.items():
             print(f"    {slot}: {item}")
             if item is not None:
                 item.show(spacing='        ')
@@ -243,12 +170,14 @@ class Character:
 
         self.showAttributes()
         self.showSkills()
-        self.showGear()
-        self.showInventory()
+        self.showSlots()
 
         print(f"{self.name} has {self.inspiration} inspiration points, " + \
         f"{self.attributepoints} attribute points, and {self.skillpoints} skill points.")
 
+    #############################
+    #     character combat
+    #############################
     def initiative(self, dice=3, die=6):
         """Rolls initiative for the character.
 
@@ -259,7 +188,7 @@ class Character:
         Returns:
             int -- The initiative roll.
         """
-        return sum([randint(1, die) for x in range(dice)]) + self.dexmod
+        return sum([randint(1, die) for x in range(dice)]) + self.dexMod
 
     def heal(self, h=None):
         """Heals the character for h health.
@@ -290,44 +219,38 @@ class Character:
         else:
             self.temphp -= d
 
+    #############################
+    # character leveling
+    #############################
     def randomizeAttributes(self):
         """Randomizes character attributes. 4d6 minus lowest roll per attribute
         """
-        (
-            self.strength,
-            self.dexterity,
-            self.constitution,
-            self.intelligence,
-            self.wisdom,
-            self.charisma,
-        ) = (
-            sum(sorted([randint(1, 6) for x in range(4)])[1:])
-            for x in self.attributes
-        )
+        self.attributes = {name:
+        sum(
+            sorted(
+                [randint(1,6) for x in range(4)]
+                )[1:]
+            )
+             for name,stat in self.attributes.items()}
 
         self.update()
 
-    # everything below is from 2019. it's pretty sloppy and largely deprecated
+    # everything below is from 2019. it's smelly and largely deprecated. recently updated some of it
     def pointBuyAttributes(self, points=27):
         """Starts the point buy process for the character.
 
         Keyword Arguments:
             points {int} -- The number of points to use in the pointbuy. (default: {27})
         """
-        (
-            self.strength,
-            self.dexterity,
-            self.constitution,
-            self.intelligence,
-            self.wisdom,
-            self.charisma,
-        ) = (8 for x in self.attributes.values())
-        self.update()
+        # wrap everything in a copy for aborts
+        charCopy = deepcopy(self)
+        # set all ability scores to 8
+        charCopy.attributes = {attr:8 for attr,stat in self.attributes.items()}
 
         def bug_player():
-            s = input("type an attribute to increment: ".lower())
-            if s not in self.attributes.keys():
-                print("invalid attribute. attributes are: " + str(self.attributes.keys())[11:-2])
+            s = input("type an attribute to increment: ").lower()
+            if s not in charCopy.attributes.keys():
+                print("invalid attribute. attributes are: " + str(charCopy.attributes.keys())[11:-2])
                 return False
             return s
 
@@ -336,12 +259,12 @@ class Character:
         def is_stalled():
             if points != 1:
                 return False
-            for attribute in self.attributes.values():
+            for attribute in charCopy.attributes.values():
                 if attribute < 13:
                     return False
             return True
 
-        self.showAttributes()
+        charCopy.showAttributes()
 
         while points > 0:
 
@@ -353,70 +276,64 @@ class Character:
             if is_stalled():
                 break
 
-            if self.attributes[s] < 15:
-                if self.attributes[s] < 13:
+            if charCopy.attributes[s] < 15:
+                if charCopy.attributes[s] < 13:
                     points -= 1
-                    self.attributes[s] += 1
+                    charCopy.attributes[s] += 1
                     print(f'Attribute {s} increased by 1. {points} points remaining.')
                 elif points > 1:
                     points -= 2
-                    self.attributes[s] += 1
+                    charCopy.attributes[s] += 1
                 else:
                     print(f'Not enough points to level {s}. {points} points remaining.')
             else:
                 print(f"attribute {s} at starting cap (15)")
 
+        self = charCopy
 
+
+    # TODO: update this for the new defaults dict
     def levelUp(self):
         """Levels up the character.
         """
-        self.level += 1
+        charCopy = deepcopy(self)
+        charCopy.level += 1
 
         # level attributes
-        if  self.level % 4 == 0:
-            self.attributepoints += 2
+        if  charCopy.level % 4 == 0:
+            charCopy.attributepoints += 2
             print(
-                f"current attributes: {self.strength} strength, {self.dexterity} dexterity, \
-                {self.constitution} constitution, {self.intelligence} intelligence, \
-                {self.wisdom} wisdom, {self.charisma} charisma"
+                f"current attributes: {charCopy.strength} strength, {charCopy.dexterity} dexterity, \
+                {charCopy.constitution} constitution, {charCopy.intelligence} intelligence, \
+                {charCopy.wisdom} wisdom, {charCopy.charisma} charisma"
                 )
 
-        while self.attributepoints > 0:
+        while charCopy.attributepoints > 0:
             s = input("type an attribute (or leave blank to exit) to increase by 1: ").lower()
 
             if s == "":
                 break
 
-            if s not in self.attributes.keys():
-                print("invalid attribute. attributes are: " + str(self.attributes.keys())[11:-2])
+            if s not in charCopy.attributes:
+                print("invalid attribute. attributes are: " + str(charCopy.attributes.keys())[11:-2])
 
-            if self.attributes[s] < 20:
-                self.attributes[s] += 1
-                self.attributepoints -= 1
+            if charCopy.attributes[s] < 20:
+                charCopy.attributes[s] += 1
+                charCopy.attributepoints -= 1
             else:
                 print("attribute maxed; pick a different attribute")
-                self.attributepoints += 1
+                charCopy.attributepoints += 1
 
-        # update attributes from new list
-        (
-            self.strength,
-            self.dexterity,
-            self.constitution,
-            self.intelligence,
-            self.wisdom,
-            self.charisma,
-        ) = (x for x in self.attributes.values())
-
-        # update character now in case int is increased enough to effect skillpoints
-        self.update()
+        # update intMod. int may have been increased enough to effect skillPoints
+        charCopy.intMod = (charCopy.attributes['intelligence'] - 10) // 2
 
         # levelup skills
-        self.skillpoints += 3 + self.intmod
+        charCopy.skillPoints += 3 + charCopy.intMod
 
-        self.showSkills()
-        while self.skillpoints > 0:
+        charCopy.showSkills()
+        while charCopy.skillPoints > 0:
             s = input(
-                f"You have {self.skillpoints} skill points. \n"+\
+                f"You have {charCopy.skillPoints} skill points. \n"+\
                 "Type skills to list skills. Leave blank to exit (saving points). \n" +\
                 "Type a skill to increase: "
             )
@@ -425,49 +342,31 @@ class Character:
                 break
 
             if s == 'skills':
-                self.showSkills()
+                charCopy.showSkills()
                 continue
 
-            if s not in self.skills.keys():
+            if s not in charCopy.skills:
                 print("that's not a skill")
                 continue
 
             # check to make sure the skill isn't maxed out
-            if self.skills[s] < 5:
+            if charCopy.skills[s] < 5:
                 # skills above 2 cost 2 to level instead of 1
-                if self.skills[s] > 2:
-                    if self.skillpoints > 1:
-                        self.skills[s] += 1
-                        self.skillpoints -= 2
+                if charCopy.skills[s] > 2:
+                    if charCopy.skillPoints > 1:
+                        charCopy.skills[s] += 1
+                        charCopy.skillPoints -= 2
                     else:
                         print("not enough to points level this skill")
-                # base case: increment skill and decrement skillpoints
+                # base case: increment skill and decrement skillPoints
                 else:
-                    self.skills[s] += 1
-                    self.skillpoints -= 1
+                    charCopy.skills[s] += 1
+                    charCopy.skillPoints -= 1
             else:
                 print("skill maxed; pick a different skill")
 
-        (
-            self.acting,
-            self.anthropology,
-            self.xenoanthropology,
-            self.diplomacy,
-            self.medicine,
-            self.vehicles,
-            self.technology,
-            self.xenotechnology,
-            self.sleightofhand,
-            self.stealth,
-            self.insight,
-            self.perception,
-            self.survival,
-            self.tactics,
-            self.athletics,
-            self.acrobatics,
-        ) = (x for x in self.skills.values())
-
-        self.update()
+        charCopy.update()
+        self = charCopy
 
 # *
 # setdefault benched at 5s/million iterations,

@@ -61,8 +61,7 @@ def create(full=False, **kwargs):
                     s = input(f'{key} ? ')
                     if s == '':
                         continue
-                    # dynamic type casting
-                    # thank you C
+
                     kwargs[key] = type(value)(s)
                     print(f'{key} data assigned')
                     break
@@ -72,7 +71,7 @@ def create(full=False, **kwargs):
 
     return character.Character(kwargs)
 
-# TODO: expanded 5e longrest implementation
+# TODO P3: expanded 5e longrest implementation
 def longrest(*characterLists):
     """pass lists of character objects to reset their hp"""
     for characterList in characterLists:
@@ -86,14 +85,6 @@ def groupInitiative(*characterLists):
     Returns:
         list: of (initiative roll, character name) tuples
     """
-    # it's this but faster
-    # order = []
-    # for characterList in characterLists:
-    #     for character in characterList:
-    #         order.append((character.initiative(), character.name))
-    # order = sorted(order, reverse=True)
-    # return order
-
     return sorted(
         [(character.initiative(), character.name) for characterList in characterLists for character in characterList]
     , reverse=True)
@@ -156,7 +147,7 @@ def dismember(char, atMost=2):
         char (character Obj): to dismember
         atMost (int, optional): maximum possible value to decrease by. Defaults to 2.
     """
-    char.attributes[random.randrange(0,len(char.attributes))] -= random.randint(1,atMost)
+    list(char.attributes.values())[random.randrange(0,len(char.attributes))] -= random.randint(1,atMost)
     char.update()
 
 def randomNames(n, *namefiles, threshold=3):
@@ -193,7 +184,6 @@ def randomNames(n, *namefiles, threshold=3):
                 names[idx] += selectedLine.rstrip() + ' '
             names[idx].rstrip() # remove trailing space
         return names
-        # while rstrip() is slower than name[:-1], it's O(1)
 
     # otherwise, store all file data in lists for faster accesses
     else:
@@ -207,8 +197,6 @@ def randomNames(n, *namefiles, threshold=3):
             namefileListList.append(namefileList) # better to rstrip on assignment
 
         # now actually create and return the random names
-        # i could've simply created a names list, and edited each value with enumerate
-        # but i'm practicing comprehension nesting. this is starting to become readable
         return tuple((' '.join(
             choice(namefileList).rstrip() for namefileList in namefileListList
             ) for henchman in range(n)))
@@ -242,9 +230,40 @@ def henchmen(n, *namefiles, attributes={}, faction=[]):
     # send it
     return faction
 
+# TODO P1: test the hell out of this
+# TODO P3: this smells awful. i think item's constructor could use a rework. it also does 2 things instead of 1
+def loadItem(itemAttrs):
+    """(recursively) loads an item in memory
+
+    Args:
+        itemAttrs (dict or str): an attr dict to manually create an item with, or a filename str to load from
+
+    Returns:
+        Item: loaded
+    """
+    if type(itemAttrs) == dict:
+        itemJSON = itemAttrs
+    elif type(itemAttrs) == str:
+        with open(f'.{sep}items{sep}'+itemAttrs) as f:
+            itemJSON = json.load(f)
+    # this order actually matters a lot, because some weapons have bonusAC
+    # range key check determines the item to load is a weapon,
+    if 'range' in itemJSON:
+        itemObj = item.Weapon(*itemJSON.values())
+        itemObj.storage = [loadItem(*itemJSON.values()) for item in itemObj.storage]
+        return itemObj
+    # bonusAC determines it's armor,
+    if 'bonusAC' in itemJSON:
+        itemObj = item.Armor(*itemJSON.values())
+        itemObj.storage = [loadItem(*itemJSON.values()) for item in itemObj.storage]
+        return itemObj
+    # otherwise it's a normal item
+    itemObj = item.Item(*itemJSON.values())
+    itemObj.storage = [loadItem(item) for item in itemObj.storage]
+    return itemObj
 
 # 4th iteration of this function. characters are now populated with gear
-# TODO os.walk's python list is the wrong data structure here. a linked list makes the most sense, I think.
+# TODO P3: os.walk's python list is the wrong data structure here. a linked list makes the most sense, I think.
 # a deque import is costly but scales well. realistically this doesn't matter
 def load():
     """builds factions, a nested dict eventually containing lists of character Objs.
@@ -252,18 +271,10 @@ def load():
     """
 
     # can't really use isinstance() here :(
-    # TODO: this stopped working?
+    # TODO P2: this broke
     if 'factions' in globals() or 'factions' in locals():
         print("load() was used while factions var exists; exiting to prevent overwrite")
         return
-
-    def loadItem(itemJSON):
-        # this order actually matters a lot, because some weapons have bonusAC
-        if 'range' in itemJSON:
-            return item.Weapon(*itemJSON.values())
-        if 'bonusAC' in itemJSON:
-            return item.Armor(*itemJSON.values())
-        return item.Item(*itemJSON.values())
 
     sep = os.sep
 
@@ -276,13 +287,12 @@ def load():
         if not rootList:
             faction = []
             for fileStr in files:
-                with open(fileStr, 'r') as f:
+                with open(fileStr) as f:
                     # convert each serialized character into an object,
                     charObj = character.Character(json.load(f))
                     # convert each serialized item into an object,
-                    charObj.inventory = [loadItem(item) for item in charObj.inventory]
-                    charObj.gear = {slot:loadItem(item) if item is not None else None \
-                        for slot,item in charObj.gear.items()}
+                    charObj.slots = {slot:loadItem(item) if item is not None else None \
+                        for slot,item in charObj.slots.items()}
                     # add the character to the faction,
                     faction.append(charObj)
             # send faction to dict
@@ -314,12 +324,11 @@ def load():
     return factions
 
 
-# i can't think of any real improvements to the save function now
 def save(factions=None):
     """writes all character data to local jsons
 
     Args:
-        factions (dict): arbitrarily nested dicts eventually containing lists full of character objects
+        factions (dict): arbitrarily nested dicts eventually containing lists of character objects
     """
     sep = os.sep
     def getCharactersFromDicts(iterable: list or dict, path=f'.{sep}factions{sep}'):
@@ -328,7 +337,7 @@ def save(factions=None):
             for key, value in iterable.items(): # e.g. path="./factions/sgc/" first
                 getCharactersFromDicts(value, path=(path+key+sep))
 
-        # we've hit a faction list
+        # encountered a charObj list
         if isinstance(iterable, list):
             for charObj in iterable:
                 # save a copy of the character, so the session can continue if needed
@@ -339,21 +348,14 @@ def save(factions=None):
 
                 # character faction should be updated on each save
                 # it is purely cosmetic at this point, though
-                # this ultimately does "./factions/x/y/z/" -> "/x/y/z"
+                # this slicing ultimately does ".\\factions\\x/y/z/" -> "/x/y/z"
                 charCopy.faction = sep+sep.join(path.split(sep)[2:-1]).replace('\\','/') # for windows
 
-                # convert stored items to JSON-serializable dicts
-                charCopy.inventory = [item.getJSON() for item in charCopy.inventory]
-                charCopy.gear = {slot:item.getJSON() if item else None for slot,item in charCopy.gear.items()}
-
-                print(f"inventory/gear from save fn for {charCopy.name}\n{charCopy.inventory}\n{charCopy.gear}")
-
                 # write character to file
-                # open(, 'w+') makes the file if it doesn't exist. no more pathlib import
-                # TODO: why did blair ignore encoding errors?
                 with open(f'{path}{charCopy.name}.json', 'w+', encoding='utf-8', errors='ignore') as f:
                     json.dump(charCopy.getJSON(), f)
 
+    # TODO P3: implement this
     if factions == None:
         factions = factions
     getCharactersFromDicts(factions)
@@ -368,49 +370,49 @@ def attack(attacker, defender, weapon=None, distance=0, cover=0):
     Args:
         attacker (Character): Character attacking
         defender (Character): Character defending
-        weapon (Weapon): Attacker's weapon
+        weapon (Weapon): Attacker's weapon. Defaults to None.
         distance (int, optional): Attack distance. Defaults to 0.
         cover (int, optional): % defender is covered. Defaults to None.
     """
     # factoring distance
     if distance == 0:
-        distancemod = 1
+        distanceMod = 1
     else:
         # 2 is arbitrary
-        distancemod = 1 - (distance / weapon.range) ** 2
-        if distancemod < 0:
-            distancemod = 0
+        distanceMod = 1 - (distance / weapon.range) ** 2
+        if distanceMod < 0:
+            distanceMod = 0
 
     # factoring cover
     if cover == 0:
-        covermod = 0
+        coverMod = 0
     else:
-        covermod = int(cover // 25)
+        coverMod = int(cover // 25)
 
     # fetch weapon
     if weapon is None:
-        if attacker.rightHand is None:
-            if attacker.leftHand is None:
+        if attacker.slots['rightHand'] is None:
+            if attacker.slots['leftHand'] is None:
                 return "no valid attacker wep" # TODO: unarmed combat
             else:
-                weapon = attacker.leftHand
+                weapon = attacker.slots['leftHand']
         else:
-            weapon = attacker.rightHand
+            weapon = attacker.slots['rightHand']
 
     # weapon mods to hit
     mod = 0
     if weapon.proficiency == "strength":
-        mod = attacker.strmod
+        mod = attacker.strMod
     elif weapon.proficiency == "dexterity":
-        mod = attacker.dexmod
+        mod = attacker.dexMod
     elif weapon.proficiency == "finesse":
-        mod = max(attacker.strmod, attacker.dexmod)
+        mod = max(attacker.strMod, attacker.dexMod)
 
     # hit calculation
     hitcalc = roll3d6() + mod
 
     # dual wield penalty
-    if attacker.leftHand is not None and attacker.rightHand is not None:
+    if attacker.slots['leftHand'] is not None and attacker.slots['rightHand'] is not None:
         hitcalc -= 2
 
     # qc penalty for long range weapons
@@ -419,11 +421,11 @@ def attack(attacker, defender, weapon=None, distance=0, cover=0):
         print("close combat weapon penalty applied")
 
     # does the attack hit?
-    if hitcalc > (defender.AC + covermod):
+    if hitcalc > (defender.AC + coverMod):
         # damage calculation
         damage = (
             round(
-                roll(2, weapon.damage // 2) * distancemod
+                roll(2, weapon.damage // 2) * distanceMod
             )
         )
 

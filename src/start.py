@@ -6,7 +6,6 @@ try:
     import playertools
     from dmtools import *
     import item
-    import resources
 
     print("Packages imported")
 

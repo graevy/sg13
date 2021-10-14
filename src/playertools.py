@@ -1,5 +1,4 @@
 import character
-import resources
 import item
 from random import randint
 from statistics import NormalDist

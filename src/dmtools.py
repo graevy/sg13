@@ -1,5 +1,4 @@
 import character
-import resources
 import random
 from statistics import NormalDist
 from copy import deepcopy

@@ -75,7 +75,7 @@ class Character:
 
         # character data
         self.gearWeight = sum([item.getWeight() if item else 0 for item in self.slots.values()])
-        self.speed = 10 - self.gearWeight**1.5//150 # breakpoints at 29kg, 45, 59, 72...(150*n)**(2/3)kg
+        self.speed = 10 - self.gearWeight**1.5//100 # breakpoints at 21kg, 34, 44, 54...(100*n)**(2/3)kg
         if self.speed < 1:
             self.speed = 1
 

@@ -38,6 +38,7 @@ def advantage(dice=1, die=20):
     return max(roll(dice, die), roll(dice, die))
 
 
+# TODO P1: this is broken now that characters are built with compound objs
 def create(full=False, **kwargs):
     """Character creation function
 
@@ -292,6 +293,8 @@ def load():
                     # convert each serialized item into an object,
                     charObj.slots = {slot:loadItem(item) if item is not None else None \
                         for slot,item in charObj.slots.items()}
+                    # update the character to calculate weight & speed
+                    charObj.update()
                     # add the character to the faction,
                     faction.append(charObj)
             # send faction to dict
@@ -329,7 +332,6 @@ def save(factions=None):
     Args:
         factions (dict): arbitrarily nested dicts eventually containing lists of character objects
     """
-    sep = os.sep
     def getCharactersFromDicts(iterable: list or dict, path=f'.{sep}factions{sep}'):
         # put every nested dict on the stack
         if isinstance(iterable, dict):

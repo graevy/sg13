@@ -1,10 +1,12 @@
 import character
+import item
 import random
 from statistics import NormalDist
 from copy import deepcopy
 import json
 import os
 
+sep = os.sep
 
 def roll(dice=1, die=20):
     """custom roll, takes (dice)d(die)"""
@@ -197,7 +199,7 @@ def randomNames(n, *namefiles, threshold=3):
 
         # now actually create and return the random names
         return tuple((' '.join(
-            choice(namefileList).rstrip() for namefileList in namefileListList
+            random.choice(namefileList).rstrip() for namefileList in namefileListList
             ) for henchman in range(n)))
 
 
@@ -275,8 +277,6 @@ def load():
         print("load() was used while factions var exists; exiting to prevent overwrite")
         return
 
-    sep = os.sep
-
     # recursive function to both load characters (with items) and populate the root factions dict
     def populateFactions(rootList, cd, files):
         # rootList is from walker e.g. ['sg13', 'sgc']. cd is the current dictionary
@@ -310,15 +310,15 @@ def load():
 
     # first yield is sort of like a dir head (it has no root), so it gets its own statement
     factions = {key:{} for key in next(walker)[1]} # factions is currently e.g. {'sgc':{}, 'trust':{}}
-
-    for root, dirs, files in walker:
+    #    (dirs unused)
+    for root, _, files in walker:
         if files:
             files = [root+sep+fileStr for fileStr in files]
 
             # root.split(sep) looks like [".", "factions", "<faction1>", "<faction2>", ...]
             # [::-1] reverses the list; populateFactions can rootList.pop() efficiently
             # [:1:-1] slices out the first 2 (junk) elements from the original unreversed list
-            faction = populateFactions(rootList=root.split(sep)[:1:-1], cd=factions, files=files)
+            populateFactions(rootList=root.split(sep)[:1:-1], cd=factions, files=files)
 
     return factions
 

@@ -5,40 +5,10 @@ from statistics import NormalDist
 from copy import deepcopy
 import json
 import os
+import rolls
 
 sep = os.sep
 
-def roll(dice=1, die=20):
-    """custom roll, takes (dice)d(die)"""
-    return sum([random.randint(1, die) for x in range(dice)])
-
-
-def roll3d20mid():
-    """mid variance standard roll"""
-    return sorted([random.randint(1, 20) for x in range(3)])[1]
-
-
-def roll3d6():
-    """low variance standard roll"""
-    return sum([random.randint(1, 6) for x in range(3)])
-
-
-def roll7d2():
-    """lowest variance standard roll"""
-    return sum([random.randint(1, 2) for x in range(7)])
-
-
-def disadvantage(dice=1, die=20):
-    """rolls disadvantage for (dice)d(die)"""
-    return min(roll(dice, die), roll(dice, die))
-
-
-def advantage(dice=1, die=20):
-    """rolls advantage for (dice)d(die)"""
-    return max(roll(dice, die), roll(dice, die))
-
-
-# TODO P1: this is broken now that characters are built with compound objs
 def create(full=False, **kwargs):
     """Character creation function
 
@@ -426,7 +396,7 @@ def attack(attacker, defender, weapon=None, distance=0, cover=0):
         # damage calculation
         damage = (
             round(
-                roll(2, weapon.damage // 2) * distanceMod
+                rolls.roll(2, weapon.damage // 2) * distanceMod
             )
         )
 

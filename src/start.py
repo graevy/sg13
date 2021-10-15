@@ -1,21 +1,21 @@
-try:
-    from importlib import reload
-    import traceback
+def main():
+    try:
+        from dmtools import load
 
-    import character
-    import playertools
-    from dmtools import *
-    import item
+        print("Packages imported")
 
-    print("Packages imported")
+        try:
+            factions = load()
+            print(f"Factions loaded:\n{factions}")
+        except Exception:
+            # What exceptions can be passed up to here? Make it more specific. 
+            print(f"Factions failed to load:")
+            print(traceback.format_exc())
 
-except Exception:
-    print(f"Packages failed to import:")
-    print(traceback.format_exc())
+    except ImportError as e:
+        print(f"Packages failed to import:")
+        print(traceback.format_exc())
 
-try:
-    factions = load()
-    print(f"Factions loaded:\n{factions}")
-except Exception:
-    print(f"Factions failed to load:")
-    print(traceback.format_exc())
+
+if __name__ == "__main__":
+    main()

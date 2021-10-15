@@ -104,17 +104,17 @@ class Character:
             slot = "rightHand"
 
         if slot in self.slots:
-            if slots[slot] is None:
-                slots[slot] = item
+            if self.slots[slot] is None:
+                self.slots[slot] = item
             else:
-                print(f"{slot} already contains {slots[slot]}")
+                print(f"{slot} already contains {self.slots[slot]}")
         else:
             print(f"{slot} invalid. valid slots are:\n" +
                 "leftHand, rightHand, head, chest, legs, belt, boots, gloves, back")
 
         self.update()
     
-    # TODO P2: rework this to set item slot to none
+    # TODO P1: implement
     def stow(self, slot, container):
         """Stores a character object's slot's item in another item.
 
@@ -130,7 +130,7 @@ class Character:
         if slot[:5] == "right":
             slot = "rightHand"
 
-        container.storage.append(item)
+        # container.storage.append(item)
 
         self.update()
     

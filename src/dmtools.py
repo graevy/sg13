@@ -17,7 +17,7 @@ def create(mode=0, **kwargs):
         mode (int, optional): level of detail. Defaults to 0.
         kwargs (dict, optional): to include on creation. Defaults to {}.
     """
-    def handleInput(key):
+    def handleInput(key, defaultsDict=character.defaults):
         # TODO P2: this doesn't handle invalid races/classes properly because 
         # dict membership checking happens in the character constructor
         while True:
@@ -25,29 +25,32 @@ def create(mode=0, **kwargs):
                 value = input(f'{key} <<< ')
                 # blank input uses the character.default value
                 if value == '':
-                    return character.defaults[key]
+                    return defaultsDict[key]
                 # must dynamically cast input string to appropriate type before returning
-                return type(character.defaults[key])(value)
+                return type(defaultsDict[key])(value)
             except ValueError:
                 print(f" invalid entry")
 
-    attributes = {} # this gets populated and then returned
+    data = {} # this gets populated and then returned
     basics = ['name', 'race', 'clas', 'faction', 'level']
     stats = {'attributes':character.defaults['attributes'], 'skills':character.defaults['skills']}
 
     # stuffing the basic values into attributes
     for basic in basics:
-        attributes[basic] = handleInput(basic)
+        data[basic] = handleInput(basic)
+
+    # optionally manulaly edit character attributes and skills
     if mode:
-        # stats is {'attributes':{etc}, 'skills':{etc}}
         for statDictName,statDict in stats.items():
-            attributes[statDictName] = {statName:handleInput(statValue) for statName,statValue in statDict.items()}
+            data[statDictName] = {
+                statName:handleInput(statName,defaultsDict=statDict) for statName,statValue in statDict.items()
+                }
 
     # at the end, insert kwargs, overwriting any defaults
     for key,value in kwargs.items():
-        attributes[key] = value
+        data[key] = value
 
-    return character.Character(attributes)
+    return character.Character(data)
 
 
 # TODO P3: expanded 5e longrest implementation

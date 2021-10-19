@@ -6,6 +6,12 @@ with open('./cfg/diceconfig.json') as f:
 dice = diceConfig['dice'] # number of dice used in each roll
 die =  diceConfig['die']  # number of sides per die
 
+# calculate mean. dice*die is max, dice is min, dice*(die+1) is max+min
+diceMean = (dice * (die + 1)) / 2
+# calculate standard deviation via discrete uniform variance formula:
+# (n^2 - 1) / 12
+diceStDev = dice * ((die**2 - 1) / 12)
+
 def newDice(newDice, newDie):
     """changes system default dice settings
 

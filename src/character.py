@@ -4,16 +4,18 @@
 
 from random import randint
 from copy import deepcopy
+import races
+import classes
 
-characterCreationDefaults = {
+defaults = {
     # biographical information           v (intentionally misspelt)
     "name": "NPC", "race": "human", "clas": "soldier", "faction": "",
 
-    # stats                                          m/s
-    "level": 1, "hitdie": 8, "hp": 8, "temphp": 0, "speed": 10,
+    # stats                             (m/s)
+    "level": 1, "hp": 10, "temphp": 0, "speed": 10,
 
     "attributes": {
-    "strength": 10, "dexterity": 10, "constitution": 10, "intelligence": 10, "wisdom": 10, "charisma": 10
+    "strength": 8, "dexterity": 8, "constitution": 8, "intelligence": 8, "wisdom": 8, "charisma": 8
     },
 
     "skills": {
@@ -38,8 +40,8 @@ class Character:
     Optionally construct with an unpacked *dict.
     """
 
-    def __init__(self, attrs, **kwargs):
-        for key, value in characterCreationDefaults.items():
+    def __init__(self, attrs={}, **kwargs):
+        for key, value in defaults.items():
             if key not in attrs: # *
                 setattr(self, key, value)
             else:
@@ -49,6 +51,11 @@ class Character:
             setattr(self, key, kwargs[key])
 
         self.suffix = "'" if self.name[-1] == ("s" or "x") else "'s"
+
+        # i decided functions were the most readable way to implement race and class modifiers
+        races.__dict__[self.race.replace("'","")](self)
+        classes.__dict__[self.clas](self)
+
         # update recalculates metavars
         self.update()
 
@@ -66,6 +73,7 @@ class Character:
     def update(self):
         """Updates and recalculates various attributes of the character.
         """
+        # modifiers
         self.strMod = (self.attributes['strength'] - 10) // 2
         self.dexMod = (self.attributes['dexterity'] - 10) // 2
         self.conMod = (self.attributes['constitution'] - 10) // 2
@@ -82,10 +90,10 @@ class Character:
         self.armorAC = sum([item.bonusAC if hasattr(item,'bonusAC') else 0 for item in self.slots.values()])
         self.AC = 6 + self.armorAC + self.dexMod
 
-        # hp = hitdie+mod for level 1, conMod for each other level
+        # hp = hitDie+mod for level 1, conMod for each other level
         # standard 5e formula is:
-        # self.hp = (self.hitdie + self.conMod) + (self.level - 1) * (self.hitdie // 2 + 1 + self.conMod)
-        self.maxhp = (self.hitdie + self.conMod) + ((self.level - 1) * self.conMod)
+        # self.hp = (self.hitDie + self.conMod) + (self.level - 1) * (self.hitDie // 2 + 1 + self.conMod)
+        self.maxhp = (self.hitDie + self.conMod) + ((self.level - 1) * self.conMod)
 
     #############################
     # character item handling
@@ -110,7 +118,7 @@ class Character:
                 print(f"{slot} already contains {self.slots[slot]}")
         else:
             print(f"{slot} invalid. valid slots are:\n" +
-                "leftHand, rightHand, head, chest, legs, belt, boots, gloves, back")
+                {list(self.slots.values())})
 
         self.update()
     

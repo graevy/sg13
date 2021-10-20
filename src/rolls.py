@@ -1,10 +1,11 @@
 
 import json
+import random
 
 with open('./cfg/diceconfig.json') as f:
     diceConfig = json.load(f)
 dice = diceConfig['dice'] # number of dice used in each roll
-die =  diceConfig['die']  # number of sides per die
+die  = diceConfig['die']  # number of sides per die
 
 # calculate mean. dice*die is max, dice is min, dice*(die+1) is max+min
 diceMean = (dice * (die + 1)) / 2
@@ -28,11 +29,11 @@ def newDice(newDice, newDie):
 
 def roll(dice=dice, die=die):
     """custom roll, takes (dice)d(die)"""
-    return sum([randint(1, die) for x in range(dice)])
+    return sum([random.randint(1, die) for x in range(dice)])
 
 def d20():
     """it's a d20. what do you want from me"""
-    return randint(1, 20)
+    return random.randint(1, 20)
 
 def mid3d20():
     """mid variance standard roll"""

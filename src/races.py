@@ -12,4 +12,5 @@ def goauld(charObj):
     charObj.attributes['wisdom'] -= 2
 
 def tokra(charObj):
+    # :^)
     goauld(charObj)

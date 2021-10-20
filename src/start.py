@@ -9,6 +9,8 @@ try:
     import races
     import classes
 
+    import rolls
+
     print("Packages imported")
 
 except Exception:

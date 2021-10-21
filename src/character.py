@@ -15,17 +15,18 @@ defaults = {
     "level": 1, "hp": 10, "temphp": 0, "speed": 10,
 
     "attributes": {
-    "strength": 8, "dexterity": 8, "constitution": 8, "intelligence": 8, "wisdom": 8, "charisma": 8
+        "strength": 8, "dexterity": 8, "constitution": 8, "intelligence": 8, "wisdom": 8, "charisma": 8
     },
 
     "skills": {
-    "acting": 0, "anthropology": 0, "xenoanthropology": 0, "sleightofhand": 0, "stealth": 0, "diplomacy": 0, "medicine": 0, "vehicles": 0,
-    "xenotechnology": 0, "technology": 0, "insight": 0, "perception": 0, "survival": 0, "tactics": 0, "athletics": 0, "acrobatics": 0
+        "acting": 0, "anthropology": 0, "xenoanthropology": 0, "sleightofhand": 0, "stealth": 0,
+        "diplomacy": 0, "medicine": 0, "vehicles": 0, "xenotechnology": 0, "technology": 0,
+        "insight": 0, "perception": 0, "survival": 0, "tactics": 0, "athletics": 0, "acrobatics": 0
     },
 
     "slots": {
-    "leftHand": None, "rightHand": None, # hands are aliased as "left" or "right"
-    "head": None, "chest": None, "legs": None, "belt": None, "boots": None, "gloves": None, "back": None,
+        "leftHand": None, "rightHand": None, # hands are aliased as "left" or "right"
+        "head": None, "chest": None, "legs": None, "belt": None, "boots": None, "gloves": None, "back": None,
     },
 
     # levelup info
@@ -52,10 +53,6 @@ class Character:
 
         self.suffix = "'" if self.name[-1] == ("s" or "x") else "'s"
 
-        # i decided functions were the most readable way to implement race and class modifiers
-        races.__dict__[self.race.replace("'","")](self)
-        classes.__dict__[self.clas](self)
-
         # update recalculates metavars
         self.update()
 
@@ -73,13 +70,17 @@ class Character:
     def update(self):
         """Updates and recalculates various attributes of the character.
         """
-        # modifiers
-        self.strMod = (self.attributes['strength'] - 10) // 2
-        self.dexMod = (self.attributes['dexterity'] - 10) // 2
-        self.conMod = (self.attributes['constitution'] - 10) // 2
-        self.intMod = (self.attributes['intelligence'] - 10) // 2
-        self.wisMod = (self.attributes['wisdom'] - 10) // 2
-        self.chaMod = (self.attributes['charisma'] - 10) // 2
+        # reset bonus attrs/skills
+        self.bonusAttrs = {attrName:0 for attrName in self.attributes}
+        self.bonusSkills = {skillName:0 for skillName in self.skills}
+
+        # modifiers. 10 strength with 3 bonus strength -> 13 strength, -10 -> 3 strength, //2 -> strMod of +1
+        self.attrMods = {attrName:(self.attributes[attrName]+self.bonusAttrs[attrName]-10)//2 for attrName in self.attributes}
+        self.skillMods = {skillName:self.skills[skillName]+self.bonusSkills[skillName] for skillName in self.skills}
+
+        # i decided functions were the most readable way to implement race and class modifiers
+        races.__dict__[self.race.replace("'","")](self)
+        classes.__dict__[self.clas](self)
 
         # character data
         self.gearWeight = sum([item.getWeight() if item else 0 for item in self.slots.values()])
@@ -88,12 +89,12 @@ class Character:
             self.speed = 1
 
         self.armorAC = sum([item.bonusAC if hasattr(item,'bonusAC') else 0 for item in self.slots.values()])
-        self.AC = 6 + self.armorAC + self.dexMod
+        self.AC = 6 + self.armorAC + self.attrMods['dexterity']
 
         # hp = hitDie+mod for level 1, conMod for each other level
         # standard 5e formula is:
-        # self.hp = (self.hitDie + self.conMod) + (self.level - 1) * (self.hitDie // 2 + 1 + self.conMod)
-        self.maxhp = (self.hitDie + self.conMod) + ((self.level - 1) * self.conMod)
+        # hp = (hitDie + conMod) + (level - 1) * (hitDie // 2 + 1 + conMod)
+        self.maxhp = (self.hitDie + self.attrMods['constitution']) + ((self.level - 1) * self.attrMods['constitution'])
 
     #############################
     # character item handling
@@ -196,7 +197,7 @@ class Character:
         Returns:
             int -- The initiative roll.
         """
-        return sum([randint(1, die) for x in range(dice)]) + self.dexMod
+        return sum([randint(1, die) for x in range(dice)]) + self.self.bonusAttrs['dexterity']
 
     def heal(self, h=None):
         """Heals the character for h health.

@@ -19,32 +19,38 @@ def create(mode=0, **kwargs):
     """
     def handleInput(key, defaultsDict=character.defaults):
         # TODO P2: this doesn't handle invalid races/classes properly because 
-        # dict membership checking happens in the character constructor
+        # dict membership checking happens in the character constructor. it
+        # only checks invalid typing. if this ends up front-facting it needs a
+        # valids dict to check input against valid ranges or something
         while True:
             try:
                 value = input(f'{key} <<< ')
                 # blank input uses the character.default value
                 if value == '':
                     return defaultsDict[key]
-                # must dynamically cast input string to appropriate type before returning
+                # must dynamically type cast input string before returning
                 return type(defaultsDict[key])(value)
             except ValueError:
                 print(f" invalid entry")
 
     data = {} # this gets populated and then returned
     basics = ['name', 'race', 'clas', 'faction', 'level']
-    stats = {'attributes':character.defaults['attributes'], 'skills':character.defaults['skills']}
 
-    # stuffing the basic values into attributes
+    # stuffing the basic values into data
     for basic in basics:
         data[basic] = handleInput(basic)
 
-    # optionally manulaly edit character attributes and skills
+    # optionally manually edit character attributes and skills
     if mode:
-        for statDictName,statDict in stats.items():
-            data[statDictName] = {
-                statName:handleInput(statName,defaultsDict=statDict) for statName,statValue in statDict.items()
-                }
+        attrs = character.defaults['attributes']
+        data['attributes'] = {attrName:handleInput(attrName,defaultsDict=attrs) for attrName in attrs}
+        skills = character.defaults['skills']
+        data['skills'] = {skillName:handleInput(skillName,defaultsDict=skills) for skillName in skills}
+        
+        # gear editing
+        if mode > 1:
+            slots = character.defaults['slots']
+            data['slots'] = {slotName:handleInput(slotName,defaultsDict=slots) for slotName in slots}
 
     # at the end, insert kwargs, overwriting any defaults
     for key,value in kwargs.items():
@@ -390,11 +396,11 @@ def attack(attacker, defender, weapon=None, distance=0, cover=0):
     # weapon mods to hit
     mod = 0
     if weapon.proficiency == "strength":
-        mod = attacker.strMod
+        mod = attacker.self.bonusAttrs['strength']
     elif weapon.proficiency == "dexterity":
-        mod = attacker.dexMod
+        mod = attacker.self.bonusAttrs['dexterity']
     elif weapon.proficiency == "finesse":
-        mod = max(attacker.strMod, attacker.dexMod)
+        mod = max(attacker.self.bonusAttrs['strength'], attacker.self.bonusAttrs['dexterity'])
 
     # hit calculation
     hitcalc = roll3d6() + mod

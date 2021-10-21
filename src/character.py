@@ -12,7 +12,7 @@ defaults = {
     "name": "NPC", "race": "human", "clas": "soldier", "faction": "",
 
     # stats                             (m/s)
-    "level": 1, "hp": 10, "temphp": 0, "speed": 10.0,
+    "level": 1, "hp": 10, "tempHp": 0, "speed": 10.0,
 
     "attributes": {
         "strength": 8, "dexterity": 8, "constitution": 8, "intelligence": 8, "wisdom": 8, "charisma": 8
@@ -178,7 +178,7 @@ class Character:
         """
 
         print(f"{self.name} is a level {self.level} {self.race} {self.clas}.")
-        print(f"{self.name} has {self.hp} health, {self.temphp} temp health, and {self.maxhp} max health.")
+        print(f"{self.name} has {self.hp} health, {self.tempHp} temp health, and {self.maxHp} max health.")
 
         self.showAttributes()
         self.showSkills()
@@ -210,10 +210,10 @@ class Character:
         """
         # if we're doing a basic full heal...
         if h == None:
-            self.hp = self.maxhp
+            self.hp = self.maxHp
         # else, make sure we won't go over max health
-        elif self.hp + h > self.maxhp:
-            self.hp = self.maxhp
+        elif self.hp + h > self.maxHp:
+            self.hp = self.maxHp
         # otherwise, just add the hp
         else:
             self.hp += h
@@ -224,12 +224,12 @@ class Character:
         Args:
             d (int): damage to deal
         """
-        if d > self.temphp:
-            d -= self.temphp
-            self.temphp = 0
+        if d > self.tempHp:
+            d -= self.tempHp
+            self.tempHp = 0
             self.hp -= d
         else:
-            self.temphp -= d
+            self.tempHp -= d
 
     #############################
     # character leveling

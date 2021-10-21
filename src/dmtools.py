@@ -20,7 +20,7 @@ def create(mode=0, **kwargs):
     def handleInput(key, defaultsDict=character.defaults):
         # TODO P2: this doesn't handle invalid races/classes properly because 
         # dict membership checking happens in the character constructor. it
-        # only checks invalid typing. if this ends up front-facting it needs a
+        # only checks invalid typing. if this ends up front-facing it needs a
         # valids dict to check input against valid ranges or something
         while True:
             try:

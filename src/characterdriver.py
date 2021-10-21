@@ -6,7 +6,7 @@ import resources
 
 sword = Weapon("boof", weight=1)
 
-avery = Character({'name':'avery', 'strength':8, 'boots':resources.boots, 'technology':1, 'temphp':4, 'hp':6})
+avery = Character({'name':'avery', 'strength':8, 'boots':resources.boots, 'technology':1, 'tempHp':4, 'hp':6})
 
 avery.heal(1)
 avery.hurt(2)

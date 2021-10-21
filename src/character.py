@@ -12,7 +12,7 @@ defaults = {
     "name": "NPC", "race": "human", "clas": "soldier", "faction": "",
 
     # stats                             (m/s)
-    "level": 1, "hp": 10, "temphp": 0, "speed": 10,
+    "level": 1, "hp": 10, "temphp": 0, "speed": 10.0,
 
     "attributes": {
         "strength": 8, "dexterity": 8, "constitution": 8, "intelligence": 8, "wisdom": 8, "charisma": 8
@@ -53,22 +53,25 @@ class Character:
 
         self.suffix = "'" if self.name[-1] == ("s" or "x") else "'s"
 
-        # update recalculates metavars
+        # update recalculates meta-variables
         self.update()
 
     def getJSON(self):
-        """Creates and returns a (JSON serializable) dict of the character.
+        """Creates and returns a (JSON serializable, writeable) dict of the character.
 
         Returns:
-            dict -- A dictionary version of the character's attributes.
+            dict -- of the character's attributes.
         """
+        # TODO P3: sloppy to add and then delete. could replace vars()
         attrs = vars(self)
+        del attrs['bonusAttrs'], attrs['bonusSkills'], attrs['attrMods'], attrs['skillMods'], \
+            attrs['hitDie'], attrs['maxHp'], attrs['AC'], attrs['armorAC'], attrs['gearWeight']
         # item.getJSON already does recursion
         attrs['slots'] = {slot:item.getJSON() if item else None for slot,item in self.slots.items()}
         return attrs
 
     def update(self):
-        """Updates and recalculates various attributes of the character.
+        """Calculates character meta-variables
         """
         # reset bonus attrs/skills
         self.bonusAttrs = {attrName:0 for attrName in self.attributes}
@@ -94,7 +97,7 @@ class Character:
         # hp = hitDie+mod for level 1, conMod for each other level
         # standard 5e formula is:
         # hp = (hitDie + conMod) + (level - 1) * (hitDie // 2 + 1 + conMod)
-        self.maxhp = (self.hitDie + self.attrMods['constitution']) + ((self.level - 1) * self.attrMods['constitution'])
+        self.maxHp = (self.hitDie + self.attrMods['constitution']) + ((self.level - 1) * self.attrMods['constitution'])
 
     #############################
     # character item handling

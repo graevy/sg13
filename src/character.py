@@ -1,6 +1,6 @@
 # pylint: disable=no-member
 # pylint: disable=access-member-before-definition
-# (pylint doesn't like the constructor's update shortcut)
+# characters aren't finished constructing until being updated by other functions
 
 from random import randint
 from copy import deepcopy
@@ -30,7 +30,7 @@ defaults = {
     },
 
     # levelup info
-    "attributepoints": 0, "skillpoints": 0,
+    "attributePoints": 0, "skillPoints": 0,
     # inspiration
     "inspiration": 0
 }
@@ -41,6 +41,11 @@ class Character:
     Optionally construct with an unpacked *dict.
     """
 
+    # TODO P3: starting to think, one constructor for creation and one constructor for loading
+    # maybe a created var gets stored in the jsons
+    # it used to be a good setup, but now that characters get built in 3 different ways, and
+    # items need to be loaded at specific points during character construction, it begs for refactoring
+    # it doesn't help that the whole thing is just dictcomps at this point
     def __init__(self, attrs={}, **kwargs):
         for key, value in defaults.items():
             if key not in attrs: # *
@@ -51,11 +56,6 @@ class Character:
         for key in kwargs:
             setattr(self, key, kwargs[key])
 
-        self.suffix = "'" if self.name[-1] == ("s" or "x") else "'s"
-
-        # update recalculates meta-variables
-        self.update()
-
     def getJSON(self):
         """Creates and returns a (JSON serializable, writeable) dict of the character.
 
@@ -65,7 +65,7 @@ class Character:
         # TODO P3: sloppy to add and then delete. could replace vars()
         attrs = vars(self)
         del attrs['bonusAttrs'], attrs['bonusSkills'], attrs['attrMods'], attrs['skillMods'], \
-            attrs['hitDie'], attrs['maxHp'], attrs['AC'], attrs['armorAC'], attrs['gearWeight']
+            attrs['hitDie'], attrs['maxHp'], attrs['AC'], attrs['armorAC'], attrs['gearWeight'], attrs['suffix']
         # item.getJSON already does recursion
         attrs['slots'] = {slot:item.getJSON() if item else None for slot,item in self.slots.items()}
         return attrs
@@ -99,6 +99,8 @@ class Character:
         # hp = (hitDie + conMod) + (level - 1) * (hitDie // 2 + 1 + conMod)
         self.maxHp = (self.hitDie + self.attrMods['constitution']) + ((self.level - 1) * self.attrMods['constitution'])
 
+        self.suffix = "'" if self.name[-1] == ("s" or "x") else "'s"
+
     #############################
     # character item handling
     #############################
@@ -122,7 +124,7 @@ class Character:
                 print(f"{slot} already contains {self.slots[slot]}")
         else:
             print(f"{slot} invalid. valid slots are:\n" +
-                {list(self.slots.values())})
+                {*list(self.slots.values())})
 
         self.update()
     
@@ -185,7 +187,7 @@ class Character:
         self.showSlots()
 
         print(f"{self.name} has {self.inspiration} inspiration points, " + \
-        f"{self.attributepoints} attribute points, and {self.skillpoints} skill points.")
+        f"{self.attributePoints} attribute points, and {self.skillPoints} skill points.")
 
     #############################
     #     character combat
@@ -257,12 +259,12 @@ class Character:
         # wrap everything in a copy for aborts
         charCopy = deepcopy(self)
         # set all ability scores to 8
-        charCopy.attributes = {attr:8 for attr,stat in self.attributes.items()}
+        charCopy.attributes = {attr:8 for attr in self.attributes}
 
         def bug_player():
             s = input("type an attribute to increment: ").lower()
             if s not in charCopy.attributes.keys():
-                print("invalid attribute. attributes are: " + str(charCopy.attributes.keys())[11:-2])
+                print("invalid attribute. attributes are: " + str(list(charCopy.attributes.keys())))
                 return False
             return s
 
@@ -304,7 +306,7 @@ class Character:
         self = charCopy
 
 
-    # TODO: update this for the new defaults dict
+    # TODO P1: update this for the new defaults dict
     def levelUp(self):
         """Levels up the character.
         """
@@ -313,34 +315,30 @@ class Character:
 
         # level attributes
         if  charCopy.level % 4 == 0:
-            charCopy.attributepoints += 2
-            print(
-                f"current attributes: {charCopy.strength} strength, {charCopy.dexterity} dexterity, \
-                {charCopy.constitution} constitution, {charCopy.intelligence} intelligence, \
-                {charCopy.wisdom} wisdom, {charCopy.charisma} charisma"
-                )
+            charCopy.attributePoints += 2
+            print(f"current attributes: {**a}")
 
-        while charCopy.attributepoints > 0:
+        while charCopy.attributePoints > 0:
             s = input("type an attribute (or leave blank to exit) to increase by 1: ").lower()
 
             if s == "":
                 break
 
             if s not in charCopy.attributes:
-                print("invalid attribute. attributes are: " + str(charCopy.attributes.keys())[11:-2])
+                print("invalid attribute. attributes are: " + str(list(charCopy.attributes.keys())))
 
             if charCopy.attributes[s] < 20:
                 charCopy.attributes[s] += 1
-                charCopy.attributepoints -= 1
+                charCopy.attributePoints -= 1
             else:
                 print("attribute maxed; pick a different attribute")
-                charCopy.attributepoints += 1
+                charCopy.attributePoints += 1
 
-        # update intMod. int may have been increased enough to effect skillPoints
-        charCopy.intMod = (charCopy.attributes['intelligence'] - 10) // 2
+        # update. int may have been increased enough to effect skillPoints
+        charCopy.update()
 
         # levelup skills
-        charCopy.skillPoints += 3 + charCopy.intMod
+        charCopy.skillPoints += 3 + charCopy.attrMods['intelligence']
 
         charCopy.showSkills()
         while charCopy.skillPoints > 0:

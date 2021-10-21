@@ -83,9 +83,9 @@ class Character:
         #             self.bonusAttrs[statName] += statValue
         #         for statName,statValue in item.bonusSkills.items():
         #             self.bonusSkills[statName] += statValue
-        self.bonusAttrs = {attrName:sum(item.bonusAttrs.setdefault(attrName,0) if item else 0 \
+        self.bonusAttrs = {attrName:sum(item.bonusAttrs.get(attrName,0) if item else 0 \
             for item in self.slots.values()) for attrName in self.attributes}
-        self.bonusSkills = {skillName:sum(item.bonusSkills.setdefault(skillName,0) if item else 0 \
+        self.bonusSkills = {skillName:sum(item.bonusSkills.get(skillName,0) if item else 0 \
             for item in self.slots.values()) for skillName in self.skills}
 
         # i decided functions were the simplest way to implement race and class modifiers

@@ -43,6 +43,7 @@ class Item:
             container.storage.append(self)
         else:
             print("can't fit!")
+            return False
 
 
 class Weapon(Item):

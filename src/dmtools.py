@@ -56,7 +56,10 @@ def create(mode=0, **kwargs):
     for key,value in kwargs.items():
         data[key] = value
 
-    return character.Character(data)
+    out = character.Character(data)
+    out.update()
+
+    return out
 
 
 # TODO P3: expanded 5e longrest implementation
@@ -223,7 +226,6 @@ def henchmen(n, *namefiles, attributes={}, faction=[]):
     # send it
     return faction
 
-# TODO P1: test the hell out of this
 # TODO P3: this smells awful. i think item's constructor could use a rework. it also does 2 things instead of 1
 # the solution here might just be to collapse weapon and armor types into the item class. armor especially
 # barely offers functionality beyond the base class
@@ -241,19 +243,16 @@ def loadItem(itemAttrs):
     elif type(itemAttrs) == str:
         with open(f'.{sep}items{sep}'+itemAttrs) as f:
             itemJSON = json.load(f)
+
+    # ladder to determine item type to construct
     # this order actually matters a lot, because some weapons have bonusAC
-    # range key check determines the item to load is a weapon,
     if 'range' in itemJSON:
-        itemObj = item.Weapon(*itemJSON.values())
-        itemObj.storage = [loadItem(*itemJSON.values()) for item in itemObj.storage]
-        return itemObj
-    # bonusAC determines it's armor,
-    if 'bonusAC' in itemJSON:
-        itemObj = item.Armor(*itemJSON.values())
-        itemObj.storage = [loadItem(*itemJSON.values()) for item in itemObj.storage]
-        return itemObj
-    # otherwise it's a normal item
-    itemObj = item.Item(*itemJSON.values())
+        itemObj = item.Weapon(**itemJSON)
+    elif 'bonusAC' in itemJSON:
+        itemObj = item.Armor(**itemJSON)
+    else:
+        itemObj = item.Item(**itemJSON)
+
     itemObj.storage = [loadItem(item) for item in itemObj.storage]
     return itemObj
 
@@ -276,7 +275,7 @@ def load():
         # rootList is from walker e.g. ['sg13', 'sgc']. cd is the current dictionary
         outerDict = rootList.pop() # sgc will equal {'sg13':_, ...} so it's "outer"
 
-        # base case: rootList is empty after being popped. now dict can be populated
+        # base case: rootList is empty after being popped; now dict can be populated
         if not rootList:
             faction = []
             for fileStr in files:

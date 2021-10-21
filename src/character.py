@@ -41,8 +41,8 @@ class Character:
     Optionally construct with an unpacked **dict.
     """
 
-    # TODO P3: constructor/update/load refactoring. the character objects get built
-    # essentially in 3 stages using methods and functions. begs for refactoring
+    # TODO P3: constructor/update/load refactoring. character objects get built essentially in 3 stages
+    # using external methods and functions. tons of unnecessary assignments. begs for refactoring
     def __init__(self, attrs={}, **kwargs):
         for key, value in defaults.items():
             if key not in attrs: # *
@@ -73,7 +73,7 @@ class Character:
         # reset bonus attrs/skills
 
         # update() is the most performance critical part of the code. it gets called a lot.
-        # so i moved these 8 lines into 2 comprehensions. maybe i need to balkanize update
+        # so i moved these 8 lines into 2 comprehensions. maybe i need to split update
         #
         # self.bonusAttrs = {attrName:0 for attrName in self.attributes}
         # self.bonusSkills = {skillName:0 for skillName in self.skills}
@@ -104,6 +104,7 @@ class Character:
         if self.speed < 1: # ultimately i don't want to stop players from being able to like, crawl
             self.speed = 1
 
+        # hasattr ternary sneakily also checks if the item isn't None
         self.armorAC = sum(item.bonusAC if hasattr(item,'bonusAC') else 0 for item in self.slots.values())
         self.AC = 6 + self.armorAC + self.attrMods['dexterity']
 
@@ -136,8 +137,7 @@ class Character:
             else:
                 print(f"{slot} already contains {self.slots[slot]}")
         else:
-            print(f"{slot} invalid. valid slots are:\n" +
-                {*list(self.slots.values())})
+            print(f"{slot} invalid. valid slots are:\n", *self.slots)
 
         self.update()
     
@@ -215,7 +215,7 @@ class Character:
         Returns:
             int -- The initiative roll.
         """
-        return sum([randint(1, die) for x in range(dice)]) + self.self.bonusAttrs['dexterity']
+        return sum(randint(1, die) for x in range(dice)) + self.bonusAttrs['dexterity']
 
     def heal(self, h=None):
         """Heals the character for h health.

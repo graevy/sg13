@@ -119,7 +119,11 @@ class Character:
         # hp = hitDie+mod for level 1, conMod for each other level
         # standard 5e formula is:
         # hp = (hitDie + conMod) + (level - 1) * (hitDie // 2 + 1 + conMod)
-        self.maxHp = (self.hitDie + self.attrMods['constitution']) + ((self.level - 1) * self.attrMods['constitution'])
+        try:
+            self.maxHp = (self.hitDie + self.attrMods['constitution']) + ((self.level - 1) * self.attrMods['constitution'])
+        except AttributeError:
+            # this is the first meta variable error encountered here
+            print("you used the normal character constructor instead of the factory method")
         
     def updateSpeed(self):
         # 1.5 and 100 just felt right for the speed formula after trying different values

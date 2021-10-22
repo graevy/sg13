@@ -283,12 +283,10 @@ def load():
             for fileStr in files:
                 with open(fileStr) as f:
                     # convert each serialized character into an object,
-                    charObj = character.Character(json.load(f))
-                    # convert each serialized item into an object,
+                    charObj = character.Character(attrs={},**json.load(f))
+                    # convert each serialized item into an object (loadItem does recursion),
                     charObj.slots = {slot:loadItem(item) if item is not None else None \
                         for slot,item in charObj.slots.items()}
-                    # update the character to calculate weight & speed
-                    charObj.update()
                     # add the character to the faction,
                     faction.append(charObj)
             # send faction to dict

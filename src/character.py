@@ -35,14 +35,14 @@ defaults = {
     "inspiration": 0
 }
 
-
+# an important note about the word attribute:
+# most ttrpg systems i've used use "attribute" to refer to innate stat values like strength or wisdom
+# unfortunately, python object members are called attributes too. so there's some name collision i've tried to mitigate
+# this brings me to a potential TODO: combine the skills and attributes dicts into a stats dict
 class Character:
     """Generic character class. Construct with attrs, an {attrname: value} dict.
     Optionally construct with an unpacked **dict.
     """
-
-    # TODO P3: constructor/update/load refactoring. character objects get built essentially in 3 stages
-    # using external methods and functions. tons of unnecessary assignments. begs for refactoring
     def __init__(self, attrs={}, **kwargs):
         for key, value in defaults.items():
             if key not in attrs: # *
@@ -53,67 +53,122 @@ class Character:
         for key in kwargs:
             setattr(self, key, kwargs[key])
 
+    @classmethod
+    def new(cls, attrs={}, **kwargs):
+        """factory method for character creation. using this to load character jsons will cause
+        race/class mods to stack (!), and run a bunch of unnecessary recalculation overhead
+
+        Args:
+            attrs (dict, optional): to include for character creation. Defaults to {}.
+
+        Returns:
+            character: created
+        """
+        charObj = cls(attrs=attrs, **kwargs)
+
+        # creating character meta-variables
+        charObj.suffix = "'" if charObj.name[-1] == ("s" or "x") else "'s"
+
+        # print(charObj.slots)
+        # import dmtools
+        # charObj.slots = {k:dmtools.loadItem(itemAttrs=v) if v else None for k,v in charObj.slots.items()}
+        # bonus stat calculation**
+        charObj.bonusAttrs = {attrName:sum(item.bonusAttrs.get(attrName,0) if item else 0 \
+            for item in charObj.slots.values()) for attrName in charObj.attributes}
+        charObj.bonusSkills = {skillName:sum(item.bonusSkills.get(skillName,0) if item else 0 \
+            for item in charObj.slots.values()) for skillName in charObj.skills}
+
+        # getWeight() does recursion
+        charObj.gearWeight = sum(item.getWeight() if item else 0 for item in charObj.slots.values())
+
+        # i decided functions were the simplest way to implement race and class modifiers
+        # this is done here because it affects modifier calculation
+        races.__dict__[charObj.race.replace("'","")](charObj)
+        classes.__dict__[charObj.clas](charObj)
+
+        # modifier calculation
+        charObj.attrMods = {attrName:(charObj.attributes[attrName] + charObj.bonusAttrs[attrName] - 10) // 2 \
+            for attrName in charObj.attributes}
+
+        charObj.updateAC()
+        charObj.updateMaxHp()
+        charObj.updateSpeed()
+
+        return charObj
+
     def getJSON(self):
         """Creates and returns a (JSON serializable, writeable) dict of the character.
 
         Returns:
             dict -- of the character's attributes.
         """
-        # TODO P3: sloppy to add and then delete. could replace vars()
         attrs = vars(self)
-        del attrs['bonusAttrs'], attrs['bonusSkills'], attrs['attrMods'], attrs['skillMods'], \
-            attrs['hitDie'], attrs['maxHp'], attrs['AC'], attrs['armorAC'], attrs['gearWeight'], attrs['suffix']
-        # item.getJSON already does recursion
+        # item.getJSON does recursion
         attrs['slots'] = {slot:item.getJSON() if item else None for slot,item in self.slots.items()}
         return attrs
 
-    def update(self):
-        """Calculates character meta-variables
-        """
-        # reset bonus attrs/skills
-
-        # update() is the most performance critical part of the code. it gets called a lot.
-        # so i moved these 8 lines into 2 comprehensions. maybe i need to split update
-        #
-        # self.bonusAttrs = {attrName:0 for attrName in self.attributes}
-        # self.bonusSkills = {skillName:0 for skillName in self.skills}
-        # for item in self.slots.values():
-        #     if item:
-        #         for statName,statValue in item.bonusAttrs.items():
-        #             self.bonusAttrs[statName] += statValue
-        #         for statName,statValue in item.bonusSkills.items():
-        #             self.bonusSkills[statName] += statValue
-        self.bonusAttrs = {attrName:sum(item.bonusAttrs.get(attrName,0) if item else 0 \
-            for item in self.slots.values()) for attrName in self.attributes}
-        self.bonusSkills = {skillName:sum(item.bonusSkills.get(skillName,0) if item else 0 \
-            for item in self.slots.values()) for skillName in self.skills}
-
-        # i decided functions were the simplest way to implement race and class modifiers
-        # this is done here because it affects modifier calculation
-        # __dict__ instead of dir() for hash search speed. replace is called because some races have apostrophes
-        races.__dict__[self.race.replace("'","")](self)
-        classes.__dict__[self.clas](self)
-
-        # modifiers. 10 strength with 3 bonus strength -> 13 strength, -10 -> 3 strength, //2 -> strMod of +1
-        self.attrMods = {attrName:(self.attributes[attrName]+self.bonusAttrs[attrName]-10)//2 for attrName in self.attributes}
-        self.skillMods = {skillName:self.skills[skillName]+self.bonusSkills[skillName] for skillName in self.skills}
-
-        # getWeight() does recursion. 1.5 and 100 just felt right for the speed formula after trying different values
-        self.gearWeight = sum(item.getWeight() if item else 0 for item in self.slots.values())
-        self.speed = 10.0 - self.gearWeight**1.5//100 # breakpoints at 21kg, 34, 44, 54...(100*n)**(2/3)kg
-        if self.speed < 1: # ultimately i don't want to stop players from being able to like, crawl
-            self.speed = 1
-
+    #############################
+    #### stat update methods ####
+    #############################
+    def updateAC(self):
         # hasattr ternary sneakily also checks if the item isn't None
         self.armorAC = sum(item.bonusAC if hasattr(item,'bonusAC') else 0 for item in self.slots.values())
         self.AC = 6 + self.armorAC + self.attrMods['dexterity']
 
+    def updateMaxHp(self):
         # hp = hitDie+mod for level 1, conMod for each other level
         # standard 5e formula is:
         # hp = (hitDie + conMod) + (level - 1) * (hitDie // 2 + 1 + conMod)
         self.maxHp = (self.hitDie + self.attrMods['constitution']) + ((self.level - 1) * self.attrMods['constitution'])
+        
+    def updateSpeed(self):
+        # 1.5 and 100 just felt right for the speed formula after trying different values
+        self.speed = 10.0 - self.gearWeight**1.5//100 # breakpoints at 21kg, 34, 44, 54...(100*n)**(2/3)kg
+        if self.speed < 1: # ultimately i don't want to stop people from being able to like, crawl
+            self.speed = 1
 
+    def update(self):
+        """debug tool (to be phased out) that re-runs ALL the setup code
+        """
+        self.bonusAttrs = {attrName:sum(item.bonusAttrs.get(attrName,0) if item else 0 \
+            for item in self.slots.values()) for attrName in self.attributes}
+        self.bonusSkills = {skillName:sum(item.bonusSkills.get(skillName,0) if item else 0 \
+            for item in self.slots.values()) for skillName in self.skills}
+        self.attrMods = {attrName:(self.attributes[attrName] + self.bonusAttrs[attrName] - 10) // 2 \
+            for attrName in self.attributes}
+        self.updateAC()
+        self.updateMaxHp()
+        self.gearWeight = sum(item.getWeight() if item else 0 for item in self.slots.values())
+        self.updateSpeed()
         self.suffix = "'" if self.name[-1] == ("s" or "x") else "'s"
+
+    def handleNewItem(self, item, don=True):
+        """updates meta-variables whenever a new item is equipped or unequipped
+
+        Args:
+            item (item): to handle
+            don (bool, optional): True if equipping (donning). Defaults to True.
+        """
+        don = 1 if don else -1
+
+        self.gearWeight += item.getWeight() * don
+        self.updateSpeed()
+
+        if hasattr(item,'bonusAC'):
+            self.armorAC += item.bonusAC * don
+
+        for skillName,skillValue in item.bonusSkills.items():
+            self.bonusSkills[skillName] += skillValue * don
+
+        for attrName,attrValue in item.bonusAttrs.items():
+            self.bonusAttrs[attrName] += attrValue * don
+            self.attrMods[attrName] = (self.attributes[attr] + self.bonusAttrs[attr] - 10) // 2
+            if attrName == 'dexterity':
+                self.AC = 6 + self.armorAC + self.attrMods['dexterity']
+            if attrName == 'constitution':
+                self.maxHp = (self.hitDie + self.attrMods['constitution']) + \
+                ((self.level - 1) * self.attrMods['constitution'])
+
 
     #############################
     # character item handling
@@ -133,13 +188,16 @@ class Character:
 
         if slot in self.slots:
             if self.slots[slot] is None:
+                # the actual equip function, everything else is just boilerplate
                 self.slots[slot] = item
+
+                self.handleNewItem(item, don=True)
+
             else:
                 print(f"{slot} already contains {self.slots[slot]}")
         else:
             print(f"{slot} invalid. valid slots are:\n", *self.slots)
 
-        self.update()
     
     def stow(self, slot, container):
         """Stores a character object's slot's item in another item.
@@ -156,10 +214,15 @@ class Character:
         if slot[:5] == "right":
             slot = "rightHand"
 
-        if self.slots[slot].store(container):
+        item = self.slots[slot]
+
+        if item.store(container):
+
+            self.handleNewItem(item, don=False)
+
+            # remove item
             self.slots[slot] = None
 
-        self.update()
     
     #############################
     # character pretty printing
@@ -178,8 +241,8 @@ class Character:
         """Prints the attributes of the character.
         """
         print(self.name + self.suffix + " attributes are:")
-        for name, attribute in self.attributes.items():
-            print(f"    {name}: {attribute}")
+        for name in self.attributes:
+            print(f"    {name}: {self.attributes[name]+self.bonusAttrs[name]}")
 
     def showSkills(self):
         """Prints the skills of the character.
@@ -205,6 +268,7 @@ class Character:
     #############################
     #     character combat
     #############################
+    # TODO P2: attack function wrapper method?
     def initiative(self, dice=3, die=6):
         """Rolls initiative for the character.
 
@@ -394,3 +458,14 @@ class Character:
 # *
 # setdefault benched at 5s/million iterations,
 # checking membership benched at 4.5s/million
+
+# **
+# these 2 dense dictcomps are collapsed from this code:
+# self.bonusAttrs = {attrName:0 for attrName in self.attributes}
+# self.bonusSkills = {skillName:0 for skillName in self.skills}
+# for item in self.slots.values():
+#     if item:
+#         for statName,statValue in item.bonusAttrs.items():
+#             self.bonusAttrs[statName] += statValue
+#         for statName,statValue in item.bonusSkills.items():
+#             self.bonusSkills[statName] += statValue

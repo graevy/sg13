@@ -56,8 +56,9 @@ def create(mode=0, **kwargs):
     for key,value in kwargs.items():
         data[key] = value
 
-    out = character.Character(data)
-    out.update()
+    out = character.Character.new(attrs=data)
+    out.updateStats()
+    out.updateWeight()
 
     return out
 
@@ -79,6 +80,9 @@ def groupInitiative(*characterLists):
     return sorted(
         [(character.initiative(), character.name) for characterList in characterLists for character in characterList]
     , reverse=True)
+
+def skillCheck(charObj, stat, dc):
+    pass # TODO P1
 
 def setDc(successOdds, dice=rolls.dice, die=rolls.die, roundDown=True):
     """returns the DC of a % success chance
@@ -215,7 +219,7 @@ def henchmen(n, *namefiles, attributes={}, faction=[]):
         namefiles = tuple(('firstnames.txt','lastnames.txt'))
 
     # create list of henchmen,
-    characters = [character.Character(attributes) for x in range(n)]
+    characters = [character.Character.new(attrs=attributes) for x in range(n)]
     # generate random names,
     names = randomNames(n, *namefiles)
     # name the characters
@@ -226,9 +230,7 @@ def henchmen(n, *namefiles, attributes={}, faction=[]):
     # send it
     return faction
 
-# TODO P3: this smells awful. i think item's constructor could use a rework. it also does 2 things instead of 1
-# the solution here might just be to collapse weapon and armor types into the item class. armor especially
-# barely offers functionality beyond the base class
+# TODO P3: this thing is doubling as a factory method and that probably shouldn't happen
 def loadItem(itemAttrs):
     """(recursively) loads an item in memory
 

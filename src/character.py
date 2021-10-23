@@ -91,9 +91,7 @@ class Character:
 
     def updateRaceAndClass(self, race=False, clas=False):
         # i decided functions were the simplest way to execute race and class modifiers
-        if hasattr(self,'raceAndClassApplied'):
-            pass
-        else:
+        if not hasattr(self,'raceAndClassApplied'):
             races.__dict__[race.replace("'","") if race else self.race.replace("'","")](self)
             classes.__dict__[clas if clas else self.clas](self)
             self.raceAndClassApplied=True

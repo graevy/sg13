@@ -56,7 +56,7 @@ def create(mode=0, **kwargs):
     for key,value in kwargs.items():
         data[key] = value
 
-    out = character.Character.new(attrs=data)
+    out = character.Character.new(**data)
     out.updateStats()
     out.updateWeight()
 
@@ -140,6 +140,7 @@ def heal(char, amount=None):
 def levelUp(char):
     char.levelUp()
 
+
 def dismember(char, atMost=2):
     """permanently randomly decrease a character's attribute
 
@@ -207,7 +208,7 @@ def henchmen(n, *namefiles, attributes={}, faction=[]):
 
     Args:
         n (int): number of henchmen
-        namefiles (str, optional): text files to source random character names from
+        namefiles (str, optional): text filenames to source random character names from
         attributes (dict, optional): a data dict containing elements for character construction
         faction (list, optional): a faction list to put henchmen inside
 
@@ -219,7 +220,7 @@ def henchmen(n, *namefiles, attributes={}, faction=[]):
         namefiles = tuple(('firstnames.txt','lastnames.txt'))
 
     # create list of henchmen,
-    characters = [character.Character.new(attrs=attributes) for x in range(n)]
+    characters = [character.Character.new(**attributes) for x in range(n)]
     # generate random names,
     names = randomNames(n, *namefiles)
     # name the characters
@@ -283,7 +284,7 @@ def load():
             for fileStr in files:
                 with open(fileStr) as f:
                     # convert each serialized character into an object,
-                    charObj = character.Character(attrs={},**json.load(f))
+                    charObj = character.Character(**json.load(f))
                     # convert each serialized item into an object (loadItem does recursion),
                     charObj.slots = {slot:loadItem(item) if item is not None else None \
                         for slot,item in charObj.slots.items()}
@@ -317,6 +318,33 @@ def load():
 
     return factions
 
+# TODO P3: ugly
+def getCharLists(factions, faction=None):
+    """gets a list of all characters in a faction
+
+    Args:
+        factions (dict): the factions dict
+        faction (str, optional): to traverse factions with. example 'sgc/sg13'. Defaults to ''.
+
+    Returns:
+        list: of characters
+    """
+    outList = []
+    def recur(iterable):
+        nonlocal outList
+        if isinstance(iterable,list):
+            outList += iterable
+        else:
+            for value in iterable.values():
+                recur(value)
+
+    if faction:
+        faction = faction.split('/')[::-1]
+    while faction:
+        factions = factions[faction.pop()]
+
+    recur(factions)
+    return outList
 
 def save(factions=None):
     """writes all character data to local jsons

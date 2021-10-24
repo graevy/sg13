@@ -82,7 +82,7 @@ def groupInitiative(*characterLists):
     , reverse=True)
 
 def skillCheck(charObj, stat, dc):
-    pass # TODO P1
+    return True if rolls.IIId6() + charObj.skills[stat] + charObj.bonusSkills[stat] >= dc else False
 
 def setDc(successOdds, dice=rolls.dice, die=rolls.die, roundDown=True):
     """returns the DC of a % success chance
@@ -354,20 +354,27 @@ def save(factions=None):
         factions = factions
     getCharactersFromDicts(factions)
 
-
+# TODO P3: less ugly, but still bad
 def getChars(charDict):
-    outList = []
+    """recursively get character objects inside a dictionary
+
+    Args:
+        charDict (list): of charObjs
+
+    Returns:
+        list: of charObjs
+    """
+    outList = [] # populated and returned
     def recur(iterable):
-        # [recur(value) if isinstance(value,dict) else outList.extend(value) for value in iterable.values()]
         for value in iterable.values():
             if isinstance(value,dict):
                 recur(value)
             else:
+                # extend operates outside local namespace, += doesn't. TIL
                 outList.extend(value)
     recur(charDict)
 
     return outList
-
 
 # from my original 2019 codebase
 # i've improved a lot since then. i gave it a facelift, but
@@ -445,3 +452,13 @@ def attack(attacker, defender, weapon=None, distance=0, cover=0):
 
     else:
         print("miss!")
+
+
+# some experiments i'm leaving here
+# def getChars2(charDict, outList=[])
+#     [getChars2(value, outList) if isinstance(value,dict) else outList.extend(value) for value in iterable.values()]
+#     return outList
+
+# def getChars3(charDict):
+#     # this is pretty fast, but puts out nested lists
+#     return [value if isinstance(value,list) else getChars3(value) if isinstance(value,dict) else value for value in charDict.values()]

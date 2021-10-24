@@ -317,34 +317,7 @@ def load():
             populateFactions(rootList=root.split(sep)[:1:-1], cd=factions, files=files)
 
     return factions
-
-# TODO P3: ugly
-def getCharLists(factions, faction=None):
-    """gets a list of all characters in a faction
-
-    Args:
-        factions (dict): the factions dict
-        faction (str, optional): to traverse factions with. example 'sgc/sg13'. Defaults to ''.
-
-    Returns:
-        list: of characters
-    """
-    outList = []
-    def recur(iterable):
-        nonlocal outList
-        if isinstance(iterable,list):
-            outList += iterable
-        else:
-            for value in iterable.values():
-                recur(value)
-
-    if faction:
-        faction = faction.split('/')[::-1]
-    while faction:
-        factions = factions[faction.pop()]
-
-    recur(factions)
-    return outList
+    
 
 def save(factions=None):
     """writes all character data to local jsons
@@ -369,8 +342,8 @@ def save(factions=None):
 
                 # character faction should be updated on each save
                 # it is purely cosmetic at this point, though
-                # this slicing ultimately does ".\\factions\\x/y/z/" -> "/x/y/z"
-                charCopy.faction = sep+sep.join(path.split(sep)[2:-1]).replace('\\','/') # for windows
+                # this slicing ultimately does ".\\factions\\x/y/z/" -> "x/y/z"
+                charCopy.faction = sep.join(path.split(sep)[2:-1]).replace('\\','/') # for windows
 
                 # write character to file
                 with open(f'{path}{charCopy.name}.json', 'w+', encoding='utf-8', errors='ignore') as f:
@@ -380,6 +353,20 @@ def save(factions=None):
     if factions == None:
         factions = factions
     getCharactersFromDicts(factions)
+
+
+def getChars(charDict):
+    outList = []
+    def recur(iterable):
+        # [recur(value) if isinstance(value,dict) else outList.extend(value) for value in iterable.values()]
+        for value in iterable.values():
+            if isinstance(value,dict):
+                recur(value)
+            else:
+                outList.extend(value)
+    recur(charDict)
+
+    return outList
 
 
 # from my original 2019 codebase

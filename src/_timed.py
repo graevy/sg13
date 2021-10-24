@@ -18,10 +18,7 @@ def timed(func):
     """
     def inner(*args, loops=100000, digits=5, skipIO=False, verification=False, verificationData=None, **kwargs):
         # see timeitNamespace explanation at end of file
-        timeitNamespace = {}
-        timeitNamespace[func.__name__] = func
-        timeitNamespace['args'] = args
-        timeitNamespace['kwargs'] = kwargs
+        timeitNamespace = {func.__name__:func, 'args':args, 'kwargs':kwargs}
         # timeit basically does exec(timeitStatement)
         timeitStatement = func.__name__+"(*args, **kwargs)"
 
@@ -78,9 +75,7 @@ def timeBatch(data, *funcs, loops=100000, digits=5, skipIO=False, verification=F
         verificationData (type(data), optional): data for verification. Defaults to None.
     """
     # see timeitNamespace explanation at end of file
-    timeitNamespace = {}
-    for func in funcs:
-        timeitNamespace[func.__name__] = func
+    timeitNamespace = {func.__name__:func for func in funcs}
 
     results = []
     # i categorize the results by datapoint instead of by function for readability, mostly

@@ -1,12 +1,9 @@
-# pylint: disable=no-member
-# pylint: disable=access-member-before-definition
-# characters aren't finished constructing until being updated by other functions
-
 from random import randint
 from copy import deepcopy
 import races
 import classes
 
+# this dict only really gets used in character creation and 
 defaults = {
     # biographical information           v (intentionally misspelt)
     "name": "NPC", "race": "human", "clas": "soldier", "faction": "",
@@ -43,20 +40,18 @@ class Character:
     """Generic character class. Construct with an unpacked **dict.
     """
     def __init__(self, **kwargs):
-        for key, value in defaults.items():
-            setattr(self,key,value)
         for key, value in kwargs.items():
             setattr(self,key,value)
 
     @classmethod
     def new(cls, **kwargs):
-        """uncontrolled factory method for first-time character creation. using this to load character jsons will cause
-        race/class mods to stack (!), and run a bunch of unnecessary recalculation overhead
+        """uncontrolled factory method for first-time character creation.
+        using this to load character jsons will run unnecessary recalculation overhead
 
         Returns:
             character: created
         """
-        charObj = cls(**kwargs)
+        charObj = cls(**(defaults | kwargs))
 
         charObj.suffix = "'" if charObj.name[-1] == ("s" or "x") else "'s"
 
@@ -144,6 +139,7 @@ class Character:
         self.updateSpeed()
         self.suffix = "'" if self.name[-1] == ("s" or "x") else "'s"
 
+    # TODO P2: this needs more testing
     def handleNewItem(self, item, don=True):
         """updates meta-variables whenever a new item is equipped or unequipped
 
@@ -276,7 +272,7 @@ class Character:
         Returns:
             int -- The initiative roll.
         """
-        return sum(randint(1, die) for x in range(dice)) + self.bonusAttrs['dexterity']
+        return sum(randint(1, die) for x in range(dice)) + self.attrMods['dexterity']
 
     def heal(self, h=None):
         """Heals the character for h health.
@@ -319,7 +315,7 @@ class Character:
                 [randint(1,6) for x in range(4)]
                 )[1:]
             )
-             for name,stat in self.attributes.items()}
+             for name in self.attributes}
 
         self.update()
 

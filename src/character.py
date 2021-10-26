@@ -283,12 +283,11 @@ class Character:
         # if we're doing a basic full heal...
         if h == None:
             self.hp = self.maxHp
-        # else, make sure we won't go over max health
-        elif self.hp + h > self.maxHp:
-            self.hp = self.maxHp
-        # otherwise, just add the hp
         else:
             self.hp += h
+        # (don't overheal)
+        if self.hp > self.maxHp:
+            self.hp = self.maxHp
 
     def hurt(self, d):
         """Hurts the character for d damage.

@@ -3,7 +3,7 @@ from copy import deepcopy
 import races
 import classes
 
-# this dict only really gets used in character creation and 
+# this dict only really gets used in character creation and dmtools
 defaults = {
     # biographical information           v (intentionally misspelt)
     "name": "NPC", "race": "human", "clas": "soldier", "faction": "",
@@ -40,7 +40,7 @@ class Character:
     """Generic character class. Construct with an unpacked **dict.
     """
     def __init__(self, **kwargs):
-        for key, value in kwargs.items():
+        for key,value in kwargs.items():
             setattr(self,key,value)
 
     @classmethod
@@ -147,25 +147,37 @@ class Character:
             item (item): to handle
             don (bool, optional): True if equipping (donning). Defaults to True.
         """
+        # everything gets multiplied by don because sometimes we're unequipping
+        # TODO P3: maybe just work this code into equip/unequip?
         don = 1 if don else -1
 
+        # all of these calcs are done outside of their update() methods because it's much more efficient this way
+        # this means that changes to the item class could break this method
+
+        # weight and speed first
         self.gearWeight += item.getWeight() * don
         self.updateSpeed()
 
+        # AC needs recalculation too
         if hasattr(item,'bonusAC'):
             self.armorAC += item.bonusAC * don
+            self.AC += item.bonusAC * don
 
+        # skills are pretty straightforward
         for skillName,skillValue in item.bonusSkills.items():
             self.bonusSkills[skillName] += skillValue * don
 
+        # attributes are tricky because of AC and maxHp
         for attrName,attrValue in item.bonusAttrs.items():
             self.bonusAttrs[attrName] += attrValue * don
-            self.attrMods[attrName] = (self.attributes[attr] + self.bonusAttrs[attr] - 10) // 2
+            mod = self.attrMods[attrName] = (self.attributes[attr] + self.bonusAttrs[attr] - 10) // 2
+            # AC gets recalculated twice sometimes, but it can't really be helped without collapsing Armor into Item
+            # this would simplify a lot of the item code, especially around serialization, but it reduces extensibility
             if attrName == 'dexterity':
-                self.AC = 6 + self.armorAC + self.attrMods['dexterity']
+                self.AC = 6 + self.armorAC + mod
             if attrName == 'constitution':
-                self.maxHp = (self.hitDie + self.attrMods['constitution']) + \
-                ((self.level - 1) * self.attrMods['constitution'])
+                self.maxHp = (self.hitDie + mod) + \
+                ((self.level - 1) * mod)
 
     #############################
     # character item handling

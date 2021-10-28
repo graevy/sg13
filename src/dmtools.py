@@ -266,19 +266,14 @@ def loadItem(itemAttrs):
     itemObj.storage = [loadItem(item) for item in itemObj.storage]
     return itemObj
 
-# 4th iteration of this function. characters are now populated with gear
 # os.walk's python list is the wrong data structure here. a linked list makes the most sense, I think.
 # a deque import is costly but scales well. realistically this doesn't matter
 def load():
     """builds factions, a nested dict eventually containing lists of character Objs.
-    ***WILL OVERWRITE IF USED MID-SESSION***
     """
 
-    # can't really use isinstance() here :(
-    # TODO P2: this broke
-    if 'factions' in globals() or 'factions' in locals():
-        print("load() was used while factions var exists; exiting to prevent overwrite")
-        return
+    if 'factions' in globals():
+        raise Exception("load() attempted to overwrite factions dict")
 
     # recursive function to both load characters (with items) and populate the root factions dict
     def populateFactions(rootList, cd, files):

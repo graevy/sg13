@@ -52,21 +52,7 @@ class Character:
             character: created
         """
         charObj = cls(**(defaults | kwargs))
-
-        charObj.suffix = "'" if charObj.name[-1] == ("s" or "x") else "'s"
-
-        charObj.updateBonuses()
-        # race/class is done between bonuses and mods because it
-        # requires bonuses to exist, and it affects modifier calculation
-        charObj.updateRaceAndClass()
-        charObj.updateMods()
-        # AC and MaxHp depend on mods
-        charObj.updateAC()
-        charObj.updateMaxHp()
-        charObj.updateWeight()
-        # speed depends on weight
-        charObj.updateSpeed()
-
+        charObj.update()
         return charObj
 
     def getJSON(self):
@@ -112,10 +98,7 @@ class Character:
         # hp = hitDie+mod for level 1, conMod for each other level
         # standard 5e formula is:
         # hp = (hitDie + conMod) + (level - 1) * (hitDie // 2 + 1 + conMod)
-        try:
-            self.maxHp = (self.hitDie + self.attrMods['constitution']) + ((self.level - 1) * self.attrMods['constitution'])
-        except AttributeError:
-            print("you used the normal character constructor with the defaults dict instead of the factory method again")
+        self.maxHp = (self.hitDie + self.attrMods['constitution']) + ((self.level - 1) * self.attrMods['constitution'])
 
     def updateWeight(self):
         # getWeight() does nested item recursion
@@ -128,18 +111,21 @@ class Character:
             self.speed = 1
 
     def update(self):
-        """debug tool that builds all character meta variables
-        """
-        self.updateRaceAndClass()
+        """builds all character meta variables"""
         self.updateBonuses()
+        # race/class is done between bonuses and mods because it
+        # requires bonuses to exist, and it affects modifier calculation
+        self.updateRaceAndClass()
         self.updateMods()
+        # AC and MaxHp depend on mods
         self.updateAC()
         self.updateMaxHp()
         self.updateWeight()
+        # speed depends on weight
         self.updateSpeed()
         self.suffix = "'" if self.name[-1] == ("s" or "x") else "'s"
 
-    # TODO P2: this needs more testing
+    # TODO P2: this wasn't well tested iirc
     def handleNewItem(self, item, don=True):
         """updates meta-variables whenever a new item is equipped or unequipped
 
@@ -259,6 +245,11 @@ class Character:
     def show(self):
         """Prints the current status of the character.
         """
+
+        if not hasattr(self,'maxHp'):
+            # this happens embarrassingly often
+            raise Exception(
+                "you used the normal character constructor with the defaults dict instead of the factory method again")
 
         print(f"{self.name} is a level {self.level} {self.race} {self.clas}.")
         print(f"{self.name} has {self.hp} health, {self.tempHp} temp health, and {self.maxHp} max health.")

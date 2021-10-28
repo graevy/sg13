@@ -19,7 +19,7 @@ class DMPanel(tk.Tk):
         self.buttons += [tk.Button(text=fnName, command=fn) for fnName,fn in rollFns]
 
         # populating the GUI
-        frame = tk.Frame()
+        self.frame = tk.Frame(master=self, relief='flat', borderwidth=1)
         
 
 if __name__ == '__main__':

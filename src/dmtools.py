@@ -38,29 +38,36 @@ def create(mode=0, **kwargs):
 
     # stuffing the basic values into data
     for basic in basics:
-        data[basic] = handleInput(basic)
+        if basic not in kwargs:
+            data[basic] = handleInput(basic)
 
     # optionally manually edit character attributes and skills
     if mode:
         attrs = character.defaults['attributes']
-        data['attributes'] = {attrName:handleInput(attrName,defaultsDict=attrs) for attrName in attrs}
+        data['attributes'] = {attrName:handleInput(attrName,attrs) \
+            if attrName not in kwargs else None for attrName in attrs}
         skills = character.defaults['skills']
-        data['skills'] = {skillName:handleInput(skillName,defaultsDict=skills) for skillName in skills}
+        data['skills'] = {skillName:handleInput(skillName,skills) \
+            if skillName not in kwargs else None for skillName in skills}
         
         # gear editing
         if mode > 1:
             slots = character.defaults['slots']
-            data['slots'] = {slotName:handleInput(slotName,defaultsDict=slots) for slotName in slots}
+            data['slots'] = {slotName:handleInput(slotName,slots) \
+                if slotName not in kwargs else None for slotName in slots}
 
-    # at the end, insert kwargs, overwriting any defaults
-    for key,value in kwargs.items():
-        data[key] = value
+    # at the end, insert kwargs, overwriting any Nones
+    data = data | kwargs
 
-    out = character.Character.new(**data)
-    out.updateStats()
-    out.updateWeight()
+    # this permits create(strength=15) instead of create(attributes={strength:15,dexterity:10...})
+    # pop also neatly cleans the data dict before assignment if, uh, anyone includes that error
+    for key in kwargs:
+        if key in character.defaults['attributes']:
+            data['attributes'][key] = data.pop(key)
+        if key in character.defaults['skills']:
+            data['skills'][key] = data.pop(key)
 
-    return out
+    return character.Character.new(**data)
 
 
 # TODO P3: expanded 5e longrest implementation
@@ -286,7 +293,7 @@ def load():
                     # convert each serialized character into an object,
                     charObj = character.Character(**json.load(f))
                     # convert each serialized item into an object (loadItem does recursion),
-                    charObj.slots = {slot:loadItem(item) if item is not None else None \
+                    charObj.slots = {slot:loadItem(item) if item else None \
                         for slot,item in charObj.slots.items()}
                     # add the character to the faction,
                     faction.append(charObj)

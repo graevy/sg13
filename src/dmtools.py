@@ -9,39 +9,59 @@ import rolls
 
 sep = os.sep
 
-def create(full=False, **kwargs):
+# muuuch better than previous. now with easy default value input and extensible modes
+def create(mode=0, **kwargs):
     """Character creation function
 
     Args:
-        **kwargs (dict, optional): Optionally include attributes as kwargs. Defaults to {}.
-        full (bool, optional): If you want to edit each attribute, full=True. Defaults to False.
+        mode (int, optional): level of detail. Defaults to 0.
+        kwargs (dict, optional): to include on creation. Defaults to {}.
     """
+    def handleInput(key, defaultsDict=character.defaults):
+        # TODO P2: this doesn't handle invalid races/classes properly because 
+        # dict membership checking happens in the character constructor. it
+        # only checks invalid typing. if this ends up front-facing it needs a
+        # valids dict to check input against valid ranges or something
+        while True:
+            try:
+                value = input(f'{key} <<< ')
+                # blank input uses the character.default value
+                if value == '':
+                    return defaultsDict[key]
+                # must dynamically type cast input string before returning
+                return type(defaultsDict[key])(value)
+            except ValueError:
+                print(f" invalid entry")
 
-    # if you want full control you can edit each value
-    if not full:
-        defaults = list(character.characterCreationDefaults.items())[:7]
-    else:
-        defaults = list(character.characterCreationDefaults.items())
+    data = {} # this gets populated and then returned
+    basics = ['name', 'race', 'clas', 'faction', 'level']
 
-    for key, value in defaults:
-        # manually enter each value that data doesn't have
-        if key not in kwargs:
-            # only way to restart a loop iteration is to nest an infinite loop and break it on a success
-            # thank you python
-            while True:
-                try:
-                    s = input(f'{key} ? ')
-                    if s == '':
-                        continue
+    # stuffing the basic values into data
+    for basic in basics:
+        data[basic] = handleInput(basic)
 
-                    kwargs[key] = type(value)(s)
-                    print(f'{key} data assigned')
-                    break
+    # optionally manually edit character attributes and skills
+    if mode:
+        attrs = character.defaults['attributes']
+        data['attributes'] = {attrName:handleInput(attrName,defaultsDict=attrs) for attrName in attrs}
+        skills = character.defaults['skills']
+        data['skills'] = {skillName:handleInput(skillName,defaultsDict=skills) for skillName in skills}
+        
+        # gear editing
+        if mode > 1:
+            slots = character.defaults['slots']
+            data['slots'] = {slotName:handleInput(slotName,defaultsDict=slots) for slotName in slots}
 
-                except (TypeError, ValueError):
-                    print(" invalid parameter")
+    # at the end, insert kwargs, overwriting any defaults
+    for key,value in kwargs.items():
+        data[key] = value
 
-    return character.Character(kwargs)
+    out = character.Character.new(**data)
+    out.updateStats()
+    out.updateWeight()
+
+    return out
+
 
 # TODO P3: expanded 5e longrest implementation
 def longrest(*characterLists):
@@ -61,14 +81,16 @@ def groupInitiative(*characterLists):
         [(character.initiative(), character.name) for characterList in characterLists for character in characterList]
     , reverse=True)
 
+def skillCheck(charObj, stat, dc):
+    return True if rolls.IIId6() + charObj.skills[stat] + charObj.bonusSkills[stat] >= dc else False
 
-def setDc(successOdds, dice=3, die=6, roundDown=True):
+def setDc(successOdds, dice=rolls.dice, die=rolls.die, roundDown=True):
     """returns the DC of a % success chance
 
     Args:
         successOdds (int): the 0-99 chance of action success.
-        dice (int, optional): number of dice to roll. Defaults to 3.
-        die (int, optional): faces per die. Defaults to 6.
+        dice (int, optional): number of dice to roll. Defaults to rolls.dice.
+        die (int, optional): faces per die. Defaults to rolls.die.
         roundDown (bool, optional): floors the DC -- for lower variance rolls. Defaults to True.
 
     Returns:
@@ -76,28 +98,34 @@ def setDc(successOdds, dice=3, die=6, roundDown=True):
     """
     successOdds /= 100
 
-    # calculate mean, standard deviation, and then DC
-
-    # calculate mean. dice*die is max, dice is min, dice*(die+1) is max+min
-    mean = (dice * (die + 1)) / 2
-
-    # calculate standard deviation via discrete uniform variance formula
-    # (n^2 - 1) / 12
-    dieVariance = (die ** 2 - 1) / 12
-    diceVariance = dieVariance * dice
-    stDev = diceVariance ** 0.5
-
     # calculate a DC using the inverse cumulative distribution function
-    dc = NormalDist(mu=mean, sigma=stDev).inv_cdf(successOdds)
+    dc = NormalDist(mu=rolls.diceMean, sigma=rolls.diceStDev).inv_cdf(successOdds)
 
     # rotate around the 10.5 mean (17 becomes 4, 11 becomes 10, etc)
     # alternatively: dc = dice*(die+1) - dc
-    dc = -(dc - mean) + mean
+    dc = -(dc - rolls.diceMean) + rolls.diceMean
 
     if roundDown:
         # casting floats to ints truncates in python. don't have to import math
         return f"{int(dc)} (rounded down from {dc})"
     return f"{round(dc)} (rounded from {dc})"
+
+def oddsNum(dc, dice=rolls.dice, die=rolls.die):
+    """return odds of succeeding a dice check
+
+    Args:
+        dc (int): Dice check to pass/fail
+        dice (int, optional): Number of dice. Defaults to 3.
+        die (int, optional): Number of sides per die. Defaults to 6.
+
+    Returns:
+        [str]: Percent chance of success
+    """
+    odds = NormalDist(mu=rolls.diceMean, sigma=rolls.diceStDev).cdf(dc)
+    percentSuccess = 100 - int(round(odds, 2) * 100)
+
+    return f"DC of {dc} rolling {dice}d{die}: {percentSuccess}% success"
+    # in python 2, (1 + erf(x/root2))/2 can be substituted for normaldist.cdf
 
 # alias commands
 def hurt(char, amount):
@@ -111,6 +139,7 @@ def heal(char, amount=None):
 
 def levelUp(char):
     char.levelUp()
+
 
 def dismember(char, atMost=2):
     """permanently randomly decrease a character's attribute
@@ -134,7 +163,7 @@ def randomNames(n, *namefiles, threshold=3):
         tuple: of ('random name' 'for each' 'namefile used') strings
     """
 
-    # use a faster space-less algorithm (crediting Python Cookbook) if few names are needed
+    # use a faster space-less algorithm (crediting Python Cookbook) if fewer names are needed
     if n <= threshold:
         names = ['' for x in range(n)]
         for idx,_ in enumerate(names):
@@ -179,7 +208,7 @@ def henchmen(n, *namefiles, attributes={}, faction=[]):
 
     Args:
         n (int): number of henchmen
-        namefiles (str, optional): text files to source random character names from
+        namefiles (str, optional): text filenames to source random character names from
         attributes (dict, optional): a data dict containing elements for character construction
         faction (list, optional): a faction list to put henchmen inside
 
@@ -191,7 +220,7 @@ def henchmen(n, *namefiles, attributes={}, faction=[]):
         namefiles = tuple(('firstnames.txt','lastnames.txt'))
 
     # create list of henchmen,
-    characters = [character.Character(attributes) for x in range(n)]
+    characters = [character.Character.new(**attributes) for x in range(n)]
     # generate random names,
     names = randomNames(n, *namefiles)
     # name the characters
@@ -202,8 +231,7 @@ def henchmen(n, *namefiles, attributes={}, faction=[]):
     # send it
     return faction
 
-# TODO P1: test the hell out of this
-# TODO P3: this smells awful. i think item's constructor could use a rework. it also does 2 things instead of 1
+# TODO P3: this thing is doubling as a factory method and that probably shouldn't happen
 def loadItem(itemAttrs):
     """(recursively) loads an item in memory
 
@@ -218,24 +246,21 @@ def loadItem(itemAttrs):
     elif type(itemAttrs) == str:
         with open(f'.{sep}items{sep}'+itemAttrs) as f:
             itemJSON = json.load(f)
+
+    # ladder to determine item type to construct
     # this order actually matters a lot, because some weapons have bonusAC
-    # range key check determines the item to load is a weapon,
     if 'range' in itemJSON:
-        itemObj = item.Weapon(*itemJSON.values())
-        itemObj.storage = [loadItem(*itemJSON.values()) for item in itemObj.storage]
-        return itemObj
-    # bonusAC determines it's armor,
-    if 'bonusAC' in itemJSON:
-        itemObj = item.Armor(*itemJSON.values())
-        itemObj.storage = [loadItem(*itemJSON.values()) for item in itemObj.storage]
-        return itemObj
-    # otherwise it's a normal item
-    itemObj = item.Item(*itemJSON.values())
+        itemObj = item.Weapon(**itemJSON)
+    elif 'bonusAC' in itemJSON:
+        itemObj = item.Armor(**itemJSON)
+    else:
+        itemObj = item.Item(**itemJSON)
+
     itemObj.storage = [loadItem(item) for item in itemObj.storage]
     return itemObj
 
 # 4th iteration of this function. characters are now populated with gear
-# TODO P3: os.walk's python list is the wrong data structure here. a linked list makes the most sense, I think.
+# os.walk's python list is the wrong data structure here. a linked list makes the most sense, I think.
 # a deque import is costly but scales well. realistically this doesn't matter
 def load():
     """builds factions, a nested dict eventually containing lists of character Objs.
@@ -253,18 +278,16 @@ def load():
         # rootList is from walker e.g. ['sg13', 'sgc']. cd is the current dictionary
         outerDict = rootList.pop() # sgc will equal {'sg13':_, ...} so it's "outer"
 
-        # base case: rootList is empty after being popped. now dict can be populated
+        # base case: rootList is empty after being popped; now dict can be populated
         if not rootList:
             faction = []
             for fileStr in files:
                 with open(fileStr) as f:
                     # convert each serialized character into an object,
-                    charObj = character.Character(json.load(f))
-                    # convert each serialized item into an object,
+                    charObj = character.Character(**json.load(f))
+                    # convert each serialized item into an object (loadItem does recursion),
                     charObj.slots = {slot:loadItem(item) if item is not None else None \
                         for slot,item in charObj.slots.items()}
-                    # update the character to calculate weight & speed
-                    charObj.update()
                     # add the character to the faction,
                     faction.append(charObj)
             # send faction to dict
@@ -294,7 +317,7 @@ def load():
             populateFactions(rootList=root.split(sep)[:1:-1], cd=factions, files=files)
 
     return factions
-
+    
 
 def save(factions=None):
     """writes all character data to local jsons
@@ -319,8 +342,8 @@ def save(factions=None):
 
                 # character faction should be updated on each save
                 # it is purely cosmetic at this point, though
-                # this slicing ultimately does ".\\factions\\x/y/z/" -> "/x/y/z"
-                charCopy.faction = sep+sep.join(path.split(sep)[2:-1]).replace('\\','/') # for windows
+                # this slicing ultimately does ".\\factions\\x/y/z/" -> "x/y/z"
+                charCopy.faction = sep.join(path.split(sep)[2:-1]).replace('\\','/') # for windows
 
                 # write character to file
                 with open(f'{path}{charCopy.name}.json', 'w+', encoding='utf-8', errors='ignore') as f:
@@ -331,6 +354,27 @@ def save(factions=None):
         factions = factions
     getCharactersFromDicts(factions)
 
+# TODO P3: less ugly, but still bad
+def getChars(charDict):
+    """recursively get character objects inside a dictionary
+
+    Args:
+        charDict (list): of charObjs
+
+    Returns:
+        list: of charObjs
+    """
+    outList = [] # populated and returned
+    def recur(iterable):
+        for value in iterable.values():
+            if isinstance(value,dict):
+                recur(value)
+            else:
+                # extend operates outside local namespace, += doesn't. TIL
+                outList.extend(value)
+    recur(charDict)
+
+    return outList
 
 # from my original 2019 codebase
 # i've improved a lot since then. i gave it a facelift, but
@@ -373,11 +417,11 @@ def attack(attacker, defender, weapon=None, distance=0, cover=0):
     # weapon mods to hit
     mod = 0
     if weapon.proficiency == "strength":
-        mod = attacker.strMod
+        mod = attacker.self.bonusAttrs['strength']
     elif weapon.proficiency == "dexterity":
-        mod = attacker.dexMod
+        mod = attacker.self.bonusAttrs['dexterity']
     elif weapon.proficiency == "finesse":
-        mod = max(attacker.strMod, attacker.dexMod)
+        mod = max(attacker.self.bonusAttrs['strength'], attacker.self.bonusAttrs['dexterity'])
 
     # hit calculation
     hitcalc = roll3d6() + mod
@@ -408,3 +452,13 @@ def attack(attacker, defender, weapon=None, distance=0, cover=0):
 
     else:
         print("miss!")
+
+
+# some experiments i'm leaving here
+# def getChars2(charDict, outList=[])
+#     [getChars2(value, outList) if isinstance(value,dict) else outList.extend(value) for value in iterable.values()]
+#     return outList
+
+# def getChars3(charDict):
+#     # this is pretty fast, but puts out nested lists
+#     return [value if isinstance(value,list) else getChars3(value) if isinstance(value,dict) else value for value in charDict.values()]

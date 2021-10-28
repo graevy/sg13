@@ -1,11 +1,13 @@
 class Item:
-    def __init__(self, name, description=None, weight=0.0, storage=[], size=2, slots=0):
+    def __init__(self, name, description=None, weight=0.0, size=2, slots=0, storage=[], bonusAttrs={}, bonusSkills={}):
         self.name = name
         self.description = description
         self.weight = weight
-        self.storage = storage
         self.size = size # 0 is tiny, 1 is small, 2 is medium...use any signed int; it's a priority system
         self.slots = slots
+        self.storage = storage
+        self.bonusAttrs = bonusAttrs
+        self.bonusSkills = bonusSkills
 
     def __str__(self):
         return self.name+': '+self.description
@@ -41,20 +43,25 @@ class Item:
             container.storage.append(self)
         else:
             print("can't fit!")
+            return False
 
 
 class Weapon(Item):
-    def __init__(self, name, description=None, weight=0.0, storage=[], size=2, slots=0, \
-    range=3, damage=8, proficiency='strength', proficiencytype='melee', cqcpenalty=0):
+    def __init__(self, name, description=None, weight=0.0, size=2, slots=0, \
+                    storage=[], bonusAttrs={}, bonusSkills={}, \
+                    range=3, damage=8, proficiency='strength', proficiencytype='melee', cqcpenalty=0):
 
-        super().__init__(name, description, weight, storage, size, slots)
+        super().__init__(name, description, weight, size, slots, storage, bonusAttrs, bonusSkills)
 
         self.range, self.damage, self.proficiency, self.proficiencytype, self.cqcpenalty = \
         range, damage, proficiency, proficiencytype, cqcpenalty
 
 
 class Armor(Item):
-    def __init__(self, name, description=None, weight=0.0, storage=[], size=2, slots=0, bonusAC=0):
+    def __init__(self, name, description=None, weight=0.0, size=2, slots=0, \
+                    storage=[], bonusAttrs={}, bonusSkills={}, \
+                    bonusAC=0):
 
-        super().__init__(name, description, weight, storage, size, slots)
+        super().__init__(name, description, weight, size, slots, storage, bonusAttrs, bonusSkills)
+
         self.bonusAC = bonusAC

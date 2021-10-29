@@ -88,8 +88,8 @@ def groupInitiative(*characterLists):
         [(character.initiative(), character.name) for characterList in characterLists for character in characterList]
     , reverse=True)
 
-def skillCheck(charObj, stat, dc):
-    return True if rolls.IIId6() + charObj.skills[stat] + charObj.bonusSkills[stat] >= dc else False
+def skillCheck(charObj, stat, dc, rollFn=rolls.IIId6):
+    return True if rollFn() + charObj.skills[stat] + charObj.bonusSkills[stat] >= dc else False
 
 def setDc(successOdds, dice=rolls.dice, die=rolls.die, roundDown=True):
     """returns the DC of a % success chance

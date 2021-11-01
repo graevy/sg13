@@ -9,7 +9,7 @@ defaults = {
     "name": "NPC", "race": "human", "clas": "soldier", "faction": "",
 
     # stats                             (m/s)
-    "level": 1, "hp": 10, "tempHp": 0, "speed": 10.0,
+    "level": 1, "hp": 10, "tempHp": 0, "speed": 8.0,
 
     "attributes": {
         "strength": 8, "dexterity": 8, "constitution": 8, "intelligence": 8, "wisdom": 8, "charisma": 8
@@ -32,12 +32,8 @@ defaults = {
     "inspiration": 0
 }
 
-# a note about the word attribute:
-# most ttrpg systems i've used use "attribute" to refer to innate stat values like strength or wisdom
-# unfortunately, python object members are called attributes too. so there's some name collision i've tried to mitigate
-# this brings me to a potential TODO: combine the skills and attributes dicts (& bonuses) into a stats dict
 class Character:
-    """Generic character class. Construct with an unpacked **dict.
+    """Generic character class. Construct with an unpacked **dict
     """
     def __init__(self, **kwargs):
         for key,value in kwargs.items():
@@ -45,7 +41,7 @@ class Character:
 
     @classmethod
     def new(cls, **kwargs):
-        """uncontrolled factory method for first-time character creation.
+        """uncontrolled factory method for first-time character creation
         using this to load character jsons will run unnecessary recalculation overhead
 
         Returns:
@@ -69,15 +65,19 @@ class Character:
     #############################
     #### stat update methods ####
     #############################
+    # TODO P3: updateBonuses/updateMods should utilize updateBonus/updateMod methods,
+    # this would harden e.g. handleNewItem against e.g. item/feat extensibility. in the same vein,
+    # different races should probably just be different classes with different e.g. updateSpeed methods
 
     def updateRaceAndClass(self, race=False, clas=False):
-        # i decided functions were the simplest way to execute race and class modifiers
+        # functions are simpler, though
         if not hasattr(self,'raceAndClassApplied'):
             races.__dict__[race.replace("'","") if race else self.race.replace("'","")](self)
             classes.__dict__[clas if clas else self.clas](self)
             self.raceAndClassApplied=True
 
     def updateBonuses(self):
+        # see eof*
         self.bonusAttrs = {attrName:sum(
             item.bonusAttrs.get(attrName,0) if item else 0 for item in self.slots.values()
             ) for attrName in self.attributes}
@@ -105,10 +105,13 @@ class Character:
         self.gearWeight = sum(item.getWeight() if item else 0 for item in self.slots.values())
 
     def updateSpeed(self):
-        # 1.5 and 100 just felt right for the speed formula after trying different values
-        self.speed = 10.0 - self.gearWeight**1.5//100 # breakpoints at 21kg, 34, 44, 54...(100*n)**(2/3)kg
-        if self.speed < 1: # ultimately i don't want to stop people from being able to like, crawl
-            self.speed = 1
+        strMod = self.attrMods['strength'] + self.bonusAttrs['strength']
+        divisor = 100 + strMod * 50 if strMod < 6 else 350
+        # the goal here is to make strength meaningfully impact the amount of gear someone can carry
+        # 1.5 and 100 just felt right for defaults. breakpoints at 21kg, 34, 44, 54...(100*n)**(1/1.5)kg
+        # 50 as a multiplier scales pretty accurately given that it's supposed to represent human capability:
+        # with the intended max strmod of 5, the max gear someone could carry at 1 m/s is a little under 200kg
+        self.speed = 8.0 - self.gearWeight**1.5 // divisor
 
     def update(self):
         """builds all character meta variables"""
@@ -121,7 +124,7 @@ class Character:
         self.updateAC()
         self.updateMaxHp()
         self.updateWeight()
-        # speed depends on weight
+        # speed depends on weight and mods
         self.updateSpeed()
         self.suffix = "'" if self.name[-1] == ("s" or "x") else "'s"
 
@@ -134,7 +137,6 @@ class Character:
             don (bool, optional): True if equipping (donning). Defaults to True.
         """
         # everything gets multiplied by don because sometimes we're unequipping
-        # TODO P3: maybe just work this code into equip/unequip?
         don = 1 if don else -1
 
         # all of these calcs are done outside of their update() methods because it's much more efficient this way
@@ -336,7 +338,7 @@ class Character:
         def bug_player():
             s = input("type an attribute to increment: ").lower()
             if s not in charCopy.attributes.keys():
-                print("invalid attribute. attributes are: " + str(list(charCopy.attributes.keys())))
+                print("invalid attribute. attributes are: ", *charCopy.attributes.keys())
                 return False
             return s
 
@@ -397,7 +399,7 @@ class Character:
                 break
 
             if s not in charCopy.attributes:
-                print("invalid attribute. attributes are:",*list(charCopy.attributes.keys()))
+                print("invalid attribute. attributes are: ",*charCopy.attributes.keys())
 
             if charCopy.attributes[s] < 20:
                 charCopy.attributes[s] += 1
@@ -451,7 +453,8 @@ class Character:
         self = charCopy
 
 # *
-# these 2 dense dictcomps are collapsed from this code:
+# updating stats (and attacking) is the only real performance critical part of the code
+# i golfed these lines into the method:
 # self.bonusAttrs = {attrName:0 for attrName in self.attributes}
 # self.bonusSkills = {skillName:0 for skillName in self.skills}
 # for item in self.slots.values():

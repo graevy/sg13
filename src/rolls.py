@@ -29,7 +29,7 @@ def newDice(newDice, newDie):
 
 def roll(dice=dice, die=die):
     """custom roll, takes (dice)d(die)"""
-    return sum([random.randint(1, die) for x in range(dice)])
+    return sum(random.randint(1, die) for x in range(dice))
 
 def d20():
     """it's a d20. what do you want from me"""

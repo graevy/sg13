@@ -37,7 +37,7 @@ def d20():
 
 def mid3d20():
     """mid variance standard roll"""
-    return sorted([d20() for x in range(3)])[1]
+    return sorted(d20() for x in range(3))[1]
 
 # don't look too closely
 def IIId6():

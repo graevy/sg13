@@ -17,7 +17,7 @@ def create(mode=0, **kwargs):
         mode (int, optional): level of detail. Defaults to 0.
         kwargs (dict, optional): to include on creation. Defaults to {}.
     """
-    def handleInput(key, defaultsDict=character.defaults):
+    def handle_input(key, defaults_dict=character.defaults):
         # TODO P2: this doesn't handle invalid races/classes properly because 
         # dict membership checking happens in the character constructor. it
         # only checks invalid typing. if this ends up front-facing it needs a
@@ -27,9 +27,9 @@ def create(mode=0, **kwargs):
                 value = input(f'{key} <<< ')
                 # blank input uses the character.default value
                 if value == '':
-                    return defaultsDict[key]
+                    return defaults_dict[key]
                 # must dynamically type cast input string before returning
-                return type(defaultsDict[key])(value)
+                return type(defaults_dict[key])(value)
             except ValueError:
                 print(f" invalid entry")
 
@@ -39,22 +39,22 @@ def create(mode=0, **kwargs):
     # stuffing the basic values into data
     for basic in basics:
         if basic not in kwargs:
-            data[basic] = handleInput(basic)
+            data[basic] = handle_input(basic)
 
     # optionally manually edit character attributes and skills
     if mode:
         attrs = character.defaults['attributes']
-        data['attributes'] = {attrName:handleInput(attrName,attrs) \
-            if attrName not in kwargs else None for attrName in attrs}
+        data['attributes'] = {attr_name:handle_input(attr_name,attrs) \
+            if attr_name not in kwargs else None for attr_name in attrs}
         skills = character.defaults['skills']
-        data['skills'] = {skillName:handleInput(skillName,skills) \
-            if skillName not in kwargs else None for skillName in skills}
+        data['skills'] = {skill_name:handle_input(skill_name,skills) \
+            if skill_name not in kwargs else None for skill_name in skills}
         
         # gear editing
         if mode > 1:
             slots = character.defaults['slots']
-            data['slots'] = {slotName:handleInput(slotName,slots) \
-                if slotName not in kwargs else None for slotName in slots}
+            data['slots'] = {slot_name:handle_input(slot_name,slots) \
+                if slot_name not in kwargs else None for slot_name in slots}
 
     # at the end, insert kwargs, overwriting any Nones
     data = data | kwargs
@@ -71,31 +71,31 @@ def create(mode=0, **kwargs):
 
 
 # TODO P3: expanded 5e longrest implementation
-def longrest(*characterLists):
+def longrest(*character_lists):
     """pass lists of character objects to reset their hp"""
-    for characterList in characterLists:
-        for character in characterList:
+    for character_list in character_lists:
+        for character in character_list:
             character.heal()
 
 
-def groupInitiative(*characterLists):
+def groupInitiative(*character_lists):
     """generates initiative rolls from lists of characters.
 
     Returns:
         list: of (initiative roll, character name) tuples
     """
     return sorted(
-        [(character.initiative(), character.name) for characterList in characterLists for character in characterList]
+        [(character.initiative(), character.name) for character_list in character_lists for character in character_list]
     , reverse=True)
 
-def skillCheck(charObj, stat, dc, rollFn=rolls.IIId6):
-    return True if rollFn() + charObj.skills[stat] + charObj.bonusSkills[stat] >= dc else False
+def skillCheck(char_obj, stat, dc, rollFn=rolls.IIId6):
+    return True if rollFn() + char_obj.skills[stat] + char_obj.bonus_skills[stat] >= dc else False
 
-def setDc(successOdds, dice=rolls.dice, die=rolls.die, roundDown=True):
+def setDc(success_odds, dice=rolls.dice, die=rolls.die, roundDown=True):
     """returns the DC of a % success chance
 
     Args:
-        successOdds (int): the 0-99 chance of action success.
+        success_odds (int): the 0-99 chance of action success.
         dice (int, optional): number of dice to roll. Defaults to rolls.dice.
         die (int, optional): faces per die. Defaults to rolls.die.
         roundDown (bool, optional): floors the DC -- for lower variance rolls. Defaults to True.
@@ -103,14 +103,14 @@ def setDc(successOdds, dice=rolls.dice, die=rolls.die, roundDown=True):
     Returns:
         int: the corresponding DC
     """
-    successOdds /= 100
+    success_odds /= 100
 
     # calculate a DC using the inverse cumulative distribution function
-    dc = NormalDist(mu=rolls.diceMean, sigma=rolls.diceStDev).inv_cdf(successOdds)
+    dc = NormalDist(mu=rolls.dice_mean, sigma=rolls.dice_stdev).inv_cdf(success_odds)
 
     # rotate around the 10.5 mean (17 becomes 4, 11 becomes 10, etc)
     # alternatively: dc = dice*(die+1) - dc
-    dc = -(dc - rolls.diceMean) + rolls.diceMean
+    dc = -(dc - rolls.dice_mean) + rolls.dice_mean
 
     if roundDown:
         # casting floats to ints truncates in python. don't have to import math
@@ -128,7 +128,7 @@ def oddsNum(dc, dice=rolls.dice, die=rolls.die):
     Returns:
         [str]: Percent chance of success
     """
-    odds = NormalDist(mu=rolls.diceMean, sigma=rolls.diceStDev).cdf(dc)
+    odds = NormalDist(mu=rolls.dice_mean, sigma=rolls.dice_stdev).cdf(dc)
     percentSuccess = 100 - int(round(odds, 2) * 100)
 
     return f"DC of {dc} rolling {dice}d{die}: {percentSuccess}% success"
@@ -144,8 +144,8 @@ def heal(char, amount=None):
     else:
         char.heal(amount)
 
-def levelUp(char):
-    char.levelUp()
+def level_up(char):
+    char.level_up()
 
 
 def dismember(char, atMost=2):
@@ -158,7 +158,7 @@ def dismember(char, atMost=2):
     list(char.attributes.values())[random.randrange(0,len(char.attributes))] -= random.randint(1,atMost)
     char.update()
 
-def randomNames(n, *namefiles, threshold=3):
+def random_names(n, *namefiles, threshold=3):
     """spits out random names from namefiles
 
     Args:
@@ -175,38 +175,38 @@ def randomNames(n, *namefiles, threshold=3):
         names = ['' for x in range(n)]
         for idx,_ in enumerate(names):
             for namefile in namefiles:
-                lineIndex = 0
-                selectedLine = None
+                line_index = 0
+                selected_line = None
                 with open(namefile, 'r') as f:
                     while True:
                         line = f.readline()
                         if not line: # readline() returns '' at EOF
                             break
-                        lineIndex += 1
+                        line_index += 1
                         # first line has a 1/1 chance of being selected
                         # the nth line has a 1/n chance of overwriting previous selection
-                        if random.uniform(0, lineIndex) < 1:
-                            selectedLine = line
+                        if random.uniform(0, line_index) < 1:
+                            selected_line = line
 
                 # (add spaces between firstname nthname lastname)
-                names[idx] += selectedLine.rstrip() + ' '
+                names[idx] += selected_line.rstrip() + ' '
             names[idx].rstrip() # remove trailing space
         return names
 
     # otherwise, store all file data in lists for faster accesses
     else:
         # build a list of lists of random names from each file
-        namefileListList = []
+        namefile_list_list = []
         for namefile in namefiles:
-            namefileList = []
+            namefile_list = []
             with open(namefile, 'r') as f:
                 for line in f:
-                    namefileList.append(line) # name whitespace and trailing newline preserved
-            namefileListList.append(namefileList) # better to rstrip on assignment
+                    namefile_list.append(line) # name whitespace and trailing newline preserved
+            namefile_list_list.append(namefile_list) # better to rstrip on assignment
 
         # now actually create and return the random names
         return tuple((' '.join(
-            random.choice(namefileList).rstrip() for namefileList in namefileListList
+            random.choice(namefile_list).rstrip() for namefile_list in namefile_list_list
             ) for henchman in range(n)))
 
 
@@ -229,7 +229,7 @@ def henchmen(n, *namefiles, attributes={}, faction=[]):
     # create list of henchmen,
     characters = [character.Character.new(**attributes) for x in range(n)]
     # generate random names,
-    names = randomNames(n, *namefiles)
+    names = random_names(n, *namefiles)
     # name the characters
     for idx in range(n):
         characters[idx].name = names[idx]
@@ -239,32 +239,32 @@ def henchmen(n, *namefiles, attributes={}, faction=[]):
     return faction
 
 # TODO P3: this thing is doubling as a factory method and that probably shouldn't happen
-def loadItem(itemAttrs):
+def load_item(item_attrs):
     """(recursively) loads an item in memory
 
     Args:
-        itemAttrs (dict or str): an attr dict to manually create an item with, or a filename str to load from
+        item_attrs (dict or str): an attr dict to manually create an item with, or a filename str to load from
 
     Returns:
         Item: loaded
     """
-    if type(itemAttrs) == dict:
-        itemJSON = itemAttrs
-    elif type(itemAttrs) == str:
-        with open(f'.{sep}items{sep}'+itemAttrs) as f:
-            itemJSON = json.load(f)
+    if type(item_attrs) == dict:
+        item_json = item_attrs
+    elif type(item_attrs) == str:
+        with open(f'.{sep}items{sep}'+item_attrs) as f:
+            item_json = json.load(f)
 
     # ladder to determine item type to construct
-    # this order actually matters a lot, because some weapons have bonusAC
-    if 'range' in itemJSON:
-        itemObj = item.Weapon(**itemJSON)
-    elif 'bonusAC' in itemJSON:
-        itemObj = item.Armor(**itemJSON)
+    # this order actually matters a lot, because some weapons have bonus_ac
+    if 'range' in item_json:
+        item_obj = item.Weapon(**item_json)
+    elif 'bonus_ac' in item_json:
+        item_obj = item.Armor(**item_json)
     else:
-        itemObj = item.Item(**itemJSON)
+        item_obj = item.Item(**item_json)
 
-    itemObj.storage = [loadItem(item) for item in itemObj.storage]
-    return itemObj
+    item_obj.storage = [load_item(item) for item in item_obj.storage]
+    return item_obj
 
 # os.walk's python list is the wrong data structure here. a linked list makes the most sense, I think.
 # a deque import is costly but scales well. realistically this doesn't matter
@@ -276,30 +276,30 @@ def load():
         raise Exception("load() attempted to overwrite factions dict")
 
     # recursive function to both load characters (with items) and populate the root factions dict
-    def populateFactions(rootList, cd, files):
-        # rootList is from walker e.g. ['sg13', 'sgc']. cd is the current dictionary
-        outerDict = rootList.pop() # sgc will equal {'sg13':_, ...} so it's "outer"
+    def populateFactions(root_list, cd, files):
+        # root_list is from walker e.g. ['sg13', 'sgc']. cd is the current dictionary
+        outer_dict = root_list.pop() # sgc will equal {'sg13':_, ...} so it's "outer"
 
-        # base case: rootList is empty after being popped; now dict can be populated
-        if not rootList:
+        # base case: root_list is empty after being popped; now dict can be populated
+        if not root_list:
             faction = []
-            for fileStr in files:
-                with open(fileStr) as f:
+            for file_str in files:
+                with open(file_str) as f:
                     # convert each serialized character into an object,
-                    charObj = character.Character(**json.load(f))
-                    # convert each serialized item into an object (loadItem does recursion),
-                    charObj.slots = {slot:loadItem(item) if item else None \
-                        for slot,item in charObj.slots.items()}
+                    char_obj = character.Character(**json.load(f))
+                    # convert each serialized item into an object (load_item does recursion),
+                    char_obj.slots = {slot:load_item(item) if item else None \
+                        for slot,item in char_obj.slots.items()}
                     # add the character to the faction,
-                    faction.append(charObj)
+                    faction.append(char_obj)
             # send faction to dict
-            cd[outerDict] = faction
+            cd[outer_dict] = faction
             return
 
         # otherwise, keep traversing
-        if outerDict not in cd:
-            cd[outerDict] = {}
-        populateFactions(rootList=rootList, cd=cd[outerDict], files=files)
+        if outer_dict not in cd:
+            cd[outer_dict] = {}
+        populateFactions(root_list=root_list, cd=cd[outer_dict], files=files)
 
     # generator yielding file locations
     #                               root:           dirs       files
@@ -311,15 +311,14 @@ def load():
     #    (dirs unused)
     for root, _, files in walker:
         if files:
-            files = [root+sep+fileStr for fileStr in files]
+            files = [root+sep+file_str for file_str in files]
 
             # root.split(sep) looks like [".", "factions", "<faction1>", "<faction2>", ...]
-            # [::-1] reverses the list; populateFactions can rootList.pop() efficiently
+            # [::-1] reverses the list; populateFactions can root_list.pop() efficiently
             # [:1:-1] slices out the first 2 (junk) elements from the original unreversed list
-            populateFactions(rootList=root.split(sep)[:1:-1], cd=factions, files=files)
+            populateFactions(root_list=root.split(sep)[:1:-1], cd=factions, files=files)
 
     return factions
-    
 
 def save(factions=None):
     """writes all character data to local jsons
@@ -327,17 +326,17 @@ def save(factions=None):
     Args:
         factions (dict): arbitrarily nested dicts eventually containing lists of character objects
     """
-    def getCharactersFromDicts(iterable: list or dict, path=f'.{sep}factions{sep}'):
+    def get_characters_from_dicts(iterable: list or dict, path=f'.{sep}factions{sep}'):
         # put every nested dict on the stack
         if isinstance(iterable, dict):
             for key, value in iterable.items(): # e.g. path="./factions/sgc/" first
-                getCharactersFromDicts(value, path=(path+key+sep))
+                get_characters_from_dicts(value, path=(path+key+sep))
 
-        # encountered a charObj list
+        # encountered a char_obj list
         if isinstance(iterable, list):
-            for charObj in iterable:
+            for char_obj in iterable:
                 # save a copy of the character, so the session can continue if needed
-                charCopy = deepcopy(charObj)
+                char_copy = deepcopy(char_obj)
                 # create directories if they don't exist
                 if not os.path.exists(path):
                     os.makedirs(path)
@@ -345,26 +344,26 @@ def save(factions=None):
                 # character faction should be updated on each save
                 # it is purely cosmetic at this point, though
                 # this slicing ultimately does ".\\factions\\x/y/z/" -> "x/y/z"
-                charCopy.faction = sep.join(path.split(sep)[2:-1]).replace('\\','/') # for windows
+                char_copy.faction = sep.join(path.split(sep)[2:-1]).replace('\\','/') # for windows
 
                 # write character to file
-                with open(f'{path}{charCopy.name}.json', 'w+', encoding='utf-8', errors='ignore') as f:
-                    json.dump(charCopy.getJSON(), f)
+                with open(f'{path}{char_copy.name}.json', 'w+', encoding='utf-8') as f:
+                    json.dump(char_copy.get_json(), f)
 
     # TODO P3: implement this
     if factions == None:
         factions = factions
-    getCharactersFromDicts(factions)
+    get_characters_from_dicts(factions)
 
 # TODO P3: less ugly, but still bad
 def getChars(charDict):
     """recursively get character objects inside a dictionary
 
     Args:
-        charDict (list): of charObjs
+        charDict (list): of char_objs
 
     Returns:
-        list: of charObjs
+        list: of char_objs
     """
     outList = [] # populated and returned
     def recur(iterable):
@@ -374,9 +373,28 @@ def getChars(charDict):
             else:
                 # extend operates outside local namespace, += doesn't. TIL
                 outList.extend(value)
-    recur(charDict)
 
+    recur(charDict)
     return outList
+
+# TODO P3: this shorter version memory leaks???
+# somehow outList gets saved between calls, and consecutive calls add to it
+# def getChars2(charDict, outList=[]):
+#     for value in charDict.values():
+#         if isinstance(value,dict):
+#             getChars2(value,outList)
+#         else:
+#             outList += value
+#     return outList
+
+# compound_dict = {   1:{2:[3,4]}, 5:{6:{7:[8]}, 9:[0]}   }
+# def recur(iterable,output=[]):
+#     for value in iterable.values():
+#         if isinstance(value,dict):
+#             recur(value)
+#         else:
+#             output += value
+#     return output
 
 # from my original 2019 codebase
 # i've improved a lot since then. i gave it a facelift, but
@@ -408,33 +426,33 @@ def attack(attacker, defender, weapon=None, distance=0, cover=0):
 
     # fetch weapon
     if weapon is None:
-        if attacker.slots['rightHand'] is None:
-            if attacker.slots['leftHand'] is None:
+        if attacker.slots['right_hand'] is None:
+            if attacker.slots['left_hand'] is None:
                 return "no valid attacker wep" # TODO: unarmed combat
             else:
-                weapon = attacker.slots['leftHand']
+                weapon = attacker.slots['left_hand']
         else:
-            weapon = attacker.slots['rightHand']
+            weapon = attacker.slots['right_hand']
 
     # weapon mods to hit
     mod = 0
     if weapon.proficiency == "strength":
-        mod = attacker.self.bonusAttrs['strength']
+        mod = attacker.self.bonus_attrs['strength']
     elif weapon.proficiency == "dexterity":
-        mod = attacker.self.bonusAttrs['dexterity']
+        mod = attacker.self.bonus_attrs['dexterity']
     elif weapon.proficiency == "finesse":
-        mod = max(attacker.self.bonusAttrs['strength'], attacker.self.bonusAttrs['dexterity'])
+        mod = max(attacker.self.bonus_attrs['strength'], attacker.self.bonus_attrs['dexterity'])
 
     # hit calculation
     hitcalc = roll3d6() + mod
 
     # dual wield penalty
-    if attacker.slots['leftHand'] is not None and attacker.slots['rightHand'] is not None:
+    if attacker.slots['left_hand'] is not None and attacker.slots['right_hand'] is not None:
         hitcalc -= 2
 
     # qc penalty for long range weapons
-    if weapon.cqcpenalty > 0 and distance > 3:
-        hitcalc -= 2 * weapon.cqcpenalty
+    if weapon.cqc_penalty > 0 and distance > 3:
+        hitcalc -= 2 * weapon.cqc_penalty
         print("close combat weapon penalty applied")
 
     # does the attack hit?
@@ -456,7 +474,7 @@ def attack(attacker, defender, weapon=None, distance=0, cover=0):
         print("miss!")
 
 
-# some experiments i'm leaving here
+# some golf experiments i'm leaving here
 # def getChars2(charDict, outList=[])
 #     [getChars2(value, outList) if isinstance(value,dict) else outList.extend(value) for value in iterable.values()]
 #     return outList

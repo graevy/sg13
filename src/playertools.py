@@ -31,9 +31,9 @@ def unequip(char, item, slot):
 
 def grab(char, item, hand=None):
     if hand[:4].lower() == 'left':
-        hand = 'leftHand'
+        hand = 'left_hand'
     elif hand[:5].lower() == 'right':
-        hand = 'rightHand'
+        hand = 'right_hand'
     else:
         print("invalid hand slot")
     char.equip(item, slot=hand)
@@ -53,7 +53,7 @@ def odds(dc, dice=rolls.dice, die=rolls.die):
         str: a short string describing how likely a success is
     """
     # calculate odds
-    odds = NormalDist(mu=rolls.diceMean, sigma=rolls.diceStDev).cdf(dc)
+    odds = NormalDist(mu=rolls.dice_mean, sigma=rolls.dice_stdev).cdf(dc)
     percentSuccess = 100 - int(round(odds, 2) * 100)
 
     # in python 2, (1 + erf(x/root2))/2 can be substituted for normaldist.cdf

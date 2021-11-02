@@ -1,16 +1,16 @@
-def human(charObj): # +1 to all
-    charObj.bonusAttrs = {attrName:attrValue+1 for attrName,attrValue in charObj.bonusAttrs.items()}
+def human(char_obj): # +1 to all
+    char_obj.bonus_attrs = {attr_name:attr_value+1 for attr_name,attr_value in char_obj.bonus_attrs.items()}
 
-def jaffa(charObj):
-    charObj.bonusAttrs['constitution'] += 2
-    charObj.bonusAttrs['wisdom'] += 2
+def jaffa(char_obj):
+    char_obj.bonus_attrs['constitution'] += 2
+    char_obj.bonus_attrs['wisdom'] += 2
 
-def goauld(charObj):
-    charObj.bonusAttrs['constitution'] += 2
-    charObj.bonusAttrs['intelligence'] += 2
-    charObj.bonusAttrs['charisma'] += 2
-    charObj.bonusAttrs['wisdom'] -= 2
+def goauld(char_obj):
+    char_obj.bonus_attrs['constitution'] += 2
+    char_obj.bonus_attrs['intelligence'] += 2
+    char_obj.bonus_attrs['charisma'] += 2
+    char_obj.bonus_attrs['wisdom'] -= 2
 
-def tokra(charObj):
+def tokra(char_obj):
     # :^)
-    goauld(charObj)
+    goauld(char_obj)

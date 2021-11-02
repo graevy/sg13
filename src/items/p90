@@ -1,1 +1,1 @@
-{"name": "FN P90", "description": "5.7x28mm FMJ", "weight": 3.0, "storage": [], "size": 2, "slots": 0, "range": 200, "damage": 12, "proficiency": "dexterity", "proficiencytype": "melee", "cqcpenalty": 1}
+{"name": "FN P90", "description": "5.7x28mm FMJ", "weight": 3.0, "storage": [], "size": 2, "slots": 0, "range": 200, "damage": 12, "proficiency": "dexterity", "proficiency_type": "melee", "cqc_penalty": 1}

@@ -1,13 +1,15 @@
+import json
+
 class Item:
-    def __init__(self, name, description=None, weight=0.0, size=2, slots=0, storage=[], bonusAttrs={}, bonusSkills={}):
+    def __init__(self, name, description=None, weight=0.0, size=2, slots=0, storage=[], bonus_attrs={}, bonus_skills={}):
         self.name = name
         self.description = description
         self.weight = weight
         self.size = size # 0 is tiny, 1 is small, 2 is medium...use any signed int; it's a priority system
         self.slots = slots
         self.storage = storage
-        self.bonusAttrs = bonusAttrs
-        self.bonusSkills = bonusSkills
+        self.bonus_attrs = bonus_attrs
+        self.bonus_skills = bonus_skills
 
     def __str__(self):
         return self.name+': '+self.description
@@ -21,16 +23,16 @@ class Item:
         for item in self.storage:
             item.show(spacing)
 
-    def getWeight(self):
+    def get_weight(self):
         """recursively gets item and storage weight
         """
-        return self.weight + sum([item.getWeight() for item in self.storage])
+        return self.weight + sum(item.get_weight() for item in self.storage)
 
-    def getJSON(self):
+    def get_json(self):
         """recursively serializes items
         """
         attrs = vars(self)
-        attrs['storage'] = [item.getJSON() for item in self.storage]
+        attrs['storage'] = [item.get_json() for item in self.storage]
         return attrs
 
     def store(self, container):
@@ -45,23 +47,29 @@ class Item:
             print("can't fit!")
             return False
 
+    # this only gets used on refactoring, and should be excluded from potential releases
+    def save(self):
+        with open(f'./items/{self.name}.json', 'w+', encoding='utf-8') as f:
+            json.dump(self.get_json(), f)
+
+
 
 class Weapon(Item):
     def __init__(self, name, description=None, weight=0.0, size=2, slots=0, \
-                    storage=[], bonusAttrs={}, bonusSkills={}, \
-                    range=3, damage=8, proficiency='strength', proficiencytype='melee', cqcpenalty=0):
+                    storage=[], bonus_attrs={}, bonus_skills={}, \
+                    range=3, damage=8, proficiency='strength', proficiency_type='melee', cqc_penalty=0):
 
-        super().__init__(name, description, weight, size, slots, storage, bonusAttrs, bonusSkills)
+        super().__init__(name, description, weight, size, slots, storage, bonus_attrs, bonus_skills)
 
-        self.range, self.damage, self.proficiency, self.proficiencytype, self.cqcpenalty = \
-        range, damage, proficiency, proficiencytype, cqcpenalty
+        self.range, self.damage, self.proficiency, self.proficiency_type, self.cqc_penalty = \
+        range, damage, proficiency, proficiency_type, cqc_penalty
 
 
 class Armor(Item):
     def __init__(self, name, description=None, weight=0.0, size=2, slots=0, \
-                    storage=[], bonusAttrs={}, bonusSkills={}, \
-                    bonusAC=0):
+                    storage=[], bonus_attrs={}, bonus_skills={}, \
+                    bonus_ac=0):
 
-        super().__init__(name, description, weight, size, slots, storage, bonusAttrs, bonusSkills)
+        super().__init__(name, description, weight, size, slots, storage, bonus_attrs, bonus_skills)
 
-        self.bonusAC = bonusAC
+        self.bonus_ac = bonus_ac

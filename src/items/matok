@@ -1,1 +1,1 @@
-{"name": "Ma'tok", "description": null, "weight": 5.0, "storage": [], "size": 3, "slots": 0, "range": 50, "damage": 30, "proficiency": "strength", "proficiencytype": "melee", "cqcpenalty": 0}
+{"name": "Ma'tok", "description": null, "weight": 5.0, "storage": [], "size": 3, "slots": 0, "range": 50, "damage": 30, "proficiency": "strength", "proficiency_type": "melee", "cqc_penalty": 0}

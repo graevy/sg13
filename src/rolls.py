@@ -3,28 +3,28 @@ import json
 import random
 
 with open('./cfg/diceconfig.json') as f:
-    diceConfig = json.load(f)
-dice = diceConfig['dice'] # number of dice used in each roll
-die  = diceConfig['die']  # number of sides per die
+    dice_config = json.load(f)
+dice = dice_config['dice'] # number of dice used in each roll
+die  = dice_config['die']  # number of sides per die
 
 # calculate mean. dice*die is max, dice is min, dice*(die+1) is max+min
-diceMean = (dice * (die + 1)) / 2
+dice_mean = (dice * (die + 1)) / 2
 # calculate standard deviation via discrete uniform variance formula:
 # (n^2 - 1) / 12
-diceStDev = dice * ((die**2 - 1) / 12)
+dice_stdev = dice * ((die**2 - 1) / 12)
 
-def newDice(newDice, newDie):
+def new_dice(new_dice, new_die):
     """changes system default dice settings
 
     Args:
-        newDice (int): of dice per roll
-        newDie (int): of sides per die
+        new_dice (int): of dice per roll
+        new_die (int): of sides per die
     """
     global dice,die
-    dice = newDice
-    die = newDie
-    diceConfig = {'dice':dice, 'die':die}
-    with open('./cfg/diceconfig.json', 'w+') as f:
+    dice = new_dice
+    die = new_die
+    dice_config = {'dice':dice, 'die':die}
+    with open('./cfg/diceconfig.json', 'w+', encoding='utf-8') as f:
         json.dump(diceConfig, f)
 
 def roll(dice=dice, die=die):

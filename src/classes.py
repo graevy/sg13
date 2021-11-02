@@ -1,18 +1,18 @@
-def soldier(charObj):
-    charObj.hitDie = 10
-    charObj.bonusAttrs['constitution'] += 2
-    charObj.bonusSkills['tactics'] += 1
-    charObj.bonusSkills['athletics'] += 1
+def soldier(char_obj):
+    char_obj.hit_die = 10
+    char_obj.bonus_attrs['constitution'] += 2
+    char_obj.bonus_skills['tactics'] += 1
+    char_obj.bonus_skills['athletics'] += 1
 
-def scientist(charObj):
-    charObj.hitDie = 8
-    charObj.bonusAttrs['intelligence'] += 3
-    charObj.bonusSkills['technology'] += 2
-    charObj.bonusSkills['xenotechnology'] += 2
+def scientist(char_obj):
+    char_obj.hit_die = 8
+    char_obj.bonus_attrs['intelligence'] += 3
+    char_obj.bonus_skills['technology'] += 2
+    char_obj.bonus_skills['xenotechnology'] += 2
 
-def anthropologist(charObj):
-    charObj.hitDie = 8
-    charObj.bonusAttrs['wisdom'] += 3
-    charObj.bonusSkills['anthropology'] += 2
-    charObj.bonusSkills['xenoanthropology'] += 1
-    charObj.bonusSkills['diplomacy'] += 1
+def anthropologist(char_obj):
+    char_obj.hit_die = 8
+    char_obj.bonus_attrs['wisdom'] += 3
+    char_obj.bonus_skills['anthropology'] += 2
+    char_obj.bonus_skills['xenoanthropology'] += 1
+    char_obj.bonus_skills['diplomacy'] += 1

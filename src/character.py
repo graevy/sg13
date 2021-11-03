@@ -455,31 +455,35 @@ class Character:
 
     def auto_level_up(self, preset=self.clas):
 
-        def preset_priority():
-            # ladders until structural pattern matching actually takes off
-            # each class just reorders attribute priority
-            nonlocal preset
-            if preset == 'soldier':
-                preferred_attrs = 'constitution', 'dexterity', 'strength', 'wisdom', 'intelligence', 'charisma'
-            elif preset == 'scientist':
-                preferred_attrs = 'intelligence', 'constitution', 'dexterity', 'wisdom', 'charisma', 'strength'
-            elif preset == 'archaeologist':
-                preferred_attrs = 'wisdom', 'intelligence', 'dexterity', 'charisma', 'constitution', 'strength'
-            else:
-                # if nothing is supplied, just exit the function with a random attribute
-                nonlocal self
-                return random.choice(tuple(self.attributes.keys()))
+        # acting, anthropology, xenoanthropology, sleightofhand, stealth,
+        # diplomacy, medicine, vehicles, xenotechnology, technology,
+        # insight, perception, survival, tactics, athletics, acrobatics
+        if preset == 'soldier':
+            preferred_attrs = 'constitution', 'dexterity', 'strength', 'wisdom', 'intelligence', 'charisma'
+            preferred_skills = 'athletics', 'tactics', 'perception', 'acrobatics', 'stealth', 'medicine', 'vehicles', 'survival'
 
-            # TODO P2: this is a placeholder
-            # prioritizes 3 attrs in order, but keeps them roughly grouped
-            if preferred_attrs[0] - preferred_attrs[1] < 2:
-                return preferred_attrs[0]
-            if preferred_attrs[1] - preferred_attrs[2] < 2:
-                return preferred_attrs[1]
-            else:
-                return preferred_attrs[2]            
+        elif preset == 'scientist':
+            preferred_attrs = 'intelligence', 'constitution', 'dexterity', 'wisdom', 'charisma', 'strength'
+            preferred_skills = 'technology', 'xenotechnology'
+
+        elif preset == 'archaeologist':
+            preferred_attrs = 'wisdom', 'intelligence', 'dexterity', 'charisma', 'constitution', 'strength'
+            preferred_skills = 'xenoanthropology', 'anthropology', 'diplomacy', 'insight', 'perception', 'acting'
+
+        # else:
+        #     # if nothing is supplied, just exit the function with a random attribute
+        #     nonlocal self
+        #     return random.choice(tuple(self.attributes.keys()))
+
+        # TODO P2: this is a placeholder. it will also fail if someone's attribute hits a max value
+        # prioritizes 3 attrs in order, but keeps them roughly grouped
+        if preferred_attrs[0] - preferred_attrs[1] < 2:
+            return preferred_attrs[0]
+        if preferred_attrs[1] - preferred_attrs[2] < 2:
+            return preferred_attrs[1]
+        else:
+            return preferred_attrs[2]            
             
-
         char_copy = deepcopy(self)
         char_copy.level += 1
 
@@ -488,12 +492,13 @@ class Character:
             char_copy.attribute_points += 2
 
         for point in range(char_copy.attribute_points):
-            char_copy.attributes[   random.choice(tuple(char_copy.attributes.keys()))   ] += 1
+            char_copy.attributes[   pick_attribute()   ] += 1
 
-
-
-        char_copy.update_mods()
         base_int_mod = (char_copy.attributes['intelligence'] - 10) // 2
+        char_copy.skill_points += 3 + base_int_mod
+
+        for point in range(char_copy.skill_points):
+
 
 
 

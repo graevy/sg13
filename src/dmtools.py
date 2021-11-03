@@ -251,7 +251,7 @@ def load_item(item_attrs):
     if type(item_attrs) == dict:
         item_json = item_attrs
     elif type(item_attrs) == str:
-        with open(f'.{sep}items{sep}'+item_attrs) as f:
+        with open(f'.{sep}items{sep}{item_attrs}.json') as f:
             item_json = json.load(f)
 
     # ladder to determine item type to construct
@@ -272,6 +272,7 @@ def load():
     """builds factions, a nested dict eventually containing lists of character Objs.
     """
 
+    # TODO P3: this broke
     if 'factions' in globals():
         raise Exception("load() attempted to overwrite factions dict")
 

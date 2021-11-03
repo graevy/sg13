@@ -475,15 +475,6 @@ class Character:
         #     nonlocal self
         #     return random.choice(tuple(self.attributes.keys()))
 
-        # TODO P2: this is a placeholder. it will also fail if someone's attribute hits a max value
-        # prioritizes 3 attrs in order, but keeps them roughly grouped
-        if preferred_attrs[0] - preferred_attrs[1] < 2:
-            return preferred_attrs[0]
-        if preferred_attrs[1] - preferred_attrs[2] < 2:
-            return preferred_attrs[1]
-        else:
-            return preferred_attrs[2]            
-            
         char_copy = deepcopy(self)
         char_copy.level += 1
 
@@ -491,14 +482,22 @@ class Character:
         if  char_copy.level % 4 == 0:
             char_copy.attribute_points += 2
 
-        for point in range(char_copy.attribute_points):
-            char_copy.attributes[   pick_attribute()   ] += 1
+        # TODO P2: this is a placeholder. it will also fail if someone's attribute hits a max value
+        # prioritizes 3 attrs in order, but keeps them roughly grouped
+        for point in range(attribute_points):
+            if preferred_attrs[0] - preferred_attrs[1] < 2:
+                self.attributes[preferred_attrs[0]] += 1
+            if preferred_attrs[1] - preferred_attrs[2] < 2:
+                self.attributes[preferred_attrs[1]] += 1
+            else:
+                self.attributes[preferred_attrs[2]] += 1
+
 
         base_int_mod = (char_copy.attributes['intelligence'] - 10) // 2
         char_copy.skill_points += 3 + base_int_mod
 
         for point in range(char_copy.skill_points):
-
+            
 
 
 

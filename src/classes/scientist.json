@@ -1,1 +1,1 @@
-{"name": "scientist", "hit_die": 8, "bonus_attrs": {"intelligence": 3}, "bonus_skills": {"xenotechnology": 2, "technology": 2}, "proficiencies": null, "feats": null}
+{"name": "scientist", "hit_die": 8, "bonus_attrs": {"intelligence": 3}, "bonus_skills": {"xenotechnology": 2, "technology": 2}, "proficiencies": null, "feats": null, "preferred_attrs": ["intelligence", "constitution", "dexterity", "wisdom", "charisma", "strength"], "preferred_skills": ["technology", "xenotechnology"]}

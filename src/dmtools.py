@@ -381,7 +381,7 @@ def save(factions=None):
 #     recur(charDict)
 #     return outList
 
-def getChars(char_dict, out_list=None):
+def get_chars(char_dict, out_list=None):
     """recursively get character objects from lists inside a nested dict
 
     Args:
@@ -390,11 +390,11 @@ def getChars(char_dict, out_list=None):
     Returns:
         list: of char_objs
     """
-    if out_list is None:
+    if out_list is None: # thanks guido
         out_list = []
     for value in char_dict.values():
         if isinstance(value,dict):
-            getChars2(value,out_list)
+            get_chars(value,out_list)
         else:
             out_list += value
     return out_list

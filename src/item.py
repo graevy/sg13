@@ -1,5 +1,3 @@
-import json
-
 class Item:
     def __init__(self, name, description=None, weight=0.0, size=2, slots=0, storage=[], bonus_attrs={}, bonus_skills={}):
         self.name = name
@@ -47,10 +45,15 @@ class Item:
             print("can't fit!")
             return False
 
-    # this only gets used on refactoring, and should be excluded from potential releases
-    def save(self):
-        with open(f'./items/{self.name}.json', 'w+', encoding='utf-8') as f:
-            json.dump(self.get_json(), f)
+    # # this only gets used on refactoring, and should be excluded from potential releases
+    # def save(self):
+    #     with open(f'./items/{self.name}.json', 'w+', encoding='utf-8') as f:
+    #         json.dump(self.get_json(), f)
+
+    # @classmethod
+    # def load(cls, name):
+    #     with open(f'./items/{name}.json') as f:
+    #         return cls(**json.load(f))
 
 
 

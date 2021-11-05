@@ -1,8 +1,9 @@
 import random
 from copy import deepcopy
 
-import races
-import classes
+import race
+import clas
+import rolls
 
 # this dict only really gets used in character creation and dmtools
 defaults = {
@@ -69,13 +70,26 @@ class Character:
     #############################
     # TODO P3: update_bonuses/update_mods should utilize updateBonus/updateMod methods,
     # this would harden e.g. handle_new_item against e.g. item/feat extensibility. in the same vein,
-    # different races should probably just be different classes with different e.g. update_speed methods
+    # different races should probably just be different classes with different e.g. update_speed methods?
 
     def update_race_and_class(self, race=False, clas=False):
-        # functions are simpler, though
+        # check to make sure we aren't stacking bonuses on each update
         if not hasattr(self,'race_and_class_applied'):
-            races.__dict__[race.replace("'","") if race else self.race.replace("'","")](self)
-            classes.__dict__[clas if clas else self.clas](self)
+            # apply racial bonuses by loading and inspecting the json
+            race_dict = race.load_race(self.race if not race else race)
+            for attr,bonus in race_dict.bonus_attrs.items():
+                self.bonus_attrs[attr] += bonus
+            for skill,bonus in race_dict.bonus_skills.items():
+                self.bonus_skills[skill] += bonus
+
+            # apply class bonuses the same way
+            clas_dict = clas.load_clas(self.clas if not clas else clas)
+            for attr,bonus in clas_dict.bonus_attrs.items():
+                self.bonus_attrs[attr] += bonus
+            for skill,bonus in clas_dict.bonus_skills.items():
+                self.bonus_skills[skill] += bonus
+
+            # so we don't stack bonuses in the future
             self.race_and_class_applied=True
 
     def update_bonuses(self):
@@ -265,8 +279,12 @@ class Character:
         f"{self.attribute_points} attribute points, and {self.skill_points} skill points.")
 
     #############################
-    #     character combat
+    #   character interaction   #
     #############################
+
+    def skill_check(self, stat, dc, rollFn=rolls.IIId6):
+        return True if rollFn() + self.skills[stat] + self.bonus_skills[stat] >= dc else False
+
     # TODO P2: attack function wrapper method?
     def initiative(self, dice=3, die=6):
         """Rolls initiative for the character.
@@ -453,50 +471,46 @@ class Character:
         char_copy.update()
         self = char_copy
 
-    def auto_level_up(self, preset=self.clas):
+    # def auto_level_up(self, preset=self.clas):
 
-        # acting, anthropology, xenoanthropology, sleightofhand, stealth,
-        # diplomacy, medicine, vehicles, xenotechnology, technology,
-        # insight, perception, survival, tactics, athletics, acrobatics
-        if preset == 'soldier':
-            preferred_attrs = 'constitution', 'dexterity', 'strength', 'wisdom', 'intelligence', 'charisma'
-            preferred_skills = 'athletics', 'tactics', 'perception', 'acrobatics', 'stealth', 'medicine', 'vehicles', 'survival'
+    #     match preset:
+    #         case 'soldier':
+    #             preferred_attrs = 'constitution', 'dexterity', 'strength', 'wisdom', 'intelligence', 'charisma'
+    #             preferred_skills = 'athletics', 'tactics', 'perception', 'acrobatics', 'stealth', 'medicine', 'vehicles', 'survival'
+    #         case 'scientist':
+    #             preferred_attrs = 'intelligence', 'constitution', 'dexterity', 'wisdom', 'charisma', 'strength'
+    #             preferred_skills = 'technology', 'xenotechnology'
+    #         case 'archaeologist':
+    #             preferred_attrs = 'wisdom', 'intelligence', 'dexterity', 'charisma', 'constitution', 'strength'
+    #             preferred_skills = 'xenoanthropology', 'anthropology', 'diplomacy', 'insight', 'perception', 'acting'
 
-        elif preset == 'scientist':
-            preferred_attrs = 'intelligence', 'constitution', 'dexterity', 'wisdom', 'charisma', 'strength'
-            preferred_skills = 'technology', 'xenotechnology'
+    #     # else:
+    #     #     # if nothing is supplied, just exit the function with a random attribute
+    #     #     nonlocal self
+    #     #     return random.choice(tuple(self.attributes.keys()))
 
-        elif preset == 'archaeologist':
-            preferred_attrs = 'wisdom', 'intelligence', 'dexterity', 'charisma', 'constitution', 'strength'
-            preferred_skills = 'xenoanthropology', 'anthropology', 'diplomacy', 'insight', 'perception', 'acting'
+    #     char_copy = deepcopy(self)
+    #     char_copy.level += 1
 
-        # else:
-        #     # if nothing is supplied, just exit the function with a random attribute
-        #     nonlocal self
-        #     return random.choice(tuple(self.attributes.keys()))
+    #     # level attributes
+    #     if  char_copy.level % 4 == 0:
+    #         char_copy.attribute_points += 2
 
-        char_copy = deepcopy(self)
-        char_copy.level += 1
-
-        # level attributes
-        if  char_copy.level % 4 == 0:
-            char_copy.attribute_points += 2
-
-        # TODO P2: this is a placeholder. it will also fail if someone's attribute hits a max value
-        # prioritizes 3 attrs in order, but keeps them roughly grouped
-        for point in range(attribute_points):
-            if preferred_attrs[0] - preferred_attrs[1] < 2:
-                self.attributes[preferred_attrs[0]] += 1
-            if preferred_attrs[1] - preferred_attrs[2] < 2:
-                self.attributes[preferred_attrs[1]] += 1
-            else:
-                self.attributes[preferred_attrs[2]] += 1
+    #     # TODO P2: this is a placeholder. it will also fail if someone's attribute hits a max value
+    #     # prioritizes 3 attrs in order, but keeps them roughly grouped
+    #     for point in range(attribute_points):
+    #         if preferred_attrs[0] - preferred_attrs[1] < 2:
+    #             self.attributes[preferred_attrs[0]] += 1
+    #         if preferred_attrs[1] - preferred_attrs[2] < 2:
+    #             self.attributes[preferred_attrs[1]] += 1
+    #         else:
+    #             self.attributes[preferred_attrs[2]] += 1
 
 
-        base_int_mod = (char_copy.attributes['intelligence'] - 10) // 2
-        char_copy.skill_points += 3 + base_int_mod
+    #     base_int_mod = (char_copy.attributes['intelligence'] - 10) // 2
+    #     char_copy.skill_points += 3 + base_int_mod
 
-        for point in range(char_copy.skill_points):
+    #     for point in range(char_copy.skill_points):
             
 
 

@@ -7,6 +7,6 @@ setup(
     include_package_data=True,
     install_requires=[
         'requests',
-        'importlib; python_version == "3.6"',
+        'importlib; python_version == "3.10"',
     ],
 )

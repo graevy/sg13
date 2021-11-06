@@ -1,1 +1,1 @@
-{"name": "Alteran Scanner", "description": "Ranges: 50m lifesigns, 300m misc. heat, 1-100km em/radiation depending on strength. Ranges tripled but detectable in active mode.", "weight": 0.3, "storage": [], "size": 2, "slots": 0}
+{"name": "Alteran Scanner", "description": "Ranges: 50m lifesigns, 300m misc. heat, 1-100km em/radiation depending on strength. Ranges tripled but detectable in active mode.", "weight": 0.3, "storage": [], "size": 2, "space": 0}

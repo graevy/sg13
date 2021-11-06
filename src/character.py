@@ -53,6 +53,18 @@ class Character:
         char_obj.update()
         return char_obj
 
+    # these are a solid maybe
+    # @classmethod
+    # def load(cls, path):
+    #     with open(path) as f:
+    #         return cls(**json.load(f))
+
+    # def save(self):
+    #     attrs = vars(self)
+    #     attrs['slots'] = {slot:item.get_json() if item else None for slot,item in self.slots.items()}
+    #     with open(f'.{os.sep}factions{self.faction.replace('/',os.sep)}{os.sep}.json', 'w+', encoding='utf-8') as f:
+    #         json.dump(attrs, f)
+
     def get_json(self):
         """Creates and returns a (JSON serializable, writeable) dict of the character.
 

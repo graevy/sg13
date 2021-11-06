@@ -1,10 +1,10 @@
 class Item:
-    def __init__(self, name, description=None, weight=0.0, size=2, slots=0, storage=[], bonus_attrs={}, bonus_skills={}):
+    def __init__(self, name, description=None, weight=0.0, size=2, space=0, storage=[], bonus_attrs={}, bonus_skills={}):
         self.name = name
         self.description = description
         self.weight = weight
         self.size = size # 0 is tiny, 1 is small, 2 is medium...use any signed int; it's a priority system
-        self.slots = slots
+        self.space = space
         self.storage = storage
         self.bonus_attrs = bonus_attrs
         self.bonus_skills = bonus_skills
@@ -39,7 +39,7 @@ class Item:
         Args:
             container (item): to store in
         """
-        if self.size < container.size and len(container.storage) < container.slots:
+        if self.size < container.size and len(container.storage) < container.space:
             container.storage.append(self)
         else:
             print("can't fit!")
@@ -58,21 +58,21 @@ class Item:
 
 
 class Weapon(Item):
-    def __init__(self, name, description=None, weight=0.0, size=2, slots=0, \
+    def __init__(self, name, description=None, weight=0.0, size=2, space=0, \
                     storage=[], bonus_attrs={}, bonus_skills={}, \
                     range=3, damage=8, proficiency='strength', proficiency_type='melee', cqc_penalty=0):
 
-        super().__init__(name, description, weight, size, slots, storage, bonus_attrs, bonus_skills)
+        super().__init__(name, description, weight, size, space, storage, bonus_attrs, bonus_skills)
 
         self.range, self.damage, self.proficiency, self.proficiency_type, self.cqc_penalty = \
         range, damage, proficiency, proficiency_type, cqc_penalty
 
 
 class Armor(Item):
-    def __init__(self, name, description=None, weight=0.0, size=2, slots=0, \
+    def __init__(self, name, description=None, weight=0.0, size=2, space=0, \
                     storage=[], bonus_attrs={}, bonus_skills={}, \
                     bonus_ac=0):
 
-        super().__init__(name, description, weight, size, slots, storage, bonus_attrs, bonus_skills)
+        super().__init__(name, description, weight, size, space, storage, bonus_attrs, bonus_skills)
 
         self.bonus_ac = bonus_ac

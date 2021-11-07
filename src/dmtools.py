@@ -17,16 +17,19 @@ def create(mode=0, **kwargs):
         mode (int, optional): level of detail. Defaults to 0.
         kwargs (dict, optional): to include on creation. Defaults to {}.
     """
+    with open(f"./cfg/character_defaults/{kwargs['race'] if 'race' in kwargs else 'human'}.json") as f:
+        defaults = json.load(f)
+
     # TODO P2: this doesn't handle invalid races/classes properly because 
     # dict membership checking happens in the character constructor. it
     # only checks invalid typing. if this ends up front-facing it needs an enum.
     # this defaults_dict implementation is pretty hamfisted
-    def handle_input(key, defaults_dict=character.defaults):
+    def handle_input(key, defaults_dict=defaults):
         # infinite loop allows restarting loop iterations
         while True:
             try:
                 value = input(f'{key} <<< ')
-                # blank input uses the character.default value
+                # blank input uses the default value
                 if value == '':
                     return defaults_dict[key]
                 # must dynamically type cast input string before returning
@@ -44,16 +47,16 @@ def create(mode=0, **kwargs):
 
     # optionally manually edit character attributes and skills
     if mode:
-        attrs = character.defaults['attributes']
+        attrs = defaults['attributes']
         data['attributes'] = {attr_name:handle_input(attr_name,attrs) \
             if attr_name not in kwargs else None for attr_name in attrs}
-        skills = character.defaults['skills']
+        skills = defaults['skills']
         data['skills'] = {skill_name:handle_input(skill_name,skills) \
             if skill_name not in kwargs else None for skill_name in skills}
         
         # gear editing
         if mode > 1:
-            slots = character.defaults['slots']
+            slots = defaults['slots']
             data['slots'] = {slot_name:handle_input(slot_name,slots) \
                 if slot_name not in kwargs else None for slot_name in slots}
 
@@ -63,9 +66,9 @@ def create(mode=0, **kwargs):
     # this permits create(strength=15) instead of create(attributes={strength:15,dexterity:10...})
     # pop also neatly cleans the data dict before assignment if, uh, anyone were to include that error
     for key in kwargs:
-        if key in character.defaults['attributes']:
+        if key in defaults['attributes']:
             data['attributes'][key] = data.pop(key)
-        if key in character.defaults['skills']:
+        if key in defaults['skills']:
             data['skills'][key] = data.pop(key)
 
     return character.Character.new(**data)

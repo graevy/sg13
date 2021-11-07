@@ -31,7 +31,7 @@ defaults = {
     # level_up info
     "attribute_points": 0, "skill_points": 0,
     # inspiration
-    "inspiration": 0
+    "inspiration": 0,
 }
 
 class Character:
@@ -49,6 +49,8 @@ class Character:
         Returns:
             character: created
         """
+        with open(f"./cfg/character_defaults/{kwargs['race'] if 'race' in kwargs else 'human'}.json") as f:
+            defaults = json.load(f)
         char_obj = cls(**(defaults | kwargs))
         char_obj.update()
         return char_obj
@@ -84,9 +86,9 @@ class Character:
     # this would harden e.g. handle_new_item against e.g. item/feat extensibility. in the same vein,
     # different races should probably just be different classes with different e.g. update_speed methods?
 
-    def update_race_and_class(self, race=False, clas=False):
+    def update_race(self, race=False):
         # check to make sure we aren't stacking bonuses on each update
-        if not hasattr(self,'race_and_class_applied'):
+        if not hasattr(self,'race_applied'):
             # apply racial bonuses by loading and inspecting the json
             race_dict = race.load_race(self.race if not race else race)
             for attr,bonus in race_dict.bonus_attrs.items():
@@ -94,15 +96,18 @@ class Character:
             for skill,bonus in race_dict.bonus_skills.items():
                 self.bonus_skills[skill] += bonus
 
-            # apply class bonuses the same way
+            self.race_applied = True
+
+    # see above
+    def update_clas(self, clas=False):
+        if not hasattr(self,'clas_applied'):
             clas_dict = clas.load_clas(self.clas if not clas else clas)
             for attr,bonus in clas_dict.bonus_attrs.items():
                 self.bonus_attrs[attr] += bonus
             for skill,bonus in clas_dict.bonus_skills.items():
                 self.bonus_skills[skill] += bonus
 
-            # so we don't stack bonuses in the future
-            self.race_and_class_applied=True
+            self.clas_applied = True
 
     def update_bonuses(self):
         # see eof*
@@ -118,7 +123,6 @@ class Character:
             for attr_name in self.attributes}
 
     def update_ac(self):
-        # hasattr ternary sneakily also checks if the item isn't None
         self.armor_ac = sum(item.bonus_ac if hasattr(item,'bonus_ac') else 0 for item in self.slots.values())
         self.AC = 6 + self.armor_ac + self.attr_mods['dexterity']
 
@@ -126,7 +130,7 @@ class Character:
         # hp = hit_die+mod for level 1, conMod for each other level
         # standard 5e formula is:
         # hp = (hit_die + conMod) + (level - 1) * (hit_die // 2 + 1 + conMod)
-        self.max_hp = (self.hit_die + self.attr_mods['constitution']) + ((self.level - 1) * self.attr_mods['constitution'])
+        self.max_hp = (self.clas['hit_die'] + self.attr_mods['constitution']) + ((self.level - 1) * self.attr_mods['constitution'])
 
     def update_weight(self):
         # get_weight() does nested item recursion
@@ -134,7 +138,13 @@ class Character:
 
     def update_speed(self):
         str_mod = self.attr_mods['strength'] + self.bonus_attrs['strength']
-        divisor = 100 + str_mod * 50 if str_mod < 6 else 350
+
+        if str_mod < 0:
+            divisor = 50
+        elif str_mod > 5:
+            divisor = 350
+        else:
+            divisor = 100 + str_mod * 50
         # the goal here is to make strength meaningfully impact the amount of gear someone can carry
         # 1.5 and 100 just felt right for defaults. breakpoints at 21kg, 34, 44, 54...(100*n)**(1/1.5)kg
         # 50 as a multiplier scales pretty accurately given that it's supposed to represent human capability:
@@ -157,35 +167,34 @@ class Character:
         self.suffix = "'" if self.name[-1] == ("s" or "x") else "'s"
 
     # TODO P2: this wasn't well tested iirc
-    def handle_new_item(self, item, don=True):
+    def handle_new_item(self, item, equipping=True):
         """updates meta-variables whenever a new item is equipped or unequipped
 
         Args:
             item (item): to handle
-            don (bool, optional): True if equipping (donning). Defaults to True.
+            equipping (bool, optional): True if equipping. Defaults to True.
         """
-        # everything gets multiplied by don because sometimes we're unequipping
-        don = 1 if don else -1
+        equipping = 1 if equipping else -1
 
-        # all of these calcs are done outside of their update() methods because it's much more efficient this way
+        # all of these calcs are outside of their update() methods because it's much more efficient this way
         # this means that changes to the item class could break this method
 
         # weight and speed first
-        self.gear_weight += item.get_weight() * don
+        self.gear_weight += item.get_weight() * equipping
         self.update_speed()
 
         # AC needs recalculation too
         if hasattr(item,'bonus_ac'):
-            self.armor_ac += item.bonus_ac * don
-            self.AC += item.bonus_ac * don
+            self.armor_ac += item.bonus_ac * equipping
+            self.AC += item.bonus_ac * equipping
 
         # skills are pretty straightforward
         for skill_name,skill_value in item.bonus_skills.items():
-            self.bonus_skills[skill_name] += skill_value * don
+            self.bonus_skills[skill_name] += skill_value * equipping
 
         # attributes are tricky because of AC and max_hp
         for attr_name,attr_value in item.bonus_attrs.items():
-            self.bonus_attrs[attr_name] += attr_value * don
+            self.bonus_attrs[attr_name] += attr_value * equipping
             mod = self.attr_mods[attr_name] = (self.attributes[attr] + self.bonus_attrs[attr] - 10) // 2
             # AC gets recalculated twice sometimes, but it can't really be helped without collapsing Armor into Item
             # this would simplify a lot of the item code, especially around serialization, but it reduces extensibility
@@ -483,46 +492,44 @@ class Character:
         char_copy.update()
         self = char_copy
 
-    # def auto_level_up(self, preset=self.clas):
-
-    #     match preset:
-    #         case 'soldier':
-    #             preferred_attrs = 'constitution', 'dexterity', 'strength', 'wisdom', 'intelligence', 'charisma'
-    #             preferred_skills = 'athletics', 'tactics', 'perception', 'acrobatics', 'stealth', 'medicine', 'vehicles', 'survival'
-    #         case 'scientist':
-    #             preferred_attrs = 'intelligence', 'constitution', 'dexterity', 'wisdom', 'charisma', 'strength'
-    #             preferred_skills = 'technology', 'xenotechnology'
-    #         case 'archaeologist':
-    #             preferred_attrs = 'wisdom', 'intelligence', 'dexterity', 'charisma', 'constitution', 'strength'
-    #             preferred_skills = 'xenoanthropology', 'anthropology', 'diplomacy', 'insight', 'perception', 'acting'
-
-    #     # else:
-    #     #     # if nothing is supplied, just exit the function with a random attribute
-    #     #     nonlocal self
-    #     #     return random.choice(tuple(self.attributes.keys()))
-
-    #     char_copy = deepcopy(self)
-    #     char_copy.level += 1
-
-    #     # level attributes
-    #     if  char_copy.level % 4 == 0:
-    #         char_copy.attribute_points += 2
-
-    #     # TODO P2: this is a placeholder. it will also fail if someone's attribute hits a max value
-    #     # prioritizes 3 attrs in order, but keeps them roughly grouped
-    #     for point in range(attribute_points):
-    #         if preferred_attrs[0] - preferred_attrs[1] < 2:
-    #             self.attributes[preferred_attrs[0]] += 1
-    #         if preferred_attrs[1] - preferred_attrs[2] < 2:
-    #             self.attributes[preferred_attrs[1]] += 1
-    #         else:
-    #             self.attributes[preferred_attrs[2]] += 1
+    def auto_level_up(self, preset=self.clas):
+        pass
 
 
-    #     base_int_mod = (char_copy.attributes['intelligence'] - 10) // 2
-    #     char_copy.skill_points += 3 + base_int_mod
+        with open(f'./classes/{self.clas}.json', 'r', encoding='utf-8') as f:
+            clas_dict = json.load(f)
+            preferred_attrs = clas_dict['preferred_attrs']
+            preferred_skills = clas_dict['preferred_skills']
 
-    #     for point in range(char_copy.skill_points):
+
+
+        # else:
+        #     # if nothing is supplied, just exit the function with a random attribute
+        #     nonlocal self
+        #     return random.choice(tuple(self.attributes.keys()))
+
+        char_copy = deepcopy(self)
+        char_copy.level += 1
+
+        # level attributes
+        if  char_copy.level % 4 == 0:
+            char_copy.attribute_points += 2
+
+        # TODO P2: this is a placeholder. it will also fail if someone's attribute hits a max value
+        # prioritizes 3 attrs in order, but keeps them roughly grouped
+        for point in range(attribute_points):
+            if preferred_attrs[0] - preferred_attrs[1] < 2:
+                self.attributes[preferred_attrs[0]] += 1
+            if preferred_attrs[1] - preferred_attrs[2] < 2:
+                self.attributes[preferred_attrs[1]] += 1
+            else:
+                self.attributes[preferred_attrs[2]] += 1
+
+
+        base_int_mod = (char_copy.attributes['intelligence'] - 10) // 2
+        char_copy.skill_points += 3 + base_int_mod
+
+        for point in range(char_copy.skill_points):
             
 
 

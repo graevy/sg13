@@ -6,8 +6,8 @@ try:
     import playertools
     from dmtools import *
     import item
-    import races
-    import classes
+    import race
+    import clas
 
     import rolls
 

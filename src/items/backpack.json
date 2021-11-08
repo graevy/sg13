@@ -1,1 +1,1 @@
-{"name": "Backpack", "description": "Weatherproofed", "weight": 2.1, "storage": [], "size": 3, "slots": 6, "bonus_ac": 0}
+{"name": "Backpack", "description": "Weatherproofed", "weight": 2.1, "storage": [], "size": 3, "space": 6, "bonus_ac": 0}

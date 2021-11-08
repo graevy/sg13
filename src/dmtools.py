@@ -9,7 +9,7 @@ import rolls
 
 sep = os.sep
 
-# muuuch better than previous. now with easy default value input and extensible modes
+
 def create(mode=0, **kwargs):
     """Character creation function
 
@@ -17,11 +17,12 @@ def create(mode=0, **kwargs):
         mode (int, optional): level of detail. Defaults to 0.
         kwargs (dict, optional): to include on creation. Defaults to {}.
     """
+    # TODO P2: this doesn't handle invalid races/classes properly because 
+    # dict membership checking happens in the character constructor. it
+    # only checks invalid typing. if this ends up front-facing it needs an enum.
+    # this defaults_dict implementation is pretty hamfisted
     def handle_input(key, defaults_dict=character.defaults):
-        # TODO P2: this doesn't handle invalid races/classes properly because 
-        # dict membership checking happens in the character constructor. it
-        # only checks invalid typing. if this ends up front-facing it needs a
-        # valids dict to check input against valid ranges or something
+        # infinite loop allows restarting loop iterations
         while True:
             try:
                 value = input(f'{key} <<< ')
@@ -31,7 +32,7 @@ def create(mode=0, **kwargs):
                 # must dynamically type cast input string before returning
                 return type(defaults_dict[key])(value)
             except ValueError:
-                print(f" invalid entry")
+                print(f" invalid entry for {key}")
 
     data = {} # this gets populated and then returned
     basics = ['name', 'race', 'clas', 'faction', 'level']
@@ -60,7 +61,7 @@ def create(mode=0, **kwargs):
     data = data | kwargs
 
     # this permits create(strength=15) instead of create(attributes={strength:15,dexterity:10...})
-    # pop also neatly cleans the data dict before assignment if, uh, anyone includes that error
+    # pop also neatly cleans the data dict before assignment if, uh, anyone were to include that error
     for key in kwargs:
         if key in character.defaults['attributes']:
             data['attributes'][key] = data.pop(key)
@@ -210,7 +211,7 @@ def random_names(n, *namefiles, threshold=3):
             ) for henchman in range(n)))
 
 
-def henchmen(n, *namefiles, attributes={}, faction=[]):
+def henchmen(n, *namefiles, attributes=None, faction=None):
     """generates henchmen for use in combat encounters
 
     Args:
@@ -222,9 +223,15 @@ def henchmen(n, *namefiles, attributes={}, faction=[]):
     Returns:
         (list): faction list, containing all the henchmen
     """
-    # a "def foo(*args=(args,here)):" syntax is needed
+    # "def foo(*args=(args,here)):"
     if not namefiles:
         namefiles = tuple(('firstnames.txt','lastnames.txt'))
+
+    # did you know mutable default args aren't instantiated when a function is run? only once, on definition
+    if attributes is None:
+        attributes = {}
+    if faction is None:
+        faction = []
 
     # create list of henchmen,
     characters = [character.Character.new(**attributes) for x in range(n)]
@@ -274,7 +281,7 @@ def load():
 
     # TODO P3: this broke
     if 'factions' in globals():
-        raise Exception("load() attempted to overwrite factions dict")
+        raise Exception("load() attempted to overwrite factions")
 
     # recursive function to both load characters (with items) and populate the root factions dict
     def populateFactions(root_list, cd, files):
@@ -357,36 +364,44 @@ def save(factions=None):
     get_characters_from_dicts(factions)
 
 # TODO P3: less ugly, but still bad
-def getChars(charDict):
-    """recursively get character objects inside a dictionary
+# def getChars(charDict):
+#     """recursively get character objects inside a dictionary
+
+#     Args:
+#         charDict (list): of char_objs
+
+#     Returns:
+#         list: of char_objs
+#     """
+#     outList = [] # populated and returned
+#     def recur(iterable):
+#         for value in iterable.values():
+#             if isinstance(value,dict):
+#                 recur(value)
+#             else:
+#                 # extend operates outside local namespace, += doesn't. TIL
+#                 outList.extend(value)
+
+#     recur(charDict)
+#     return outList
+
+def get_chars(char_dict, out_list=None):
+    """recursively get character objects from lists inside a nested dict
 
     Args:
-        charDict (list): of char_objs
+        char_dict (dict): of dicts [...] of lists of char_objs
 
     Returns:
         list: of char_objs
     """
-    outList = [] # populated and returned
-    def recur(iterable):
-        for value in iterable.values():
-            if isinstance(value,dict):
-                recur(value)
-            else:
-                # extend operates outside local namespace, += doesn't. TIL
-                outList.extend(value)
-
-    recur(charDict)
-    return outList
-
-# TODO P3: this shorter version memory leaks???
-# somehow outList gets saved between calls, and consecutive calls add to it
-# def getChars2(charDict, outList=[]):
-#     for value in charDict.values():
-#         if isinstance(value,dict):
-#             getChars2(value,outList)
-#         else:
-#             outList += value
-#     return outList
+    if out_list is None: # thanks guido
+        out_list = []
+    for value in char_dict.values():
+        if isinstance(value,dict):
+            get_chars(value,out_list)
+        else:
+            out_list += value
+    return out_list
 
 # from my original 2019 codebase
 # i've improved a lot since then. i gave it a facelift, but

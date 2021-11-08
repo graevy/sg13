@@ -1,0 +1,1 @@
+{"name": "soldier", "hit_die": 10, "bonus_attrs": {"constitution": 2}, "bonus_skills": {"tactics": 1, "athletics": 1}, "proficiencies": null, "feats": null, "preferred_attrs": ["constitution", "dexterity", "strength", "wisdom", "intelligence", "charisma"], "preferred_skills": ["athletics", "tactics", "perception", "acrobatics", "stealth", "medicine", "vehicles", "survival"]}

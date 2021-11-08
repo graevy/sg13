@@ -71,27 +71,27 @@ def create(mode=0, **kwargs):
 
 
 # TODO P3: expanded 5e longrest implementation
-def longrest(*character_lists):
+def long_rest(*character_lists):
     """pass lists of character objects to reset their hp"""
     for character_list in character_lists:
         for character in character_list:
             character.heal()
 
 
-def groupInitiative(*character_lists):
+def group_initiative(*character_lists):
     """generates initiative rolls from lists of characters.
 
     Returns:
         list: of (initiative roll, character name) tuples
     """
     return sorted(
-        [(character.initiative(), character.name) for character_list in character_lists for character in character_list]
+        ((character.initiative(), character.name) for character_list in character_lists for character in character_list)
     , reverse=True)
 
-def skillCheck(char_obj, stat, dc, rollFn=rolls.IIId6):
+def skill_check(char_obj, stat, dc, rollFn=rolls.IIId6):
     return True if rollFn() + char_obj.skills[stat] + char_obj.bonus_skills[stat] >= dc else False
 
-def setDc(success_odds, dice=rolls.dice, die=rolls.die, roundDown=True):
+def set_dc(success_odds, dice=rolls.dice, die=rolls.die, roundDown=True):
     """returns the DC of a % success chance
 
     Args:
@@ -117,7 +117,7 @@ def setDc(success_odds, dice=rolls.dice, die=rolls.die, roundDown=True):
         return f"{int(dc)} (rounded down from {dc})"
     return f"{round(dc)} (rounded from {dc})"
 
-def oddsNum(dc, dice=rolls.dice, die=rolls.die):
+def odds_num(dc, dice=rolls.dice, die=rolls.die):
     """return odds of succeeding a dice check
 
     Args:
@@ -129,9 +129,9 @@ def oddsNum(dc, dice=rolls.dice, die=rolls.die):
         [str]: Percent chance of success
     """
     odds = NormalDist(mu=rolls.dice_mean, sigma=rolls.dice_stdev).cdf(dc)
-    percentSuccess = 100 - int(round(odds, 2) * 100)
+    percent_success = 100 - int(round(odds, 2) * 100)
 
-    return f"DC of {dc} rolling {dice}d{die}: {percentSuccess}% success"
+    return f"DC of {dc} rolling {dice}d{die}: {percent_success}% success"
     # in python 2, (1 + erf(x/root2))/2 can be substituted for normaldist.cdf
 
 # alias commands
@@ -387,15 +387,6 @@ def getChars(charDict):
 #         else:
 #             outList += value
 #     return outList
-
-# compound_dict = {   1:{2:[3,4]}, 5:{6:{7:[8]}, 9:[0]}   }
-# def recur(iterable,output=[]):
-#     for value in iterable.values():
-#         if isinstance(value,dict):
-#             recur(value)
-#         else:
-#             output += value
-#     return output
 
 # from my original 2019 codebase
 # i've improved a lot since then. i gave it a facelift, but

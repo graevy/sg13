@@ -8,7 +8,6 @@ import clas # misspelt throughout the codebase to avoid keyword collision
 import rolls
 
 
-
 class Character:
     """Generic character class. Construct with an unpacked **dict
     """
@@ -460,7 +459,7 @@ class Character:
 
     # def auto_level_up(self, preset=self.clas):
 
-    #     with open(f'./classes/{self.clas}.json', 'r', encoding='utf-8') as f:
+    #     with open(f'.{os.sep}classes{os.sep}{self.clas}.json', encoding='utf-8') as f:
     #         clas_dict = json.load(f)
     #         preferred_attrs = clas_dict['preferred_attrs']
     #         preferred_skills = clas_dict['preferred_skills']

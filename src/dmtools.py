@@ -205,9 +205,9 @@ def random_names(n, *namefiles, threshold=3):
             namefile_list_list.append(namefile_list) # better to rstrip on assignment
 
         # now actually create and return the random names
-        return tuple((' '.join(
+        return [' '.join(
             random.choice(namefile_list).rstrip() for namefile_list in namefile_list_list
-            ) for henchman in range(n)))
+            ) for henchman in range(n)]
 
 
 def henchmen(n, *namefiles, attributes=None, faction=None):
@@ -226,23 +226,19 @@ def henchmen(n, *namefiles, attributes=None, faction=None):
     if not namefiles:
         namefiles = tuple(('firstnames.txt','lastnames.txt'))
 
-    # did you know mutable default args aren't instantiated when a function is run? only once, on definition
+    # did you know mutable default args aren't instantiated when a function is run? only on definition
+    # i didn't! that was a fun session
     if attributes is None:
         attributes = {}
     if faction is None:
         faction = []
 
-    # create list of henchmen,
-    characters = [character.Character.new(**attributes) for x in range(n)]
-    # generate random names,
+    # generate random names
     names = random_names(n, *namefiles)
-    # name the characters
-    for idx in range(n):
-        characters[idx].name = names[idx]
-    # add them to the faction,
-    faction += characters
-    # send it
-    return faction
+
+    # add a list of characters to the supplied list (if any), randomly name them from the names list, and return it
+    # random_names is pretty slow. so you're getting golfed listcomps
+    return faction + [character.Character.new(**(attributes | {'name':names.pop()})) for x in range(n)]
 
 # TODO P3: this thing is doubling as a factory method and that probably shouldn't happen
 def load_item(item_attrs):
@@ -362,27 +358,6 @@ def save(factions=None):
         factions = factions
     get_characters_from_dicts(factions)
 
-# TODO P3: less ugly, but still bad
-# def getChars(charDict):
-#     """recursively get character objects inside a dictionary
-
-#     Args:
-#         charDict (list): of char_objs
-
-#     Returns:
-#         list: of char_objs
-#     """
-#     outList = [] # populated and returned
-#     def recur(iterable):
-#         for value in iterable.values():
-#             if isinstance(value,dict):
-#                 recur(value)
-#             else:
-#                 # extend operates outside local namespace, += doesn't. TIL
-#                 outList.extend(value)
-
-#     recur(charDict)
-#     return outList
 
 def get_chars(char_dict, out_list=None):
     """recursively get character objects from lists inside a nested dict

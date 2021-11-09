@@ -1,10 +1,12 @@
 import random
 from copy import deepcopy
 import json
+import os
 
 import race
 import clas # misspelt throughout the codebase to avoid keyword collision
 import rolls
+
 
 
 class Character:
@@ -22,7 +24,7 @@ class Character:
         Returns:
             character: created
         """
-        with open(f"./races/{kwargs['race'] if 'race' in kwargs else 'human'}.json") as f:
+        with open(f".{os.sep}races{os.sep}{kwargs['race'] if 'race' in kwargs else 'human'}.json") as f:
             defaults = json.load(f)
         char_obj = cls(**(defaults | kwargs))
         char_obj.update()
@@ -198,7 +200,7 @@ class Character:
             else:
                 print(f"{slot} already contains {self.slots[slot]}")
         else:
-            print(f"{slot} invalid. valid slots are:\n", *self.slots)
+            print(f"'{slot}' invalid. valid slots are:\n    ", *self.slots.keys())
 
 
     def stow(self, slot, container):

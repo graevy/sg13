@@ -1,4 +1,5 @@
 import json
+import os
 
 
 # i'm still not sure what implementation is best for races and classes but i think saving/loading
@@ -11,9 +12,9 @@ class Race:
     
     @classmethod
     def create(cls, name, bonus_attrs, bonus_skills, proficiencies=None, feats=None):
-        with open(f'./races/{name}.json', 'w+', encoding='utf-8') as f:
+        with open(f'.{os.sep}races{os.sep}{name}.json', 'w+', encoding='utf-8') as f:
             json.dump(vars(cls(name, bonus_attrs, bonus_skills, proficiencies, feats)), f)
 
 def load_race(name):
-    with open(f'./races/{name}.json', 'r', encoding='utf-8') as f:
+    with open(f'.{os.sep}races{os.sep}{name}.json', 'r', encoding='utf-8') as f:
         return json.load(f)

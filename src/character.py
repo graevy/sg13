@@ -1,38 +1,11 @@
 import random
 from copy import deepcopy
+import json
 
 import race
-import clas
+import clas # misspelt throughout the codebase to avoid keyword collision
 import rolls
 
-# this dict only really gets used in character creation and dmtools
-defaults = {
-    # biographical information           v (intentionally misspelt)
-    "name": "NPC", "race": "human", "clas": "soldier", "faction": "",
-
-    # stats                             (m/s)
-    "level": 1, "hp": 10, "temp_hp": 0, "speed": 8.0,
-
-    "attributes": {
-        "strength": 8, "dexterity": 8, "constitution": 8, "intelligence": 8, "wisdom": 8, "charisma": 8
-    },
-
-    "skills": {
-        "acting": 0, "anthropology": 0, "xenoanthropology": 0, "sleightofhand": 0, "stealth": 0,
-        "diplomacy": 0, "medicine": 0, "vehicles": 0, "xenotechnology": 0, "technology": 0,
-        "insight": 0, "perception": 0, "survival": 0, "tactics": 0, "athletics": 0, "acrobatics": 0
-    },
-
-    "slots": {
-        "left_hand": None, "right_hand": None, # hands are aliased as "left" or "right"
-        "head": None, "chest": None, "legs": None, "belt": None, "boots": None, "gloves": None, "back": None,
-    },
-
-    # level_up info
-    "attribute_points": 0, "skill_points": 0,
-    # inspiration
-    "inspiration": 0,
-}
 
 class Character:
     """Generic character class. Construct with an unpacked **dict
@@ -49,7 +22,7 @@ class Character:
         Returns:
             character: created
         """
-        with open(f"./cfg/character_defaults/{kwargs['race'] if 'race' in kwargs else 'human'}.json") as f:
+        with open(f"./races/{kwargs['race'] if 'race' in kwargs else 'human'}.json") as f:
             defaults = json.load(f)
         char_obj = cls(**(defaults | kwargs))
         char_obj.update()
@@ -77,6 +50,7 @@ class Character:
         # item.get_json does recursion
         attrs['slots'] = {slot:item.get_json() if item else None for slot,item in self.slots.items()}
         return attrs
+        # return vars(self) | {'slots':{slot:item.get_json() if item else None for slot,item in self.slots.items()}}
 
 
     #############################
@@ -86,25 +60,15 @@ class Character:
     # this would harden e.g. handle_new_item against e.g. item/feat extensibility. in the same vein,
     # different races should probably just be different classes with different e.g. update_speed methods?
 
-    def update_race(self, race=False):
-        # check to make sure we aren't stacking bonuses on each update
-        if not hasattr(self,'race_applied'):
-            # apply racial bonuses by loading and inspecting the json
-            race_dict = race.load_race(self.race if not race else race)
-            for attr,bonus in race_dict.bonus_attrs.items():
-                self.bonus_attrs[attr] += bonus
-            for skill,bonus in race_dict.bonus_skills.items():
-                self.bonus_skills[skill] += bonus
-
-            self.race_applied = True
-
-    # see above
-    def update_clas(self, clas=False):
+    def update_clas(self):
         if not hasattr(self,'clas_applied'):
-            clas_dict = clas.load_clas(self.clas if not clas else clas)
-            for attr,bonus in clas_dict.bonus_attrs.items():
+            clas_dict = clas.load_clas(self.clas)
+
+            self.hit_die = clas_dict['hit_die']
+
+            for attr,bonus in clas_dict['bonus_attrs'].items():
                 self.bonus_attrs[attr] += bonus
-            for skill,bonus in clas_dict.bonus_skills.items():
+            for skill,bonus in clas_dict['bonus_skills'].items():
                 self.bonus_skills[skill] += bonus
 
             self.clas_applied = True
@@ -130,7 +94,7 @@ class Character:
         # hp = hit_die+mod for level 1, conMod for each other level
         # standard 5e formula is:
         # hp = (hit_die + conMod) + (level - 1) * (hit_die // 2 + 1 + conMod)
-        self.max_hp = (self.clas['hit_die'] + self.attr_mods['constitution']) + ((self.level - 1) * self.attr_mods['constitution'])
+        self.max_hp = (self.hit_die + self.attr_mods['constitution']) + ((self.level - 1) * self.attr_mods['constitution'])
 
     def update_weight(self):
         # get_weight() does nested item recursion
@@ -149,14 +113,14 @@ class Character:
         # 1.5 and 100 just felt right for defaults. breakpoints at 21kg, 34, 44, 54...(100*n)**(1/1.5)kg
         # 50 as a multiplier scales pretty accurately given that it's supposed to represent human capability:
         # with the intended max strmod of 5, the max gear someone could carry at 1 m/s is a little under 200kg
-        self.speed = 8.0 - self.gear_weight**1.5 // divisor
+        self.speed = self.base_speed - self.gear_weight**1.5 // divisor
 
     def update(self):
         """builds all character meta variables"""
         self.update_bonuses()
-        # race/class is done between bonuses and mods because it
+        # clas is done between bonuses and mods because it
         # requires bonuses to exist, and it affects modifier calculation
-        self.update_race_and_class()
+        self.update_clas()
         self.update_mods()
         # AC and max hp depend on mods
         self.update_ac()
@@ -492,45 +456,43 @@ class Character:
         char_copy.update()
         self = char_copy
 
-    def auto_level_up(self, preset=self.clas):
-        pass
+    # def auto_level_up(self, preset=self.clas):
 
-
-        with open(f'./classes/{self.clas}.json', 'r', encoding='utf-8') as f:
-            clas_dict = json.load(f)
-            preferred_attrs = clas_dict['preferred_attrs']
-            preferred_skills = clas_dict['preferred_skills']
+    #     with open(f'./classes/{self.clas}.json', 'r', encoding='utf-8') as f:
+    #         clas_dict = json.load(f)
+    #         preferred_attrs = clas_dict['preferred_attrs']
+    #         preferred_skills = clas_dict['preferred_skills']
 
 
 
-        # else:
-        #     # if nothing is supplied, just exit the function with a random attribute
-        #     nonlocal self
-        #     return random.choice(tuple(self.attributes.keys()))
+    #     # else:
+    #     #     # if nothing is supplied, just exit the function with a random attribute
+    #     #     nonlocal self
+    #     #     return random.choice(tuple(self.attributes.keys()))
 
-        char_copy = deepcopy(self)
-        char_copy.level += 1
+    #     char_copy = deepcopy(self)
+    #     char_copy.level += 1
 
-        # level attributes
-        if  char_copy.level % 4 == 0:
-            char_copy.attribute_points += 2
+    #     # level attributes
+    #     if  char_copy.level % 4 == 0:
+    #         char_copy.attribute_points += 2
 
-        # TODO P2: this is a placeholder. it will also fail if someone's attribute hits a max value
-        # prioritizes 3 attrs in order, but keeps them roughly grouped
-        for point in range(attribute_points):
-            if preferred_attrs[0] - preferred_attrs[1] < 2:
-                self.attributes[preferred_attrs[0]] += 1
-            if preferred_attrs[1] - preferred_attrs[2] < 2:
-                self.attributes[preferred_attrs[1]] += 1
-            else:
-                self.attributes[preferred_attrs[2]] += 1
+    #     # TODO P2: this is a placeholder. it will also fail if someone's attribute hits a max value
+    #     # prioritizes 3 attrs in order, but keeps them roughly grouped
+    #     for point in range(attribute_points):
+    #         if preferred_attrs[0] - preferred_attrs[1] < 2:
+    #             self.attributes[preferred_attrs[0]] += 1
+    #         if preferred_attrs[1] - preferred_attrs[2] < 2:
+    #             self.attributes[preferred_attrs[1]] += 1
+    #         else:
+    #             self.attributes[preferred_attrs[2]] += 1
 
 
-        base_int_mod = (char_copy.attributes['intelligence'] - 10) // 2
-        char_copy.skill_points += 3 + base_int_mod
+    #     base_int_mod = (char_copy.attributes['intelligence'] - 10) // 2
+    #     char_copy.skill_points += 3 + base_int_mod
 
-        for point in range(char_copy.skill_points):
-            
+    #     for point in range(char_copy.skill_points):
+    #         pass
 
 
 

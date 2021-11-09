@@ -27,6 +27,7 @@ class Character:
             defaults = json.load(f)
         char_obj = cls(**(defaults | kwargs))
         char_obj.update()
+
         return char_obj
 
     # these are a solid maybe

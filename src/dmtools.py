@@ -17,7 +17,7 @@ def create(mode=0, **kwargs):
         mode (int, optional): level of detail. Defaults to 0.
         kwargs (dict, optional): to include on creation. Defaults to {}.
     """
-    with open(f".{sep}races{sep}{kwargs['race'] if 'race' in kwargs else 'human'}.json") as f:
+    with open(f".{sep}races{sep}{kwargs.get('race','human')}{sep}{kwargs.get('race','human')}.json") as f:
         defaults = json.load(f)
 
     # TODO P2: this doesn't handle invalid races/classes properly because 
@@ -148,14 +148,14 @@ def level_up(char):
     char.level_up()
 
 
-def dismember(char, atMost=2):
+def dismember(char, at_most=2):
     """permanently randomly decrease a character's attribute
 
     Args:
         char (character Obj): to dismember
-        atMost (int, optional): maximum possible value to decrease by. Defaults to 2.
+        at_most (int, optional): maximum possible value to decrease by. Defaults to 2.
     """
-    list(char.attributes.values())[random.randrange(0,len(char.attributes))] -= random.randint(1,atMost)
+    tuple(char.attributes.values())[random.randrange(0,len(char.attributes))] -= random.randint(1,at_most)
     char.update()
 
 def random_names(n, *namefiles):
@@ -172,11 +172,11 @@ def random_names(n, *namefiles):
     # algorithm from the python cookbook expecting it to be faster. random.uniform takes about 200ns
     # and append takes about 50ns; this space-hog is faster
 
-    # build a list of lists of random names from each file
+    # build a list of lists of all names from each file
     namefile_list_list = []
     for namefile in namefiles:
         namefile_list = []
-        with open(namefile) as f:
+        with open(namefile, encoding='utf-8') as f:
             for line in f:
                 namefile_list.append(line) # name whitespace and trailing newline preserved
         namefile_list_list.append(namefile_list) # better to rstrip on assignment
@@ -204,17 +204,18 @@ def henchmen(n, *namefiles, attributes=None, faction=None):
     Returns:
         (list): faction list, containing all the henchmen
     """
-    # "def foo(*args=(args,here)):"
-    if not namefiles:
-        namefiles = tuple(('firstnames.txt','lastnames.txt'))
-
-    # did you know mutable default args aren't instantiated when a function is run? only on definition
-    # i didn't! that was a fun session
+    # did you know mutable default args are only instantiated when a function is defined? that was a fun session
     if attributes is None:
         attributes = {}
     if faction is None:
         faction = []
 
+    # use human as a default race for sourcing names
+    if not namefiles:
+        namefiles = os.listdir(f".{sep}races{sep}{attributes.get('race','human')}{sep}names")
+    # if the race wasn't given any namefiles, use human names. this gets very entertaining
+    if not namefiles:
+        namefiles = os.listdir(f".{sep}races{sep}human{sep}names")
     # generate random names
     names = random_names(n, *namefiles)
 
@@ -222,7 +223,7 @@ def henchmen(n, *namefiles, attributes=None, faction=None):
     return faction + [character.Character.new(   **(attributes | {'name':names.pop()})   ) for x in range(n)]
 
 # TODO P3: this is doubling as a factory method and that probably shouldn't happen
-def load_item(item):
+def load_item(item_to_load):
     """(recursively) loads an item in memory
 
     Args:
@@ -231,10 +232,10 @@ def load_item(item):
     Returns:
         Item: loaded
     """
-    if isinstance(item, dict):
-        item_json = item
-    elif isinstance(item, str):
-        with open(f'.{sep}items{sep}{item}.json') as f:
+    if isinstance(item_to_load, dict):
+        item_json = item_to_load
+    elif isinstance(item_to_load, str):
+        with open(f'.{sep}items{sep}{item_to_load}.json') as f:
             item_json = json.load(f)
 
     # ladder to determine item type to construct
@@ -294,6 +295,7 @@ def load():
 
     # first yield is sort of like a dir head (it has no root), so it gets its own statement
     factions = {key:{} for key in next(walker)[1]} # factions is currently e.g. {'sgc':{}, 'trust':{}}
+
     #    (dirs unused)
     for root, _, files in walker:
         if files:

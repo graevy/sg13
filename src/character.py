@@ -6,6 +6,7 @@ import os
 import race
 import clas # misspelt throughout the codebase to avoid keyword collision
 import rolls
+import dmtools
 
 
 class Character:
@@ -22,8 +23,8 @@ class Character:
 
         Returns:
             character: created
-        """
-        with open(f".{os.sep}races{os.sep}{kwargs['race'] if 'race' in kwargs else 'human'}.json") as f:
+        """#           /races/human/human.json
+        with open(f".{os.sep}races{os.sep}{kwargs.get('race','human')}{os.sep}{kwargs.get('race','human')}.json") as f:
             defaults = json.load(f)
         char_obj = cls(**(defaults | kwargs))
         char_obj.update()
@@ -53,7 +54,6 @@ class Character:
         attrs['slots'] = {slot:item.get_json() if item else None for slot,item in self.slots.items()}
         return attrs
         # return vars(self) | {'slots':{slot:item.get_json() if item else None for slot,item in self.slots.items()}}
-
 
     #############################
     #### stat update methods ####
@@ -132,7 +132,6 @@ class Character:
         self.update_speed()
         self.suffix = "'" if self.name[-1] == ("s" or "x") else "'s"
 
-    # TODO P2: this wasn't well tested iirc
     def handle_new_item(self, item, equipping=True):
         """updates meta-variables whenever a new item is equipped or unequipped
 
@@ -189,13 +188,14 @@ class Character:
             item {str} -- to equip
             slot {str} -- to move to
         """
-        slot = handle_slot_input(slot)
+        slot = self.handle_slot_input(slot)
 
         if slot in self.slots:
             if self.slots[slot] is None:
                 # the actual equip function, everything else is just boilerplate
+                item = dmtools.load_item(item)
                 self.slots[slot] = item
-                self.handle_new_item(item, don=True)
+                self.handle_new_item(item, equipping=True)
 
             else:
                 print(f"{slot} already contains {self.slots[slot]}")
@@ -216,7 +216,7 @@ class Character:
         item = self.slots[slot]
 
         if item.store(container):
-            self.handle_new_item(item, don=False)
+            self.handle_new_item(item, equipping=False)
             # remove item
             self.slots[slot] = None
 

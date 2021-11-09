@@ -17,7 +17,7 @@ def create(mode=0, **kwargs):
         mode (int, optional): level of detail. Defaults to 0.
         kwargs (dict, optional): to include on creation. Defaults to {}.
     """
-    with open(f"./cfg/character_defaults/{kwargs['race'] if 'race' in kwargs else 'human'}.json") as f:
+    with open(f".{sep}races{sep}{kwargs['race'] if 'race' in kwargs else 'human'}.json") as f:
         defaults = json.load(f)
 
     # TODO P2: this doesn't handle invalid races/classes properly because 
@@ -91,14 +91,14 @@ def groupInitiative(*character_lists):
         ((character.initiative(), character.name) for character_list in character_lists for character in character_list)
     , reverse=True)
 
-def setDc(success_odds, dice=rolls.dice, die=rolls.die, roundDown=True):
+def set_dc(success_odds, dice=rolls.dice, die=rolls.die, round_down=True):
     """returns the DC of a % success chance
 
     Args:
         success_odds (int): the 0-99 chance of action success.
         dice (int, optional): number of dice to roll. Defaults to rolls.dice.
         die (int, optional): faces per die. Defaults to rolls.die.
-        roundDown (bool, optional): floors the DC -- for lower variance rolls. Defaults to True.
+        round_down (bool, optional): floors the DC -- for lower variance rolls. Defaults to True.
 
     Returns:
         int: the corresponding DC
@@ -112,7 +112,7 @@ def setDc(success_odds, dice=rolls.dice, die=rolls.die, roundDown=True):
     # alternatively: dc = dice*(die+1) - dc
     dc = -(dc - rolls.dice_mean) + rolls.dice_mean
 
-    if roundDown:
+    if round_down:
         # casting floats to ints truncates in python. don't have to import math
         return f"{int(dc)} (rounded down from {dc})"
     return f"{round(dc)} (rounded from {dc})"
@@ -158,56 +158,38 @@ def dismember(char, atMost=2):
     list(char.attributes.values())[random.randrange(0,len(char.attributes))] -= random.randint(1,atMost)
     char.update()
 
-def random_names(n, *namefiles, threshold=3):
+def random_names(n, *namefiles):
     """spits out random names from namefiles
 
     Args:
         n (int): number of random names to return
-        *namefiles (strings): e.g. 2 namefiles produces 'john smith', 1 yields 'john'
-        threshold (int, optional): above threshold, switches to O(n) space algorithm. Defaults to 2.
+        *namefiles (strings): of file locations. 2 namefiles produces e.g. 'john smith', 1 yields 'john'
 
     Returns:
         tuple: of ('random name' 'for each' 'namefile used') strings
     """
+    # i grabbed (and improved via enumerate! see EOF) the beautiful spaceless unknown-file-length access-random-element
+    # algorithm from the python cookbook expecting it to be faster. random.uniform takes about 200ns
+    # and append takes about 50ns; this space-hog is faster
 
-    # use a faster space-less algorithm (crediting Python Cookbook) if fewer names are needed
-    if n <= threshold:
-        names = ['' for x in range(n)]
-        for idx,_ in enumerate(names):
-            for namefile in namefiles:
-                line_index = 0
-                selected_line = None
-                with open(namefile, 'r') as f:
-                    while True:
-                        line = f.readline()
-                        if not line: # readline() returns '' at EOF
-                            break
-                        line_index += 1
-                        # first line has a 1/1 chance of being selected
-                        # the nth line has a 1/n chance of overwriting previous selection
-                        if random.uniform(0, line_index) < 1:
-                            selected_line = line
+    # build a list of lists of random names from each file
+    namefile_list_list = []
+    for namefile in namefiles:
+        namefile_list = []
+        with open(namefile) as f:
+            for line in f:
+                namefile_list.append(line) # name whitespace and trailing newline preserved
+        namefile_list_list.append(namefile_list) # better to rstrip on assignment
 
-                # (add spaces between firstname nthname lastname)
-                names[idx] += selected_line.rstrip() + ' '
-            names[idx].rstrip() # remove trailing space
-        return names
+    # now actually create and return the random names
+    return [' '.join(
+        random.choice(namefile_list).rstrip() for namefile_list in namefile_list_list
+        ) for henchman in range(n)]
 
-    # otherwise, store all file data in lists for faster accesses
-    else:
-        # build a list of lists of random names from each file
-        namefile_list_list = []
-        for namefile in namefiles:
-            namefile_list = []
-            with open(namefile, 'r') as f:
-                for line in f:
-                    namefile_list.append(line) # name whitespace and trailing newline preserved
-            namefile_list_list.append(namefile_list) # better to rstrip on assignment
-
-        # now actually create and return the random names
-        return [' '.join(
-            random.choice(namefile_list).rstrip() for namefile_list in namefile_list_list
-            ) for henchman in range(n)]
+    # fun golf if you don't mind not closing files
+    # return [' '.join(
+    #     random.choice(namefile_list).rstrip() for namefile_list in [[line for line in open(namefile)] for namefile in namefiles]
+    #     ) for henchman in range(n)]
 
 
 def henchmen(n, *namefiles, attributes=None, faction=None):
@@ -237,23 +219,22 @@ def henchmen(n, *namefiles, attributes=None, faction=None):
     names = random_names(n, *namefiles)
 
     # add a list of characters to the supplied list (if any), randomly name them from the names list, and return it
-    # random_names is pretty slow. so you're getting golfed listcomps
-    return faction + [character.Character.new(**(attributes | {'name':names.pop()})) for x in range(n)]
+    return faction + [character.Character.new(   **(attributes | {'name':names.pop()})   ) for x in range(n)]
 
-# TODO P3: this thing is doubling as a factory method and that probably shouldn't happen
-def load_item(item_attrs):
+# TODO P3: this is doubling as a factory method and that probably shouldn't happen
+def load_item(item):
     """(recursively) loads an item in memory
 
     Args:
-        item_attrs (dict or str): an attr dict to manually create an item with, or a filename str to load from
+        item (dict or str): an attr dict to manually create an item with, or a filename str to load from
 
     Returns:
         Item: loaded
     """
-    if type(item_attrs) == dict:
-        item_json = item_attrs
-    elif type(item_attrs) == str:
-        with open(f'.{sep}items{sep}{item_attrs}.json') as f:
+    if isinstance(item, dict):
+        item_json = item
+    elif isinstance(item, str):
+        with open(f'.{sep}items{sep}{item}.json') as f:
             item_json = json.load(f)
 
     # ladder to determine item type to construct
@@ -265,10 +246,12 @@ def load_item(item_attrs):
     else:
         item_obj = item.Item(**item_json)
 
-    item_obj.storage = [load_item(item) for item in item_obj.storage]
+    item_obj.storage = [load_item(stored_item) for stored_item in item_obj.storage]
     return item_obj
 
-# os.walk's python list is the wrong data structure here. a linked list makes the most sense, I think.
+# this is the 5th iteration of the load function. it works well, but it's just convoluted.
+# i think the object creation could be smoother. it could use something simpler than os.walk, probably os.listdir.
+# os.walk's python list is the wrong data structure here. a linked list makes the most sense.
 # a deque import is costly but scales well. realistically this doesn't matter
 def load():
     """builds factions, a nested dict eventually containing lists of character Objs.
@@ -279,7 +262,7 @@ def load():
         raise Exception("load() attempted to overwrite factions")
 
     # recursive function to both load characters (with items) and populate the root factions dict
-    def populateFactions(root_list, cd, files):
+    def populate_factions(root_list, cd, files):
         # root_list is from walker e.g. ['sg13', 'sgc']. cd is the current dictionary
         outer_dict = root_list.pop() # sgc will equal {'sg13':_, ...} so it's "outer"
 
@@ -302,7 +285,7 @@ def load():
         # otherwise, keep traversing
         if outer_dict not in cd:
             cd[outer_dict] = {}
-        populateFactions(root_list=root_list, cd=cd[outer_dict], files=files)
+        populate_factions(root_list=root_list, cd=cd[outer_dict], files=files)
 
     # generator yielding file locations
     #                               root:           dirs       files
@@ -317,46 +300,43 @@ def load():
             files = [root+sep+file_str for file_str in files]
 
             # root.split(sep) looks like [".", "factions", "<faction1>", "<faction2>", ...]
-            # [::-1] reverses the list; populateFactions can root_list.pop() efficiently
+            # [::-1] reverses the list; populate_factions can root_list.pop() efficiently
             # [:1:-1] slices out the first 2 (junk) elements from the original unreversed list
-            populateFactions(root_list=root.split(sep)[:1:-1], cd=factions, files=files)
+            populate_factions(root_list=root.split(sep)[:1:-1], cd=factions, files=files)
 
     return factions
 
-def save(factions=None):
+
+def save(iterable: dict, path=f'.{sep}factions{sep}'):
     """writes all character data to local jsons
 
     Args:
-        factions (dict): arbitrarily nested dicts eventually containing lists of character objects
+        iterable (dict): arbitrarily nested dicts eventually containing lists of character objects
+        path (str): the directory to save character files in
     """
-    def get_characters_from_dicts(iterable: list or dict, path=f'.{sep}factions{sep}'):
-        # put every nested dict on the stack
-        if isinstance(iterable, dict):
-            for key, value in iterable.items(): # e.g. path="./factions/sgc/" first
-                get_characters_from_dicts(value, path=(path+key+sep))
 
-        # encountered a char_obj list
-        if isinstance(iterable, list):
-            for char_obj in iterable:
-                # save a copy of the character, so the session can continue if needed
-                char_copy = deepcopy(char_obj)
-                # create directories if they don't exist
-                if not os.path.exists(path):
-                    os.makedirs(path)
+    # put every nested dict on the stack
+    if isinstance(iterable, dict):
+        for key, value in iterable.items(): # e.g. path="./factions/sgc/" first
+            save(value, path=(path+key+sep))
 
-                # character faction should be updated on each save
-                # it is purely cosmetic at this point, though
-                # this slicing ultimately does ".\\factions\\x/y/z/" -> "x/y/z"
-                char_copy.faction = sep.join(path.split(sep)[2:-1]).replace('\\','/') # for windows
+    # encountered a char_obj list
+    if isinstance(iterable, list):
+        for char_obj in iterable:
+            # save a copy of the character, so the session can continue if needed
+            char_copy = deepcopy(char_obj)
+            # create directories if they don't exist
+            if not os.path.exists(path):
+                os.makedirs(path)
 
-                # write character to file
-                with open(f'{path}{char_copy.name}.json', 'w+', encoding='utf-8') as f:
-                    json.dump(char_copy.get_json(), f)
+            # character faction should be updated on each save
+            # it is purely cosmetic at this point, though
+            # this slicing ultimately does ".\\factions\\x/y/z/" -> "x/y/z"
+            char_copy.faction = sep.join(path.split(sep)[2:-1]).replace('\\','/') # for windows
 
-    # TODO P3: implement this
-    if factions == None:
-        factions = factions
-    get_characters_from_dicts(factions)
+            # write character to file
+            with open(f'{path}{char_copy.name}.json', 'w+', encoding='utf-8') as f:
+                json.dump(char_copy.get_json(), f)
 
 
 def get_chars(char_dict, out_list=None):
@@ -453,6 +433,23 @@ def attack(attacker, defender, weapon=None, distance=0, cover=0):
 
     else:
         print("miss!")
+
+
+
+# this is what i wrote for the spaceless variant. this is only useful for namefiles that exceed system memory. oh well
+
+# names = []
+# for x in range(n):
+#     name = ''
+#     for namefile in namefiles:
+#         selected_line = None
+#         with open(namefile) as f:
+#             for idx,line in enumerate(f):
+#                 if random.uniform(0,idx) < 1:
+#                     selected_line = line
+#         name += selected_line.rstrip() + ' '
+#     names.append(name.rstrip())
+# return names
 
 
 # some golf experiments i'm leaving here

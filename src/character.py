@@ -31,6 +31,9 @@ class Character:
 
         return char_obj
 
+    def __str__(self):
+        return f'{self.name}: {self.faction}'
+
     # these are a solid maybe
     # @classmethod
     # def load(cls, path):

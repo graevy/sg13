@@ -75,29 +75,33 @@ def create(mode=0, **kwargs):
 
 
 # TODO P3: expanded 5e longrest implementation
-def longrest(*character_lists):
+def long_rest(*character_lists):
     """pass lists of character objects to reset their hp"""
     for character_list in character_lists:
         for character in character_list:
             character.heal()
 
-def groupInitiative(*character_lists):
+def group_initiative(*character_lists, print_output=True):
     """generates initiative rolls from lists of characters.
 
     Returns:
-        list: of (initiative roll, character name) tuples
+        list: of character objects sorted by an initiative roll
     """
-    return sorted(
-        ((character.initiative(), character.name) for character_list in character_lists for character in character_list)
-    , reverse=True)
+    out = sorted((character for character_list in character_lists for character in character_list),
+        key=lambda character: character.initiative(), reverse=True)
 
-def set_dc(success_odds, dice=rolls.dice, die=rolls.die, round_down=True):
+    if print_output:
+        for character in out:
+            print(character)
+    else:
+        return out
+
+
+def set_dc(success_odds, round_down=True):
     """returns the DC of a % success chance
 
     Args:
         success_odds (int): the 0-99 chance of action success.
-        dice (int, optional): number of dice to roll. Defaults to rolls.dice.
-        die (int, optional): faces per die. Defaults to rolls.die.
         round_down (bool, optional): floors the DC -- for lower variance rolls. Defaults to True.
 
     Returns:
@@ -117,21 +121,19 @@ def set_dc(success_odds, dice=rolls.dice, die=rolls.die, round_down=True):
         return f"{int(dc)} (rounded down from {dc})"
     return f"{round(dc)} (rounded from {dc})"
 
-def oddsNum(dc, dice=rolls.dice, die=rolls.die):
+def odds_num(dc):
     """return odds of succeeding a dice check
 
     Args:
         dc (int): Dice check to pass/fail
-        dice (int, optional): Number of dice. Defaults to 3.
-        die (int, optional): Number of sides per die. Defaults to 6.
 
     Returns:
         [str]: Percent chance of success
     """
     odds = NormalDist(mu=rolls.dice_mean, sigma=rolls.dice_stdev).cdf(dc)
-    percentSuccess = 100 - int(round(odds, 2) * 100)
+    percent_success = 100 - int(round(odds, 2) * 100)
 
-    return f"DC of {dc} rolling {dice}d{die}: {percentSuccess}% success"
+    return f"DC of {dc} rolling {dice}d{die}: {percent_success}% success"
     # in python 2, (1 + erf(x/root2))/2 can be substituted for normaldist.cdf
 
 # alias commands

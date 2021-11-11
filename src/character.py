@@ -12,21 +12,22 @@ import dmtools
 class Character:
     """Generic character class. Construct with an unpacked **dict
     """
-    def __init__(self, **kwargs):
-        for key,value in kwargs.items():
+    def __init__(self, attrs):
+        for key,value in attrs.items():
             setattr(self,key,value)
 
     @classmethod
-    def new(cls, **kwargs):
+    def new(cls, attrs):
         """uncontrolled factory method for first-time character creation
         using this to load character jsons will run unnecessary overhead
 
         Returns:
             character: created
         """#           /races/human/human.json
-        with open(f".{os.sep}races{os.sep}{kwargs.get('race','human')}{os.sep}{kwargs.get('race','human')}.json") as f:
+        with open(f".{os.sep}races{os.sep}{attrs.get('race','human')}{os.sep}{attrs.get('race','human')}.json") as f:
             defaults = json.load(f)
-        char_obj = cls(**(defaults | kwargs))
+
+        char_obj = cls(defaults | attrs)
         char_obj.update()
 
         return char_obj
@@ -38,7 +39,7 @@ class Character:
     # @classmethod
     # def load(cls, path):
     #     with open(path) as f:
-    #         return cls(**json.load(f))
+    #         return cls(json.load(f))
 
     # def save(self):
     #     attrs = vars(self)

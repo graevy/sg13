@@ -24,7 +24,7 @@ class Character:
         Returns:
             character: created
         """#           /races/human/human.json
-        with open(f".{os.sep}races{os.sep}{attrs.get('race','human')}{os.sep}{attrs.get('race','human')}.json") as f:
+        with open(f".{os.sep}races{os.sep}{attrs.get('race','human')}{os.sep}defaults.json") as f:
             defaults = json.load(f)
 
         char_obj = cls(defaults | attrs)

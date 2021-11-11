@@ -8,7 +8,7 @@ try:
     import item
     import race
     import clas
-
+    import template
     import rolls
 
     print("Packages imported")

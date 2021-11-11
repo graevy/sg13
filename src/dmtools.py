@@ -17,7 +17,7 @@ def create(mode=0, **kwargs):
         mode (int, optional): level of detail. Defaults to 0.
         kwargs (dict, optional): to include on creation. Defaults to {}.
     """
-    with open(f".{sep}races{sep}{kwargs.get('race','human')}{sep}{kwargs.get('race','human')}.json") as f:
+    with open(f".{sep}races{sep}{kwargs.get('race','human')}{sep}defaults.json") as f:
         defaults = json.load(f)
 
     # TODO P2: this doesn't handle invalid races/classes properly because 

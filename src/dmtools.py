@@ -37,41 +37,41 @@ def create(mode=0, **kwargs):
             except ValueError:
                 print(f" invalid entry for {key}")
 
-    data = {} # this gets populated and then returned
+    attrs = {} # this gets populated and then returned
     basics = ['name', 'race', 'clas', 'faction', 'level']
 
-    # stuffing the basic values into data
+    # stuffing the basic values into attrs
     for basic in basics:
         if basic not in kwargs:
-            data[basic] = handle_input(basic)
+            attrs[basic] = handle_input(basic)
 
     # optionally manually edit character attributes and skills
     if mode:
         attrs = defaults['attributes']
-        data['attributes'] = {attr_name:handle_input(attr_name,attrs) \
+        attrs['attributes'] = {attr_name:handle_input(attr_name,attrs) \
             if attr_name not in kwargs else None for attr_name in attrs}
         skills = defaults['skills']
-        data['skills'] = {skill_name:handle_input(skill_name,skills) \
+        attrs['skills'] = {skill_name:handle_input(skill_name,skills) \
             if skill_name not in kwargs else None for skill_name in skills}
         
         # gear editing
         if mode > 1:
             slots = defaults['slots']
-            data['slots'] = {slot_name:handle_input(slot_name,slots) \
+            attrs['slots'] = {slot_name:handle_input(slot_name,slots) \
                 if slot_name not in kwargs else None for slot_name in slots}
 
     # at the end, insert kwargs, overwriting any Nones
-    data = data | kwargs
+    attrs = attrs | kwargs
 
     # this permits create(strength=15) instead of create(attributes={strength:15,dexterity:10...})
-    # pop also neatly cleans the data dict before assignment if, uh, anyone were to include that error
+    # pop also neatly cleans the attrs dict before assignment if, uh, anyone were to include that error
     for key in kwargs:
         if key in defaults['attributes']:
-            data['attributes'][key] = data.pop(key)
+            attrs['attributes'][key] = attrs.pop(key)
         if key in defaults['skills']:
-            data['skills'][key] = data.pop(key)
+            attrs['skills'][key] = attrs.pop(key)
 
-    return character.Character.new(**data)
+    return character.Character.new(attrs)
 
 
 # TODO P3: expanded 5e longrest implementation
@@ -160,69 +160,73 @@ def dismember(char, at_most=2):
     tuple(char.attributes.values())[random.randrange(0,len(char.attributes))] -= random.randint(1,at_most)
     char.update()
 
-def random_names(n, *namefiles):
-    """spits out random names from namefiles
+def random_names(n, name_files):
+    """spits out random names from name_files
 
     Args:
         n (int): number of random names to return
-        *namefiles (strings): of file locations. 2 namefiles produces e.g. 'john smith', 1 yields 'john'
+        name_files (iterable): containing files e.g. "./races/human/names/firstnames.txt"
 
     Returns:
         tuple: of ('random name' 'for each' 'namefile used') strings
     """
     # i grabbed (and improved via enumerate! see EOF) the beautiful spaceless unknown-file-length access-random-element
     # algorithm from the python cookbook expecting it to be faster. random.uniform takes about 200ns
-    # and append takes about 50ns; this space-hog is faster
+    # and append takes about 50ns; this space-hog is faster for single and obviously multiple accesses
 
     # build a list of lists of all names from each file
-    namefile_list_list = []
-    for namefile in namefiles:
-        namefile_list = []
-        with open(namefile, encoding='utf-8') as f:
+    name_file_list_list = []
+    for name_file in name_files:
+        name_file_list = []
+        with open(name_file, encoding='utf-8') as f:
             for line in f:
-                namefile_list.append(line) # name whitespace and trailing newline preserved
-        namefile_list_list.append(namefile_list) # better to rstrip on assignment
+                name_file_list.append(line) # name whitespace and trailing newline preserved
+        name_file_list_list.append(name_file_list) # better to rstrip on assignment
 
     # now actually create and return the random names
     return [' '.join(
-        random.choice(namefile_list).rstrip() for namefile_list in namefile_list_list
-        ) for henchman in range(n)]
+        random.choice(name_file_list).rstrip() for name_file_list in name_file_list_list
+        ) for _ in range(n)]
 
     # fun golf if you don't mind not closing files
     # return [' '.join(
-    #     random.choice(namefile_list).rstrip() for namefile_list in [[line for line in open(namefile)] for namefile in namefiles]
-    #     ) for henchman in range(n)]
+    #     random.choice(name_file_list).rstrip() for name_file_list in [[line for line in open(name_file)] for name_file in name_files]
+    #     ) for _ in range(n)]
 
 
-def henchmen(n, *namefiles, attributes=None, faction=None):
+def henchmen(n, template=None, attributes=None, faction=None):
     """generates henchmen for use in combat encounters
 
     Args:
         n (int): number of henchmen
-        namefiles (str, optional): text filenames to source random character names from
-        attributes (dict, optional): a data dict containing elements for character construction
-        faction (list, optional): a faction list to put henchmen inside
+        template (str, optional): the name of a pre-generated character file e.g. 'airman' to use
+        attributes (dict, optional): containing elements for character construction
+        faction (list, optional): to extend with the generated henchmen inside
 
     Returns:
-        (list): faction list, containing all the henchmen
+        (list): containing all the henchmen
     """
-    # did you know mutable default args are only instantiated when a function is defined? that was a fun session
+    # mutable default args are only instantiated when a function is defined, not called
     if attributes is None:
         attributes = {}
     if faction is None:
         faction = []
 
-    # use human as a default race for sourcing names
-    if not namefiles:
-        namefiles = os.listdir(f".{sep}races{sep}{attributes.get('race','human')}{sep}names")
-    # if the race wasn't given any namefiles, use human names. this gets very entertaining
-    if not namefiles:
-        namefiles = os.listdir(f".{sep}races{sep}human{sep}names")
-    # generate random names
-    names = random_names(n, *namefiles)
+    # using a template means we source names from its race
+    if template:
+        with open(f".{sep}npc_templates{sep}{template}.json", encoding='utf-8') as f:
+            attributes = json.load(f) | attributes
+        race = attributes['race']
+    elif 'race' in attributes and os.listdir(f".{sep}races{sep}{attributes['race']}{sep}names"):
+        race = attributes['race']
+    else:
+        race = 'human'
+
+    name_files = [f".{sep}races{sep}{race}{sep}names{sep}"+name_file for name_file in os.listdir(f".{sep}races{sep}{race}{sep}names")]
+    names = random_names(n, name_files)
 
     # add a list of characters to the supplied list (if any), randomly name them from the names list, and return it
-    return faction + [character.Character.new(   **(attributes | {'name':names.pop()})   ) for x in range(n)]
+    return faction + [character.Character.new(attributes | {'name':names.pop()}) for _ in range(n)]
 
 # TODO P3: this is doubling as a factory method and that probably shouldn't happen
 def load_item(item_to_load):
@@ -275,7 +279,7 @@ def load():
             for file_str in files:
                 with open(file_str) as f:
                     # convert each serialized character into an object,
-                    char_obj = character.Character(**json.load(f))
+                    char_obj = character.Character(json.load(f))
                     # convert each serialized item into an object (load_item does recursion),
                     char_obj.slots = {slot:load_item(item) if item else None \
                         for slot,item in char_obj.slots.items()}

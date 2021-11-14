@@ -1,4 +1,5 @@
 class Item:
+    # TODO P2: test to make sure the mutable default args don't fuck up item creation
     def __init__(self, name, description=None, weight=0.0, size=2, space=0, storage=[], bonus_attrs={}, bonus_skills={}):
         self.name = name
         self.description = description

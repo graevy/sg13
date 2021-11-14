@@ -453,7 +453,7 @@ def attack(attacker, defender, weapon=None, distance=0, cover=0):
 #     for namefile in namefiles:
 #         selected_line = None
 #         with open(namefile) as f:
-#             for idx,line in enumerate(f):
+#             for idx,line in enumerate(f, start=1):
 #                 if random.uniform(0,idx) < 1:
 #                     selected_line = line
 #         name += selected_line.rstrip() + ' '

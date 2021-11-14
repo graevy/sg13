@@ -222,7 +222,8 @@ def henchmen(n, template=None, attributes=None, faction=None):
     else:
         race = 'human'
 
-    name_files = [f".{sep}races{sep}{race}{sep}names{sep}"+name_file for name_file in os.listdir(f".{sep}races{sep}{race}{sep}names")]
+    race_path = f".{sep}races{sep}{race}{sep}names"
+    name_files = [race_path + sep + name_file for name_file in os.listdir(race_path)]
     names = random_names(n, name_files)
 
     # add a list of characters to the supplied list (if any), randomly name them from the names list, and return it

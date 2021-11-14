@@ -8,6 +8,12 @@ import clas # misspelt throughout the codebase to avoid keyword collision
 import rolls
 import dmtools
 
+MAX_LEVEL = 20
+MAX_ATTR = 20
+MAX_SKILL = 5
+BASE_SKILL_POINTS = 3
+BASE_AC = 6
+
 
 class Character:
     """Generic character class. Construct with an unpacked **dict
@@ -462,44 +468,64 @@ class Character:
         char_copy.update()
         self = char_copy
 
-    # def auto_level_up(self, preset=self.clas):
 
-    #     with open(f'.{os.sep}classes{os.sep}{self.clas}.json', encoding='utf-8') as f:
-    #         clas_dict = json.load(f)
-    #         preferred_attrs = clas_dict['preferred_attrs']
-    #         preferred_skills = clas_dict['preferred_skills']
+    # TODO P1: test
+    def auto_level_up(self):
+
+        with open(f'.{os.sep}classes{os.sep}{self.clas}.json', encoding='utf-8') as f:
+            clas_dict = json.load(f)
+            attr_weights = clas_dict['attr_weights']
+            skill_weights = clas_dict['skill_weights']
+
+        char_copy = deepcopy(self)
+        char_copy.level += 1
+            
+
+        # level attributes
+        if  char_copy.level % 2 != 0:
+            char_copy.attribute_points += 1
+
+        for _ in range(char_copy.attribute_points):
+            # so, to choose which attribute to level, sort them by their value: attrs[attr],
+            # minus their clas-supplied weighting: attr_weights[attr]
+            # this means that attributes with a higher weight get put first
+            attrs = char_copy['attributes']
+
+            # key takes a function, which takes each iterable elem as an arg (like a for loop), 
+            # and sorts by the function's output.
+            # using dict.get(value,0) allows for support for shorter weights dicts. e.g. 
+            # a scientist doesn't need 'strength':0, and could just have {'tecnhology':10} for a skill weights dict.
+            order = sorted(attrs,key=lambda attr: attrs[attr] - attr_weights.get(attr,0))
+
+            # we still need to make sure that we respect the max attr value
+            for idx,attr in enumerate(order):
+                if attrs[attr] >= MAX_ATTR:
+                    if idx >= len(attrs):
+                        raise Exception(f"{char_copy.name} somehow has all attrs >= {MAX_ATTRS}!")
+                    continue
+                attrs[attr] += 1
+                char_copy.attribute_points -= 1
+                break
 
 
+        base_int_mod = (char_copy.attributes['intelligence'] - 10) // 2
+        char_copy.skill_points += BASE_SKILL_POINTS + base_int_mod
 
-    #     # else:
-    #     #     # if nothing is supplied, just exit the function with a random attribute
-    #     #     nonlocal self
-    #     #     return random.choice(tuple(self.attributes.keys()))
+        for _ in range(char_copy.skill_points):
+            skills = char_copy['skills']
+            order = sorted(skills,key=lambda skill: skills[skill] - skill_weights.get(skill,0))
 
-    #     char_copy = deepcopy(self)
-    #     char_copy.level += 1
+            for idx,skill in enumerate(order):
+                if skills[skill] >= MAX_SKILL:
+                    if idx >= len(skills):
+                        raise Exception(f"{char_copy.name} somehow has all attrs >= {MAX_SKILLS}!")
+                    continue
+                skills[skill] += 1
+                char_copy.skill_points -= 1
+                break
 
-    #     # level attributes
-    #     if  char_copy.level % 4 == 0:
-    #         char_copy.attribute_points += 2
-
-    #     # TODO P2: this is a placeholder. it will also fail if someone's attribute hits a max value
-    #     # prioritizes 3 attrs in order, but keeps them roughly grouped
-    #     for point in range(attribute_points):
-    #         if preferred_attrs[0] - preferred_attrs[1] < 2:
-    #             self.attributes[preferred_attrs[0]] += 1
-    #         if preferred_attrs[1] - preferred_attrs[2] < 2:
-    #             self.attributes[preferred_attrs[1]] += 1
-    #         else:
-    #             self.attributes[preferred_attrs[2]] += 1
-
-
-    #     base_int_mod = (char_copy.attributes['intelligence'] - 10) // 2
-    #     char_copy.skill_points += 3 + base_int_mod
-
-    #     for point in range(char_copy.skill_points):
-    #         pass
-
+        char_copy.update()
+        self = char_copy
 
 
 

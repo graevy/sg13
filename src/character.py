@@ -345,7 +345,7 @@ class Character:
 
         self.update()
 
-    # everything below is from 2019. it's smelly and largely deprecated. recently updated some of it
+    # smelly
     def point_buy_attributes(self, points=27):
         """Starts the point buy process for the character.
 
@@ -359,8 +359,8 @@ class Character:
 
         def bug_player():
             s = input("type an attribute to increment: ").lower()
-            if s not in char_copy.attributes.keys():
-                print("invalid attribute. attributes are: ", *char_copy.attributes.keys())
+            if s not in char_copy.attributes:
+                print("invalid attribute. attributes are: ", *char_copy.attributes)
                 return False
             return s
 
@@ -420,7 +420,7 @@ class Character:
                 break
 
             if s not in char_copy.attributes:
-                print("invalid attribute. attributes are: ",*char_copy.attributes.keys())
+                print("invalid attribute. attributes are: ",*char_copy.attributes)
 
             if char_copy.attributes[s] < 20:
                 char_copy.attributes[s] += 1
@@ -495,10 +495,10 @@ class Character:
             char_copy.attribute_points += 1
 
         for _ in range(char_copy.attribute_points):
-            # so, to choose which attribute to level, sort them by their value: attrs[attr],
-            # minus their clas-supplied weighting: attr_weights[attr]
-            # this means that attributes with a higher weight get put first
             attrs = char_copy['attributes']
+            # so, to choose which attribute to level, sort them (low to high) by 
+            # their value: attrs[attr], minus their clas-supplied weighting: attr_weights[attr]
+            # this means that attributes with a higher weight get put first
 
             # key takes a function, which takes each iterable elem as an arg (like a for loop), 
             # and sorts by the function's output.
@@ -516,7 +516,7 @@ class Character:
                 char_copy.attribute_points -= 1
                 break
 
-
+        # level skills
         base_int_mod = (char_copy.attributes['intelligence'] - 10) // 2
         char_copy.skill_points += BASE_SKILL_POINTS + base_int_mod
 
@@ -527,7 +527,7 @@ class Character:
             for idx,skill in enumerate(order):
                 if skills[skill] >= MAX_SKILL:
                     if idx >= len(skills):
-                        raise Exception(f"{char_copy.name} somehow has all attrs >= {MAX_SKILLS}!")
+                        raise Exception(f"{char_copy.name} somehow has all skills >= {MAX_SKILLS}!")
                     continue
                 skills[skill] += 1
                 char_copy.skill_points -= 1

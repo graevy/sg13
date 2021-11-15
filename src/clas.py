@@ -9,10 +9,10 @@ class Clas:
 
     @classmethod
     def create(cls, name, hit_die, bonus_attrs, bonus_skills,
-    proficiencies=None, feats=None, preferred_attrs=None, preferred_skills=None):
+    proficiencies=None, feats=None, attr_weights=None, skill_weights=None):
         with open(f'.{os.sep}classes{os.sep}{name}.json', 'w+', encoding='utf-8') as f:
             json.dump(vars(cls(name, hit_die, bonus_attrs, bonus_skills,
-            proficiencies, feats, preferred_attrs, preferred_skills)), f)
+            proficiencies, feats, attr_weights, skill_weights)), f)
 
 
 def load_clas(name):

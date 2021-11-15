@@ -14,6 +14,12 @@ MAX_SKILL = 5
 BASE_SKILL_POINTS = 3
 BASE_AC = 6
 
+# much of the code is duplicated for performing the same actions on attributes and skills.
+# i'm forced to ask myself why keeping them separate is necessary, and i'm drawing a blank.
+# it's a pretty minor refactor. the biggest issue i see is handling skill/attr points for leveling.
+# it would mitigate the coding-ttrpg "attribute" name collision
+# i need to think more about it. 
+
 
 class Character:
     """Generic character class. Construct with an unpacked **dict
@@ -470,7 +476,10 @@ class Character:
 
 
     # TODO P1: test
-    def auto_level_up(self):
+    # things that still need to get done here:
+    # accounting for bonus skills/attrs
+    # weights don't scale at all with character level. is that desirable behavior?
+    def level_up_auto(self):
 
         with open(f'.{os.sep}classes{os.sep}{self.clas}.json', encoding='utf-8') as f:
             clas_dict = json.load(f)
@@ -493,8 +502,8 @@ class Character:
 
             # key takes a function, which takes each iterable elem as an arg (like a for loop), 
             # and sorts by the function's output.
-            # using dict.get(value,0) allows for support for shorter weights dicts. e.g. 
-            # a scientist doesn't need 'strength':0, and could just have {'tecnhology':10} for a skill weights dict.
+            # using dict.get(value,0) allows for support for shorter weights dicts. e.g. a scientist
+            # doesn't need 'strength':0, and could just have {'tecnhology':10} for a skill weights dict.
             order = sorted(attrs,key=lambda attr: attrs[attr] - attr_weights.get(attr,0))
 
             # we still need to make sure that we respect the max attr value

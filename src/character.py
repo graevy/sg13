@@ -130,7 +130,7 @@ class Character:
         self.gear_weight = sum(item.get_weight() if item else 0 for item in self.slots.values())
 
     def update_speed(self):
-        str_mod = self.attr_mods['strength'] + self.bonus_attrs['strength']
+        str_mod = self.attr_mods['strength']
 
         if str_mod < 0:
             divisor = 50
@@ -411,9 +411,10 @@ class Character:
             else:
                 print(f"attribute {s} at starting cap (15)")
 
-        self = char_copy
+        self.__dict__ = char_copy.__dict__
 
 
+    # TODO P2: redo this whole function tbh
     def level_up(self):
         """levels the character"""
 
@@ -421,8 +422,8 @@ class Character:
         char_copy.level += 1
 
         # level attributes
-        if  char_copy.level % 4 == 0:
-            char_copy.attribute_points += 2
+        if  char_copy.level % 2 == 0:
+            char_copy.attribute_points += 1
             char_copy.show_attributes()
 
         while char_copy.attribute_points > 0:
@@ -434,7 +435,7 @@ class Character:
             if s not in char_copy.attributes:
                 print("invalid attribute. attributes are: ",*char_copy.attributes)
 
-            if char_copy.attributes[s] < 20:
+            if char_copy.attributes[s] < MAX_ATTR:
                 char_copy.attributes[s] += 1
                 char_copy.attribute_points -= 1
             else:
@@ -484,7 +485,7 @@ class Character:
                 print("skill maxed; pick a different skill")
 
         char_copy.update()
-        self = char_copy
+        self.__dict__ = char_copy.__dict__
 
 
     # things that still need to get done here:
@@ -496,13 +497,15 @@ class Character:
             attr_weights = clas_dict['attr_weights']
             skill_weights = clas_dict['skill_weights']
 
-        # level attributes. i opted to give 1 point every 2 levels instead of the traditional 2 every 4
-        self.level += 1
-        if  self.level % 2 == 0:
-            self.attribute_points += 1
+        char_copy = deepcopy(self)
 
-        for _ in range(self.attribute_points):
-            attrs = self.attributes
+        # level attributes. i opted to give 1 point every 2 levels instead of the traditional 2 every 4
+        char_copy.level += 1
+        if  char_copy.level % 2 == 0:
+            char_copy.attribute_points += 1
+
+        for _ in range(char_copy.attribute_points):
+            attrs = char_copy.attributes
             # so, to choose which attribute to level, sort them (low to high) by 
             # their value: attrs[attr], minus their clas-supplied weighting: attr_weights[attr]
             # this means that attributes with a higher weight get put first
@@ -517,31 +520,33 @@ class Character:
             for idx,attr in enumerate(order):
                 if attrs[attr] >= MAX_ATTR:
                     if idx >= len(attrs):
-                        raise Exception(f"{self.name} has all attrs >= {MAX_ATTRS}.")
+                        raise Exception(f"{char_copy.name} has all attrs >= {MAX_ATTRS}.")
                     continue
                 attrs[attr] += 1
-                self.attribute_points -= 1
+                char_copy.attribute_points -= 1
                 break
 
         # level skills
-        base_int_mod = (self.attributes['intelligence'] - 10) // 2
-        self.skill_points += BASE_SKILL_POINTS + base_int_mod
+        base_int_mod = (char_copy.attributes['intelligence'] - 10) // 2
+        char_copy.skill_points += BASE_SKILL_POINTS + base_int_mod
 
         # basically a copy of the attribute leveling
-        for _ in range(self.skill_points):
-            skills = self.skills
+        for _ in range(char_copy.skill_points):
+            skills = char_copy.skills
             order = sorted(skills,key=lambda skill: skills[skill] - skill_weights.get(skill,0))
 
             for idx,skill in enumerate(order):
                 if skills[skill] >= MAX_SKILL:
                     if idx >= len(skills):
-                        raise Exception(f"{self.name} has all skills >= {MAX_SKILLS}.")
+                        raise Exception(f"{char_copy.name} has all skills >= {MAX_SKILLS}.")
                     continue
                 skills[skill] += 1
-                self.skill_points -= 1
+                char_copy.skill_points -= 1
                 break
 
-        self.update()
+        char_copy.update()
+        # TODO P3: this is a little unsafe, and might be able to be solved with a __dir__ method?
+        self.__dict__ = char_copy.__dict__
 
 
 

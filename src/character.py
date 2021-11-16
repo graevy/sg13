@@ -22,11 +22,14 @@ BASE_AC = 6
 
 
 class Character:
-    """Generic character class. Construct with an unpacked **dict
+    """Generic character class. Construct with an attr dict
     """
     def __init__(self, attrs):
-        for key,value in attrs.items():
-            setattr(self,key,value)
+        with open(f".{os.sep}races{os.sep}{attrs.get('race','human')}{os.sep}defaults.json") as f:
+            self.__dict__ |= json.load(f) | attrs
+
+        # for key,value in attrs.items():
+        #     setattr(self,key,value)
 
     @classmethod
     def new(cls, attrs):
@@ -91,14 +94,26 @@ class Character:
 
             self.clas_applied = True
 
+    # TODO P3: this became very horrifying very quickly
     def update_bonuses(self):
-        # see eof*
-        self.bonus_attrs = {attr_name:sum(
+        if not self.bonus_attrs:
+            self.bonus_attrs = {attr_name:sum(
+                item.bonus_attrs.get(attr_name,0) if item else 0 for item in self.slots.values()
+                ) for attr_name in self.attributes}
+        if not self.bonus_skills:
+            self.bonus_skills = {skill_name:sum(
+                item.bonus_skills.get(skill_name,0) if item else 0 for item in self.slots.values()
+                ) for skill_name in self.skills}
+
+        self.bonus_attrs = {attr_name:self.bonus_attrs.get(attr_name,0) + sum(
             item.bonus_attrs.get(attr_name,0) if item else 0 for item in self.slots.values()
             ) for attr_name in self.attributes}
-        self.bonus_skills = {skill_name:sum(
+        self.bonus_skills = {skill_name:self.bonus_skills.get(skill_name,0) + sum(
             item.bonus_skills.get(skill_name,0) if item else 0 for item in self.slots.values()
             ) for skill_name in self.skills}
+
+        self.bonus_attrs = 
+
 
     def update_mods(self):
         self.attr_mods = {attr_name:(self.attributes[attr_name] + self.bonus_attrs[attr_name] - 10) // 2 \
@@ -477,7 +492,7 @@ class Character:
 
     # TODO P1: test
     # things that still need to get done here:
-    # accounting for bonus skills/attrs
+    # accounting for bonus skills/attrs. they get reset on levelup!
     # weights don't scale at all with character level. is that desirable behavior?
     def level_up_auto(self):
 
@@ -486,16 +501,13 @@ class Character:
             attr_weights = clas_dict['attr_weights']
             skill_weights = clas_dict['skill_weights']
 
-        char_copy = deepcopy(self)
-        char_copy.level += 1
-            
+        # level attributes. i opted to give 1 point every 2 levels instead of the traditional 2 every 4
+        self.level += 1
+        if  self.level % 2 == 0:
+            self.attribute_points += 1
 
-        # level attributes
-        if  char_copy.level % 2 != 0:
-            char_copy.attribute_points += 1
-
-        for _ in range(char_copy.attribute_points):
-            attrs = char_copy['attributes']
+        for _ in range(self.attribute_points):
+            attrs = self.attributes
             # so, to choose which attribute to level, sort them (low to high) by 
             # their value: attrs[attr], minus their clas-supplied weighting: attr_weights[attr]
             # this means that attributes with a higher weight get put first
@@ -510,31 +522,31 @@ class Character:
             for idx,attr in enumerate(order):
                 if attrs[attr] >= MAX_ATTR:
                     if idx >= len(attrs):
-                        raise Exception(f"{char_copy.name} somehow has all attrs >= {MAX_ATTRS}!")
+                        raise Exception(f"{self.name} has all attrs >= {MAX_ATTRS}.")
                     continue
                 attrs[attr] += 1
-                char_copy.attribute_points -= 1
+                self.attribute_points -= 1
                 break
 
         # level skills
-        base_int_mod = (char_copy.attributes['intelligence'] - 10) // 2
-        char_copy.skill_points += BASE_SKILL_POINTS + base_int_mod
+        base_int_mod = (self.attributes['intelligence'] - 10) // 2
+        self.skill_points += BASE_SKILL_POINTS + base_int_mod
 
-        for _ in range(char_copy.skill_points):
-            skills = char_copy['skills']
+        # basically a copy of the attribute leveling
+        for _ in range(self.skill_points):
+            skills = self.skills
             order = sorted(skills,key=lambda skill: skills[skill] - skill_weights.get(skill,0))
 
             for idx,skill in enumerate(order):
                 if skills[skill] >= MAX_SKILL:
                     if idx >= len(skills):
-                        raise Exception(f"{char_copy.name} somehow has all skills >= {MAX_SKILLS}!")
+                        raise Exception(f"{self.name} has all skills >= {MAX_SKILLS}.")
                     continue
                 skills[skill] += 1
-                char_copy.skill_points -= 1
+                self.skill_points -= 1
                 break
 
-        char_copy.update()
-        self = char_copy
+        self.update()
 
 
 

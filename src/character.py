@@ -22,17 +22,15 @@ BASE_AC = 6
 
 
 class Character:
-    """Generic character class. Construct with an attr dict
+    """Generic character class. Create new instances with create(). Load saved instances with __init__()
     """
     def __init__(self, attrs):
-        with open(f".{os.sep}races{os.sep}{attrs.get('race','human')}{os.sep}defaults.json") as f:
-            self.__dict__ |= json.load(f) | attrs
-
+        self.__dict__ |= attrs
         # for key,value in attrs.items():
         #     setattr(self,key,value)
 
     @classmethod
-    def new(cls, attrs):
+    def create(cls, attrs):
         """uncontrolled factory method for first-time character creation
         using this to load character jsons will run unnecessary overhead
 
@@ -40,11 +38,9 @@ class Character:
             character: created
         """#           /races/human/human.json
         with open(f".{os.sep}races{os.sep}{attrs.get('race','human')}{os.sep}defaults.json") as f:
-            defaults = json.load(f)
+            char_obj = cls(json.load(f) | attrs)
 
-        char_obj = cls(defaults | attrs)
         char_obj.update()
-
         return char_obj
 
     def __str__(self):
@@ -52,8 +48,10 @@ class Character:
 
     # these are a solid maybe
     # @classmethod
-    # def load(cls, path):
-    #     with open(path) as f:
+    # def load(cls, path=None):
+    #     if path is None:
+    #         path = '.' + os.sep + self.faction.replace('/',os.sep) + os.sep + self.name + '.json'
+    #     with open(path, encoding='utf-8') as f:
     #         return cls(json.load(f))
 
     # def save(self):
@@ -94,25 +92,35 @@ class Character:
 
             self.clas_applied = True
 
-    # TODO P3: this became very horrifying very quickly
+    # def update_bonus(self, dict, key, value):
+    #     self.bonus_attrs[key] = self.bonus_attrs.setdefault(key,0) + value
+
+    # def update_mod(self, attr_name):
+    #     self.attr_mods[attr_name] = (self.attributes[attr_name] + self.bonus_attrs[attr_name] - 10) // 2
+
+    # def update_bonuses(self):
+    #     for slot in self.slots.values():
+    #         if slot is not None:
+    #             for attr_name, attr_value in slot.bonus_attrs.items():
+    #                 self.update_bonus(self.bonus_attrs, )
+
+    #     self.bonus_attrs = {attr_name:self.update_bonus(self.bonus_attrs, attr_name, 
+    #         sum(item.bonus_attrs[attr_name] if item else 0 for item in self.slots.values())) for attr_name in self.attributes}
+    #     self.bonus_skills = {skill_name:self.update_bonus(self.bonus_skills, skill_name, 
+    #         sum(item.bonus_skills[skill_name] if item else 0 for item in self.slots.values())) for skill_name in self.skills}
+
+    # TODO P3: this became very horrifying very quickly. i've left some code commented above as the start of a potential alternative?
+    # the original un-golfed lines are at EOF *
     def update_bonuses(self):
-        if not self.bonus_attrs:
-            self.bonus_attrs = {attr_name:sum(
-                item.bonus_attrs.get(attr_name,0) if item else 0 for item in self.slots.values()
-                ) for attr_name in self.attributes}
-        if not self.bonus_skills:
-            self.bonus_skills = {skill_name:sum(
-                item.bonus_skills.get(skill_name,0) if item else 0 for item in self.slots.values()
-                ) for skill_name in self.skills}
-
-        self.bonus_attrs = {attr_name:self.bonus_attrs.get(attr_name,0) + sum(
-            item.bonus_attrs.get(attr_name,0) if item else 0 for item in self.slots.values()
+        self.bonus_attrs = {attr_name:self.bonus_attrs.setdefault(attr_name,0) + 
+        sum(
+            item.bonus_attrs[attr_name] if item else 0 for item in self.slots.values()
             ) for attr_name in self.attributes}
-        self.bonus_skills = {skill_name:self.bonus_skills.get(skill_name,0) + sum(
-            item.bonus_skills.get(skill_name,0) if item else 0 for item in self.slots.values()
-            ) for skill_name in self.skills}
 
-        self.bonus_attrs = 
+        self.bonus_skills = {skill_name:self.bonus_skills.setdefault(skill_name,0) + 
+        sum(
+            item.bonus_skills[skill_name] if item else 0 for item in self.slots.values()
+            ) for skill_name in self.skills}
 
 
     def update_mods(self):

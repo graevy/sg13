@@ -71,7 +71,7 @@ def create(mode=0, **kwargs):
         if key in defaults['skills']:
             attrs['skills'][key] = attrs.pop(key)
 
-    return character.Character.new(attrs)
+    return character.Character.create(attrs)
 
 
 # TODO P3: expanded 5e longrest implementation
@@ -227,7 +227,7 @@ def henchmen(n, template=None, attributes=None, faction=None):
     names = random_names(n, name_files)
 
     # add a list of characters to the supplied list (if any), randomly name them from the names list, and return it
-    return faction + [character.Character.new(attributes | {'name':names.pop()}) for _ in range(n)]
+    return faction + [character.Character.create(attributes | {'name':names.pop()}) for _ in range(n)]
 
 # TODO P3: this is doubling as a factory method and that probably shouldn't happen
 def load_item(item_to_load):

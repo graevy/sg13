@@ -92,25 +92,13 @@ class Character:
 
             self.clas_applied = True
 
-    # def update_bonus(self, dict, key, value):
-    #     self.bonus_attrs[key] = self.bonus_attrs.setdefault(key,0) + value
+    def update_bonus(self, dict, key, value):
+        self.bonus_attrs[key] = self.bonus_attrs.setdefault(key,0) + value
 
-    # def update_mod(self, attr_name):
-    #     self.attr_mods[attr_name] = (self.attributes[attr_name] + self.bonus_attrs[attr_name] - 10) // 2
+    def update_mod(self, attr_name):
+        self.attr_mods[attr_name] = (self.attributes[attr_name] + self.bonus_attrs[attr_name] - 10) // 2
 
-    # def update_bonuses(self):
-    #     for slot in self.slots.values():
-    #         if slot is not None:
-    #             for attr_name, attr_value in slot.bonus_attrs.items():
-    #                 self.update_bonus(self.bonus_attrs, )
-
-    #     self.bonus_attrs = {attr_name:self.update_bonus(self.bonus_attrs, attr_name, 
-    #         sum(item.bonus_attrs[attr_name] if item else 0 for item in self.slots.values())) for attr_name in self.attributes}
-    #     self.bonus_skills = {skill_name:self.update_bonus(self.bonus_skills, skill_name, 
-    #         sum(item.bonus_skills[skill_name] if item else 0 for item in self.slots.values())) for skill_name in self.skills}
-
-    # TODO P3: this became very horrifying very quickly. i've left some code commented above as the start of a potential alternative?
-    # the original un-golfed lines are at EOF *
+    # TODO P3: this became very horrifying very quickly. i've left some code at EOF * as the start of a potential alternative?
     def update_bonuses(self):
         self.bonus_attrs = {attr_name:self.bonus_attrs.setdefault(attr_name,0) + 
         sum(
@@ -171,6 +159,7 @@ class Character:
         self.update_speed()
         self.suffix = "'" if self.name[-1] == ("s" or "x") else "'s"
 
+    # TODO P3: make this use the new update_mod and update_bonus methods
     def handle_new_item(self, item, equipping=True):
         """updates meta-variables whenever a new item is equipped or unequipped
 
@@ -498,9 +487,7 @@ class Character:
         self = char_copy
 
 
-    # TODO P1: test
     # things that still need to get done here:
-    # accounting for bonus skills/attrs. they get reset on levelup!
     # weights don't scale at all with character level. is that desirable behavior?
     def level_up_auto(self):
 
@@ -558,14 +545,24 @@ class Character:
 
 
 
-# *
-# updating stats (and attacking) is the only real performance critical part of the code
-# i golfed these lines into the method:
-# self.bonus_attrs = {attr_name:0 for attr_name in self.attributes}
-# self.bonus_skills = {skill_name:0 for skill_name in self.skills}
-# for item in self.slots.values():
-#     if item:
-#         for statName,statValue in item.bonus_attrs.items():
-#             self.bonus_attrs[statName] += statValue
-#         for statName,statValue in item.bonus_skills.items():
-#             self.bonus_skills[statName] += statValue
+# * updating stats (and attacking) is the only real performance critical part of the code
+# def update_bonuses(self):
+#     for slot in self.slots.values():
+#         if slot is not None:
+#             for attr_name, attr_value in slot.bonus_attrs.items():
+#                 self.update_bonus(self.bonus_attrs, )
+
+#     self.bonus_attrs = {attr_name:self.update_bonus(self.bonus_attrs, attr_name, 
+#         sum(item.bonus_attrs[attr_name] if item else 0 for item in self.slots.values())) for attr_name in self.attributes}
+#     self.bonus_skills = {skill_name:self.update_bonus(self.bonus_skills, skill_name, 
+#         sum(item.bonus_skills[skill_name] if item else 0 for item in self.slots.values())) for skill_name in self.skills}
+
+# def update_bonuses(self):
+#     self.bonus_attrs = {attr_name:0 for attr_name in self.attributes}
+#     self.bonus_skills = {skill_name:0 for skill_name in self.skills}
+#     for item in self.slots.values():
+#         if item:
+#             for statName,statValue in item.bonus_attrs.items():
+#                 self.bonus_attrs[statName] += statValue
+#             for statName,statValue in item.bonus_skills.items():
+#                 self.bonus_skills[statName] += statValue

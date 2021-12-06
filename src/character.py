@@ -13,6 +13,7 @@ MAX_ATTR = 20
 MAX_SKILL = 5
 BASE_SKILL_POINTS = 3
 BASE_AC = 6
+MELEE_RANGE = 3
 
 # much of the code is duplicated for performing the same actions on attributes and skills.
 # i'm forced to ask myself why keeping them separate is necessary, and i'm drawing a blank.
@@ -26,8 +27,6 @@ class Character:
     """
     def __init__(self, attrs):
         self.__dict__ |= attrs
-        # for key,value in attrs.items():
-        #     setattr(self,key,value)
 
     @classmethod
     def create(cls, attrs):
@@ -70,7 +69,6 @@ class Character:
         # item.get_json does recursion
         attrs['slots'] = {slot:item.get_json() if item else None for slot,item in self.slots.items()}
         return attrs
-        # return vars(self) | {'slots':{slot:item.get_json() if item else None for slot,item in self.slots.items()}}
 
     #############################
     #### stat update methods ####
@@ -92,13 +90,14 @@ class Character:
 
             self.clas_applied = True
 
-    def update_bonus(self, dict, key, value):
-        self.bonus_attrs[key] = self.bonus_attrs.setdefault(key,0) + value
+    def update_bonus(self, attr_name, value):
+        self.bonus_attrs[attr_name] = self.bonus_attrs.setdefault(attr_name,0) + value
 
     def update_mod(self, attr_name):
         self.attr_mods[attr_name] = (self.attributes[attr_name] + self.bonus_attrs[attr_name] - 10) // 2
 
-    # TODO P3: this became very horrifying very quickly. i've left some code at EOF * as the start of a potential alternative?
+    # TODO P3: this became very horrifying very quickly. i'm sorry.
+    # i've left some code at EOF * as the start of a potential alternative?
     def update_bonuses(self):
         self.bonus_attrs = {attr_name:self.bonus_attrs.setdefault(attr_name,0) + 
         sum(
@@ -301,7 +300,7 @@ class Character:
         return True if rollFn() + self.skills[stat] + self.bonus_skills[stat] >= dc else False
 
     # TODO P2: attack function wrapper method?
-    def initiative(self, dice=3, die=6):
+    def initiative(self, dice=rolls.dice, die=rolls.die):
         """Rolls initiative for the character.
 
         Keyword Arguments:
@@ -328,6 +327,81 @@ class Character:
         if self.hp > self.max_hp:
             self.hp = self.max_hp
 
+    # it works, so i'm not touching it
+    def attack(self, defender, weapon=None, distance=0, cover=0):
+        """self rolls against defender with weapon from distance
+
+        Args:
+            defender (Character): Character defending
+            weapon (Weapon): Attacker's weapon. Defaults to None.
+            distance (int, optional): Attack distance. Defaults to 0.
+            cover (int, optional): % defender is covered. Defaults to None.
+        """
+        # factoring distance
+        if distance == 0:
+            distance_mod = 1
+        else:
+            # 2 is arbitrary
+            distance_mod = 1 - (distance / weapon.range) ** 2
+            if distance_mod < 0:
+                distance_mod = 0
+
+        # factoring cover
+        if cover == 0:
+            cover_mod = 0
+        else:
+            cover_mod = cover // 25
+
+        # fetch weapon
+        if weapon is None:
+            if self.slots['right_hand'] is None:
+                if self.slots['left_hand'] is None:
+                    return "no valid wep" # TODO P2: unarmed combat
+                else:
+                    weapon = self.slots['left_hand']
+            else:
+                weapon = self.slots['right_hand']
+
+        # weapon mods to hit
+        match weapon.proficiency:
+            case 'strength':
+                weapon_hit_mod = self.attr_mods['strength']
+            case 'dexterity':
+                weapon_hit_mod = self.attr_mods['dexterity']
+            case 'finesse':
+                weapon_hit_mod = max(self.attr_mods['strength'], self.attr_mods['dexterity'])
+
+        # hit calculation
+        hit_roll = rolls.IIId6() + weapon_hit_mod
+
+        # dual wield penalty
+        if self.slots['left_hand'] and self.slots['right_hand']:
+            hit_roll -= 2
+
+        # qc penalty for long range weapons
+        if weapon.cqc_penalty > 0 and distance > 3:
+            hit_roll -= 2 * weapon.cqc_penalty
+            print("close combat weapon penalty applied")
+
+        # does the attack hit?
+        if hit_roll > (defender.AC + cover_mod):
+            # damage calculation
+            damage = (
+                round(
+                    rolls.roll(2, weapon.damage // 2) * distance_mod
+                )
+            )
+
+            print(f"{self.name} rolled {hit_roll} to hit {defender.name} for {damage}")
+
+            defender.hurt(totalDamage=damage)
+
+            print(f"{defender.name} is at {defender.hp} health")
+
+        else:
+            print("miss!")
+
+
     def hurt(self, d):
         """Hurts the character for d damage.
 
@@ -335,9 +409,8 @@ class Character:
             d (int): damage to deal
         """
         if d > self.temp_hp:
-            d -= self.temp_hp
+            self.hp -= d - self.temp_hp
             self.temp_hp = 0
-            self.hp -= d
         else:
             self.temp_hp -= d
 
@@ -349,8 +422,9 @@ class Character:
         """
         self.attributes = {name:
         sum(
+            # sorted()[1:] quickly drops the lowest value
             sorted(
-                [random.randint(1,6) for x in range(4)]
+                random.randint(1,6) for x in range(4)
                 )[1:]
             )
              for name in self.attributes}
@@ -488,8 +562,7 @@ class Character:
         self.__dict__ = char_copy.__dict__
 
 
-    # things that still need to get done here:
-    # weights don't scale at all with character level. is that desirable behavior?
+    # TODO P3: weights don't scale at all with character level. is that desirable behavior?
     def level_up_auto(self):
 
         with open(f'.{os.sep}classes{os.sep}{self.clas}.json', encoding='utf-8') as f:
@@ -497,10 +570,12 @@ class Character:
             attr_weights = clas_dict['attr_weights']
             skill_weights = clas_dict['skill_weights']
 
+        # wrap everything in a copy of self, in case the levelup fails
         char_copy = deepcopy(self)
 
-        # level attributes. i opted to give 1 point every 2 levels instead of the traditional 2 every 4
         char_copy.level += 1
+
+        # level attributes. i opted to give 1 point every 2 levels instead of the traditional 2 every 4
         if  char_copy.level % 2 == 0:
             char_copy.attribute_points += 1
 
@@ -519,9 +594,11 @@ class Character:
             # we still need to make sure that we respect the max attr value
             for idx,attr in enumerate(order):
                 if attrs[attr] >= MAX_ATTR:
+                    # determine the character's attributes aren't all maxed
                     if idx >= len(attrs):
                         raise Exception(f"{char_copy.name} has all attrs >= {MAX_ATTRS}.")
                     continue
+                # pick the first attribute in the ordered list (that is a valid levelup attr)
                 attrs[attr] += 1
                 char_copy.attribute_points -= 1
                 break
@@ -546,6 +623,7 @@ class Character:
 
         char_copy.update()
         # TODO P3: this is a little unsafe, and might be able to be solved with a __dir__ method?
+        # using __dict__ sort of like dereferencing
         self.__dict__ = char_copy.__dict__
 
 

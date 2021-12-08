@@ -14,6 +14,8 @@ MAX_SKILL = 5
 BASE_SKILL_POINTS = 3
 BASE_AC = 6
 MELEE_RANGE = 3
+DEFAULT_POINT_BUY_POINTS
+DEFAULT_ATTR
 
 # much of the code is duplicated for performing the same actions on attributes and skills.
 # i'm forced to ask myself why keeping them separate is necessary, and i'm drawing a blank.
@@ -26,6 +28,7 @@ class Character:
     """Generic character class. Create new instances with create(). Load saved instances with __init__()
     """
     def __init__(self, attrs):
+        """for loading saved characters"""
         self.__dict__ |= attrs
 
     @classmethod
@@ -296,8 +299,8 @@ class Character:
     #   character interaction   #
     #############################
 
-    def skill_check(self, stat, dc, rollFn=rolls.IIId6):
-        return True if rollFn() + self.skills[stat] + self.bonus_skills[stat] >= dc else False
+    def skill_check(self, stat, dc, roll_fn=rolls.IIId6):
+        return True if roll_fn() + self.skills[stat] + self.bonus_skills[stat] >= dc else False
 
     # TODO P2: attack function wrapper method?
     def initiative(self, dice=rolls.dice, die=rolls.die):
@@ -417,14 +420,14 @@ class Character:
     #############################
     # character leveling
     #############################
-    def randomize_attributes(self):
+    def randomize_attributes(self, dice=rolls.dice, die=rolls.die):
         """Randomizes character attributes. 4d6 minus lowest roll per attribute
         """
         self.attributes = {name:
         sum(
             # sorted()[1:] quickly drops the lowest value
             sorted(
-                random.randint(1,6) for x in range(4)
+                random.randint(1,die) for x in range(dice+1)
                 )[1:]
             )
              for name in self.attributes}
@@ -432,16 +435,16 @@ class Character:
         self.update()
 
     # smelly
-    def point_buy_attributes(self, points=27):
+    def point_buy_attributes(self, points=DEFAULT_POINT_BUY_POINTS):
         """Starts the point buy process for the character.
 
         Keyword Arguments:
-            points {int} -- The number of points to use in the pointbuy. (default: {27})
+            points {int} -- The number of points to use in the pointbuy. (default: {DEFAULT_POINT_BUY_POINTS})
         """
         # wrap everything in a copy for aborts
         char_copy = deepcopy(self)
-        # set all ability scores to 8
-        char_copy.attributes = {attr:8 for attr in self.attributes}
+        # set all ability scores to DEFAULT_ATTR
+        char_copy.attributes = {attr:DEFAULT_ATTR for attr in self.attributes}
 
         def bug_player():
             s = input("type an attribute to increment: ").lower()
@@ -521,7 +524,7 @@ class Character:
         base_int_mod = (char_copy.attributes['intelligence'] - 10) // 2
 
         # level_up skills
-        char_copy.skill_points += 3 + base_int_mod
+        char_copy.skill_points += BASE_SKILL_POINTS + base_int_mod
 
         char_copy.show_skills()
         while char_copy.skill_points > 0:

@@ -10,3 +10,9 @@ def test_level_up_auto():
     level_old = char.level
     char.level_up_auto()
     assert char.level - level_old == 1
+
+def test_level_up_auto_stats():
+    attrs_old = char.attributes
+    skills_old = char.skills
+    char.level_up_auto()
+    assert char.attributes != attrs_old and char.skills != skills_old

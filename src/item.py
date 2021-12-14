@@ -11,13 +11,13 @@ class Item:
         self.bonus_skills = bonus_skills
 
     def __str__(self):
-        return self.name+': '+self.description
+        return self.name + ': ' + self.description
 
     def show(self, spacing=''):
         """recursively pretty-prints item & storage contents
         """
         if self.storage:
-            print(spacing + f"{self.name} contains: {[item.name for item in self.storage]}")
+            print(spacing + self.name + ' contains: ' + ', '.join(item.name for item in self.storage))
         spacing += '    '
         for item in self.storage:
             item.show(spacing)

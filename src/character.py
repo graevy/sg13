@@ -39,8 +39,8 @@ class Character:
 
         Returns:
             character: created
-        """#           /races/human/human.json
-        with open(f".{os.sep}races{os.sep}{attrs.get('race','human')}{os.sep}defaults.json") as f:
+        """#           e.g. /races/human/human.json
+        with open(dmtools.RACES_DIR + attrs.get('race','human') + os.sep + "defaults.json") as f:
             char_obj = cls(json.load(f) | attrs)
 
         char_obj.update()

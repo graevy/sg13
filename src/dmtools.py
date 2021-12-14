@@ -14,7 +14,7 @@ ITEMS_DIR = f".{SEP}items{SEP}"
 TEMPLATES_DIR = f".{SEP}npc_templates{SEP}"
 
 
-def create_manual(mode=0, **kwargs):
+def create_character_manual(mode=0, **kwargs):
     """Stepwise character creation function
 
     Args:

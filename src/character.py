@@ -14,8 +14,9 @@ MAX_SKILL = 5
 BASE_SKILL_POINTS = 3
 BASE_AC = 6
 MELEE_RANGE = 3
-DEFAULT_POINT_BUY_POINTS
-DEFAULT_ATTR
+DEFAULT_POINT_BUY_POINTS = 27
+DEFAULT_ATTR = 8
+DEFAULT_SKILL = 0
 
 # much of the code is duplicated for performing the same actions on attributes and skills.
 # i'm forced to ask myself why keeping them separate is necessary, and i'm drawing a blank.
@@ -340,20 +341,13 @@ class Character:
             distance (int, optional): Attack distance. Defaults to 0.
             cover (int, optional): % defender is covered. Defaults to None.
         """
-        # factoring distance
-        if distance == 0:
-            distance_mod = 1
-        else:
-            # 2 is arbitrary
-            distance_mod = 1 - (distance / weapon.range) ** 2
-            if distance_mod < 0:
-                distance_mod = 0
+        # factoring distance. 2 is an arbitrary exponent to scale damage at range
+        distance_mod = 1 - (distance / weapon.range) ** 2
+        if distance_mod < 0:
+            distance_mod = 0.0
 
         # factoring cover
-        if cover == 0:
-            cover_mod = 0
-        else:
-            cover_mod = cover // 25
+        cover_mod = cover // 25
 
         # fetch weapon
         if weapon is None:

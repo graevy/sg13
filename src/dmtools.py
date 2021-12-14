@@ -245,11 +245,11 @@ def load_item(item_to_load):
     # ladder to determine item type to construct
     # this order actually matters a lot, because some weapons have bonus_ac
     if 'range' in item_json:
-        item_obj = item.Weapon(**item_json)
+        item_obj = item.Weapon(item_json)
     elif 'bonus_ac' in item_json:
-        item_obj = item.Armor(**item_json)
+        item_obj = item.Armor(item_json)
     else:
-        item_obj = item.Item(**item_json)
+        item_obj = item.Item(item_json)
 
     item_obj.storage = [load_item(stored_item) for stored_item in item_obj.storage]
     return item_obj

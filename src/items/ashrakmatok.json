@@ -1,1 +1,1 @@
-{"name": "Ashrak Wrist-Mounted Ma'tok", "description": "Unwieldy", "weight": 0, "storage": [], "size": 2, "space": 0, "range": 50, "damage": 30, "proficiency": "dexterity", "proficiency_type": "ranged", "cqc_penalty": 0}
+{"name": "Ashrak Wrist-Mounted Ma'tok", "description": "Unwieldy", "weight": 0, "storage": [], "size": 2, "space": 0, "max_range": 50, "damage": 30, "proficiency": "dexterity", "proficiency_type": "max_ranged", "cqc_penalty": 0}

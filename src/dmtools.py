@@ -78,6 +78,10 @@ def create_character_manual(mode=0, **kwargs):
 
     return character.Character.create(attrs)
 
+def create_item_manual(mode=0, **kwargs):
+    # TODO: P2
+    pass
+
 
 # TODO P3: expanded 5e longrest implementation
 def long_rest(*character_lists):
@@ -312,7 +316,7 @@ def load():
     return factions
 
 
-def save(iterable: dict, path=f'.{SEP}factions{SEP}'):
+def save(iterable: dict, path=FACTIONS_DIR):
     """writes all character data to local jsons
 
     Args:

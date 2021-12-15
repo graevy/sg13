@@ -1,13 +1,23 @@
+# TODO P3:
+# documentation for the defaults
+# refactoring away from "proficiency" and "proficiency_type". terrible names, terrible mechanics, what were you thinking
+
+MELEE_RANGE = 3
+
 ITEM_DEFAULTS = {'name':'item', 'description':None, 'weight':0.0, 'size':2, 'space':0, 'storage':[], 'bonus_attrs':{}, 'bonus_skills':{}}
-WEAPON_DEFAULTS = {'max_range':3, 'damage':8, 'proficiency':'strength', 'proficiency_type':'melee', 'cqc_penalty':0}
+WEAPON_DEFAULTS = {'max_range':MELEE_RANGE, 'damage':0, 'proficiency':'strength', 'proficiency_type':'melee', 'cqc_penalty':0}
 ARMOR_DEFAULTS = {'bonus_ac':0}
 
+
+# the unsafe character.Character constructor ultimately simplified so much code around extensibility that i decided to standardize it into the item class
+# item.Weapon.__init__ ended up taking 13 variables and called super().__init__ with 8 variables. there is an attrs module to handle exactly this
+# but one of the goals of this project for me was no external dependencies
 class Item:
-    def __init__(self, attrs):
+    def __init__(self, attrs: dict):
         self.__dict__ |= attrs
 
     @classmethod
-    def create(cls, attrs):
+    def create(cls, attrs: dict):
         return cls(ITEM_DEFAULTS | attrs)
 
     def __str__(self):
@@ -49,11 +59,11 @@ class Item:
 
 class Weapon(Item):
     @classmethod
-    def create(cls, attrs):
+    def create(cls, attrs: dict):
         return cls(ITEM_DEFAULTS | WEAPON_DEFAULTS | attrs)
 
 
 class Armor(Item):
     @classmethod
-    def create(cls, attrs):
+    def create(cls, attrs: dict):
         return cls(ITEM_DEFAULTS | ARMOR_DEFAULTS | attrs)

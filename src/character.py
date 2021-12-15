@@ -17,6 +17,8 @@ MELEE_RANGE = 3
 DEFAULT_POINT_BUY_POINTS = 27
 DEFAULT_ATTR = 8
 DEFAULT_SKILL = 0
+COVER_MAX_BONUS_AC = 4
+COVER_RESOLUTION = 100 // COVER_MAX_BONUS_AC
 
 # much of the code is duplicated for performing the same actions on attributes and skills.
 # i'm forced to ask myself why keeping them separate is necessary, and i'm drawing a blank.
@@ -28,19 +30,20 @@ DEFAULT_SKILL = 0
 class Character:
     """Generic character class. Create new instances with create(). Load saved instances with __init__()
     """
-    def __init__(self, attrs):
+    def __init__(self, attrs: dict):
         """for loading saved characters"""
         self.__dict__ |= attrs
 
     @classmethod
-    def create(cls, attrs):
+    def create(cls, attrs: dict):
         """uncontrolled factory method for first-time character creation
         using this to load character jsons will run unnecessary overhead
 
         Returns:
             character: created
         """#           e.g. /races/human/human.json
-        with open(dmtools.RACES_DIR + attrs.get('race','human') + os.sep + "defaults.json") as f:
+        #                               attrs.get('race','human')?
+        with open(dmtools.RacES_DIR + attrs['race'] if 'race' in attrs else 'human' + os.sep + "defaults.json") as f:
             char_obj = cls(json.load(f) | attrs)
 
         char_obj.update()
@@ -120,7 +123,7 @@ class Character:
 
     def update_ac(self):
         self.armor_ac = sum(item.bonus_ac if hasattr(item,'bonus_ac') else 0 for item in self.slots.values())
-        self.AC = 6 + self.armor_ac + self.attr_mods['dexterity']
+        self.ac = BASE_AC + self.armor_ac + self.attr_mods['dexterity']
 
     def update_max_hp(self):
         # hp = hit_die+mod for level 1, conMod for each other level
@@ -154,7 +157,7 @@ class Character:
         # requires bonuses to exist, and it affects modifier calculation
         self.update_clas()
         self.update_mods()
-        # AC and max hp depend on mods
+        # ac and max hp depend on mods
         self.update_ac()
         self.update_max_hp()
         self.update_weight()
@@ -179,23 +182,23 @@ class Character:
         self.gear_weight += item.get_weight() * equipping
         self.update_speed()
 
-        # AC needs recalculation too
+        # ac needs recalculation too
         if hasattr(item,'bonus_ac'):
             self.armor_ac += item.bonus_ac * equipping
-            self.AC += item.bonus_ac * equipping
+            self.ac += item.bonus_ac * equipping
 
         # skills are pretty straightforward
         for skill_name,skill_value in item.bonus_skills.items():
             self.bonus_skills[skill_name] += skill_value * equipping
 
-        # attributes are tricky because of AC and max_hp
+        # attributes are tricky because of ac and max_hp
         for attr_name,attr_value in item.bonus_attrs.items():
             self.bonus_attrs[attr_name] += attr_value * equipping
             mod = self.attr_mods[attr_name] = (self.attributes[attr] + self.bonus_attrs[attr] - 10) // 2
-            # AC gets recalculated twice sometimes, but it can't really be helped without collapsing Armor into Item
+            # ac gets recalculated twice sometimes, but it can't really be helped without collapsing Armor into Item
             # this would simplify a lot of the item code, especially around serialization, but it reduces extensibility
             if attr_name == 'dexterity':
-                self.AC = 6 + self.armor_ac + mod
+                self.ac = BASE_AC + self.armor_ac + mod
             if attr_name == 'constitution':
                 self.max_hp = (self.hit_die + mod) + \
                 ((self.level - 1) * mod)
@@ -231,7 +234,7 @@ class Character:
             else:
                 print(f"{slot} already contains {self.slots[slot]}")
         else:
-            print(f"'{slot}' invalid. valid slots are:\n    ", *self.slots.keys())
+            print(f"'{slot}' invalid. valid slots are:\n    {', '.join(self.slots)}")
 
 
     def stow(self, slot, container):
@@ -258,7 +261,7 @@ class Character:
     def show_slots(self):
         """Prints the character's slot contents."""
 
-        print(f"{self.name}{self.suffix} AC is {self.AC} and is wearing:")
+        print(f"{self.name}{self.suffix} ac is {self.ac} and is wearing:")
         for slot, item in self.slots.items():
             print(f"    {slot}: {item}")
             if item is not None:
@@ -274,17 +277,13 @@ class Character:
 
     def show_skills(self):
         """Prints the skills of the character."""
+
         print(self.name + self.suffix + " skills are:")
         for name, skill in self.skills.items():
             print(f"    {name}: {skill}")
 
     def show(self):
         """Prints the current status of the character."""
-
-        if not hasattr(self,'max_hp'):
-            # this happens embarrassingly often
-            raise Exception(
-                "you used the normal character constructor with the defaults dict instead of the factory method again")
 
         print(f"{self.name} is a level {self.level} {self.race} {self.clas}.")
         print(f"{self.name} has {self.hp} health, {self.temp_hp} temp health, and {self.max_hp} max health.")
@@ -331,7 +330,7 @@ class Character:
         if self.hp > self.max_hp:
             self.hp = self.max_hp
 
-    # it works, so i'm not touching it
+
     def attack(self, defender, weapon=None, distance=0, cover=0):
         """self rolls against defender with weapon from distance
 
@@ -347,13 +346,16 @@ class Character:
             distance_mod = 0.0
 
         # factoring cover
-        cover_mod = cover // 25
+        cover_mod = cover // COVER_RESOLUTION
 
         # fetch weapon
         if weapon is None:
             if self.slots['right_hand'] is None:
                 if self.slots['left_hand'] is None:
-                    return "no valid wep" # TODO P2: unarmed combat
+                    # TODO P3: i'm thinking about improvised weaponry?
+                    # TODO P2: untested
+                    with open(dmtools.ITEMS_DIR + 'fist.json') as f:
+                        weapon = item.Weapon(json.load(f))
                 else:
                     weapon = self.slots['left_hand']
             else:
@@ -381,7 +383,7 @@ class Character:
             print("close combat weapon penalty applied")
 
         # does the attack hit?
-        if hit_roll > (defender.AC + cover_mod):
+        if hit_roll > (defender.ac + cover_mod):
             # damage calculation
             damage = (
                 round(
@@ -619,7 +621,7 @@ class Character:
                 break
 
         char_copy.update()
-        # TODO P3: this is a little unsafe, and might be able to be solved with a __dir__ method?
+
         # using __dict__ sort of like dereferencing
         self.__dict__ = char_copy.__dict__
 

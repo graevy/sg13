@@ -20,6 +20,7 @@ DEFAULT_ATTR = 8
 DEFAULT_SKILL = 0
 COVER_MAX_BONUS_AC = 4
 COVER_RESOLUTION = 100 // COVER_MAX_BONUS_AC
+RANGE_EXPONENT = 2 # higher value makes ranged attacks hit less often. below 1 and they're better than melee
 
 # much of the code is duplicated for performing the same actions on attributes and skills.
 # i'm forced to ask myself why keeping them separate is necessary, and i'm drawing a blank.
@@ -341,8 +342,8 @@ class Character:
             distance (int, optional): Attack distance. Defaults to 0.
             cover (int, optional): % defender is covered. Defaults to None.
         """
-        # factoring distance. 2 is an arbitrary exponent to scale damage at range
-        distance_mod = 1 - (distance / weapon.range) ** 2
+        # factoring distance
+        distance_mod = 1 - (distance / weapon.range) ** RANGE_EXPONENT
         if distance_mod < 0:
             distance_mod = 0.0
 

@@ -7,6 +7,7 @@ import race
 import clas # misspelt throughout the codebase to avoid keyword collision
 import rolls
 import dmtools
+import cfg.dirs
 
 MAX_LEVEL = 20
 MAX_ATTR = 20
@@ -43,7 +44,7 @@ class Character:
             character: created
         """#           e.g. /races/human/human.json
         #                               attrs.get('race','human')?
-        with open(dmtools.RacES_DIR + attrs['race'] if 'race' in attrs else 'human' + os.sep + "defaults.json") as f:
+        with open(cfg.dirs.RACES_DIR + attrs['race'] if 'race' in attrs else 'human' + os.sep + "defaults.json") as f:
             char_obj = cls(json.load(f) | attrs)
 
         char_obj.update()
@@ -354,7 +355,7 @@ class Character:
                 if self.slots['left_hand'] is None:
                     # TODO P3: i'm thinking about improvised weaponry?
                     # TODO P2: untested
-                    with open(dmtools.ITEMS_DIR + 'fist.json') as f:
+                    with open(cfg.dirs.ITEMS_DIR + 'fist.json') as f:
                         weapon = item.Weapon(json.load(f))
                 else:
                     weapon = self.slots['left_hand']
@@ -564,7 +565,7 @@ class Character:
     # TODO P3: weights don't scale at all with character level. is that desirable behavior?
     def level_up_auto(self):
 
-        with open(f'.{os.sep}classes{os.sep}{self.clas}.json', encoding='utf-8') as f:
+        with open(cfg.dirs.CLASES_DIR + self.clas + '.json', encoding='utf-8') as f:
             clas_dict = json.load(f)
             attr_weights = clas_dict['attr_weights']
             skill_weights = clas_dict['skill_weights']

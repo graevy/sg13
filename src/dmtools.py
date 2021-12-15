@@ -1,18 +1,15 @@
-import character
-import item
 import random
 from statistics import NormalDist
 from copy import deepcopy
 import json
 import os
+
+import character
+import item
 import rolls
+import cfg.dirs
 
 SEP = os.sep
-FACTIONS_DIR = f".{SEP}factions{SEP}"
-RACES_DIR = f".{SEP}races{SEP}"
-ITEMS_DIR = f".{SEP}items{SEP}"
-TEMPLATES_DIR = f".{SEP}npc_templates{SEP}"
-
 
 def create_character_manual(mode=0, **kwargs):
     """Stepwise character creation function
@@ -81,7 +78,6 @@ def create_character_manual(mode=0, **kwargs):
 def create_item_manual(mode=0, **kwargs):
     # TODO: P2
     pass
-
 
 # TODO P3: expanded 5e longrest implementation
 def long_rest(*character_lists):
@@ -215,15 +211,15 @@ def henchmen(n, template=None, attributes=None, faction=None):
 
     # using a template means we source names from its race
     if template:
-        with open(TEMPLATES_DIR + template + '.json', encoding='utf-8') as f:
+        with open(cfg.dirs.TEMPLATES_DIR + template + '.json', encoding='utf-8') as f:
             attributes = json.load(f) | attributes
         race = attributes['race']
-    elif 'race' in attributes and os.listdir(f".{SEP}races{SEP}{attributes['race']}{SEP}names"):
+    elif 'race' in attributes and os.listdir(RACES_DIR + attributes['race'] + SEP + "names"):
         race = attributes['race']
     else:
         race = 'human'
 
-    race_path = RACES_DIR + race + SEP + 'names'
+    race_path = cfg.dirs.RACES_DIR + race + SEP + 'names'
     name_files = [race_path + SEP + name_file for name_file in os.listdir(race_path)]
     names = random_names(n, name_files)
 
@@ -243,7 +239,7 @@ def load_item(item_to_load):
     if isinstance(item_to_load, dict):
         item_json = item_to_load
     elif isinstance(item_to_load, str):
-        with open(ITEMS_DIR + item_to_load + '.json') as f:
+        with open(cfg.dirs.ITEMS_DIR + item_to_load + '.json') as f:
             item_json = json.load(f)
 
     # ladder to determine item type to construct
@@ -299,7 +295,7 @@ def load():
     # generator yielding file locations
     #                               root:           dirs       files
     # walker output looks like ['./factions'], ['sgc','trust'], []
-    walker = ((root, dirs, files) for root,dirs,files in os.walk(FACTIONS_DIR))
+    walker = ((root, dirs, files) for root,dirs,files in os.walk(cfg.dirs.FACTIONS_DIR))
 
     # first yield is sort of like a dir head (it has no root), so it gets its own statement
     factions = {key:{} for key in next(walker)[1]} # factions is currently e.g. {'sgc':{}, 'trust':{}}
@@ -316,7 +312,7 @@ def load():
     return factions
 
 
-def save(iterable: dict, path=FACTIONS_DIR):
+def save(iterable: dict, path=cfg.dirs.FACTIONS_DIR):
     """writes all character data to local jsons
 
     Args:

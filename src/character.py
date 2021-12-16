@@ -18,8 +18,8 @@ MELEE_RANGE = 3
 DEFAULT_POINT_BUY_POINTS = 27
 DEFAULT_ATTR = 8
 DEFAULT_SKILL = 0
-COVER_MAX_BONUS_AC = 4
-COVER_RESOLUTION = 100 // COVER_MAX_BONUS_AC
+MAX_BONUS_AC_FROM_COVER = 4
+COVER_INTERVAL = 100 // MAX_BONUS_AC_FROM_COVER
 RANGE_EXPONENT = 2 # higher value makes ranged attacks hit less often. below 1 and they're better than melee
 
 # much of the code is duplicated for performing the same actions on attributes and skills.
@@ -348,7 +348,7 @@ class Character:
             distance_mod = 0.0
 
         # factoring cover
-        cover_mod = cover // COVER_RESOLUTION
+        cover_mod = cover // COVER_INTERVAL
 
         # fetch weapon
         if weapon is None:

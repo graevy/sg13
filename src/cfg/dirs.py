@@ -6,6 +6,9 @@ CLASES_DIR = f".{sep}clases{sep}"
 ITEMS_DIR = f".{sep}items{sep}"
 TEMPLATES_DIR = f".{sep}npc_templates{sep}"
 
+CONFIG_DIR = f".{sep}cfg{sep}"
+DICE_CONFIG_DIR = CONFIG_DIR + "diceconfig.json"
+
 # # if i ever end up extending things
 # walker = os.walk('.')
 

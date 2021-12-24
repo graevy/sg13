@@ -15,13 +15,13 @@ CHARACTERS = src.dmtools.get_chars(factions)
 
 # TODO P3: create tests don't simulate user input at all. needs partial function injection via functools module
 def test_create_basic():
-    kwargs = dict(name='test', race='human', clas='scientist', faction='sgc', level=1)
+    kwargs = dict(name='test', race='human', class_='scientist', faction='sgc', level=1)
     char = src.dmtools.create(mode=0, **kwargs)
     for k,v in kwargs.items():
         assert char.__dict__[k] == v
 
 def test_create_mode_1():
-    kwargs = dict(name='test', race='human', clas='scientist', faction='sgc', level=1,
+    kwargs = dict(name='test', race='human', class_='scientist', faction='sgc', level=1,
         attributes={'strength':15}, skills={'anthropology':4})
     char = src.dmtools.create(mode=1, **kwargs)
     for k,v in kwargs.items():

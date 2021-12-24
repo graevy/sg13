@@ -7,10 +7,10 @@ from os import sep
 
 
 class Template(character.Character):
-    def __init__(self, name=None, race=None, clas=None, slots=None):
+    def __init__(self, name=None, race=None, class_=None, slots=None):
         self.name = input("name? >>> ") if name is None else name
         self.race = input("race? >>> ") if race is None else race
-        self.clas = input("clas? >>> ") if clas is None else clas
+        self.class_ = input("class_? >>> ") if class_ is None else class_
 
         # with open(f".{sep}races{sep}{self.race}{sep}{self.race}.json", encoding='utf-8') as f:
         #     race_defaults = json.load(f)
@@ -21,7 +21,7 @@ class Template(character.Character):
         else:
             self.slots = slots
 
-        self = character.Character.create({'name':self.name, 'race':self.race, 'clas':self.clas, 'slots':self.slots})
+        self = character.Character.create({'name':self.name, 'race':self.race, 'class_':self.class_, 'slots':self.slots})
 
     def load_slots(self):
         # getting the slots from the race allows for non-humanoids
@@ -34,7 +34,7 @@ class Template(character.Character):
             
     def save(self):
         with open(f".{sep}races{sep}{self.race}{sep}{templates}{sep}{self.name}.json", 'w+', encoding='utf-8') as f:
-            json.dump(character.Character.create({'name':self.name, 'race':self.race, 'clas':self.clas, 'slots':self.slots}).get_json(), f)
+            json.dump(character.Character.create({'name':self.name, 'race':self.race, 'class_':self.class_, 'slots':self.slots}).get_json(), f)
 
     @classmethod
     def refactor(cls, file_path_no_ext):

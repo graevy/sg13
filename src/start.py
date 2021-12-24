@@ -7,7 +7,7 @@ try:
     from dmtools import *
     import item
     import race
-    import clas
+    import class_
     import template
     import rolls
 

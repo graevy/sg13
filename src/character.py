@@ -4,7 +4,7 @@ import json
 import os
 
 import race
-import clas # misspelt throughout the codebase to avoid keyword collision
+import class_
 import rolls
 import dmtools
 import cfg.dirs
@@ -86,18 +86,18 @@ class Character:
     # this would harden e.g. handle_new_item against e.g. item/feat extensibility. in the same vein,
     # different races should probably just be different classes with different e.g. update_speed methods?
 
-    def update_clas(self):
-        if not hasattr(self,'clas_applied'):
-            clas_dict = clas.load_clas(self.clas)
+    def update_class_(self):
+        if not hasattr(self,'class_applied'):
+            class_dict = class_.load_class_(self.class_)
 
-            self.hit_die = clas_dict['hit_die']
+            self.hit_die = class_dict['hit_die']
 
-            for attr,bonus in clas_dict['bonus_attrs'].items():
+            for attr,bonus in class_dict['bonus_attrs'].items():
                 self.bonus_attrs[attr] += bonus
-            for skill,bonus in clas_dict['bonus_skills'].items():
+            for skill,bonus in class_dict['bonus_skills'].items():
                 self.bonus_skills[skill] += bonus
 
-            self.clas_applied = True
+            self.class_applied = True
 
     def update_bonus(self, attr_name, value):
         self.bonus_attrs[attr_name] = self.bonus_attrs.setdefault(attr_name,0) + value
@@ -155,9 +155,9 @@ class Character:
     def update(self):
         """builds all character meta variables"""
         self.update_bonuses()
-        # clas is done between bonuses and mods because it
+        # class_ is done between bonuses and mods because it
         # requires bonuses to exist, and it affects modifier calculation
-        self.update_clas()
+        self.update_class_()
         self.update_mods()
         # ac and max hp depend on mods
         self.update_ac()
@@ -275,7 +275,7 @@ class Character:
 
         print(self.name + self.suffix + " attributes are:")
         for name in self.attributes:
-            print(f"    {name}: {self.attributes[name]+self.bonus_attrs[name]}")
+            print(f"    {name}: {self.attributes[name] + self.bonus_attrs[name]}")
 
     def show_skills(self):
         """Prints the skills of the character."""
@@ -287,7 +287,7 @@ class Character:
     def show(self):
         """Prints the current status of the character."""
 
-        print(f"{self.name} is a level {self.level} {self.race} {self.clas}.")
+        print(f"{self.name} is a level {self.level} {self.race} {self.class_}.")
         print(f"{self.name} has {self.hp} health, {self.temp_hp} temp health, and {self.max_hp} max health.")
 
         self.show_attributes()
@@ -356,8 +356,8 @@ class Character:
                 if self.slots['left_hand'] is None:
                     # TODO P3: i'm thinking about improvised weaponry?
                     # TODO P2: untested
-                    with open(cfg.dirs.ITEMS_DIR + 'fist.json') as f:
-                        weapon = item.Weapon(json.load(f))
+                    with open(cfg.dirs.ITEMS_DIR + 'fist.json') as fist:
+                        weapon = item.Weapon(json.load(fist))
                 else:
                     weapon = self.slots['left_hand']
             else:
@@ -566,10 +566,10 @@ class Character:
     # TODO P3: weights don't scale at all with character level. is that desirable behavior?
     def level_up_auto(self):
 
-        with open(cfg.dirs.CLASES_DIR + self.clas + '.json', encoding='utf-8') as f:
-            clas_dict = json.load(f)
-            attr_weights = clas_dict['attr_weights']
-            skill_weights = clas_dict['skill_weights']
+        with open(cfg.dirs.CLASS_ES_DIR + self.class_ + '.json', encoding='utf-8') as f:
+            class_dict = json.load(f)
+            attr_weights = class_dict['attr_weights']
+            skill_weights = class_dict['skill_weights']
 
         # wrap everything in a copy of self, in case the levelup fails
         char_copy = deepcopy(self)
@@ -583,7 +583,7 @@ class Character:
         for _ in range(char_copy.attribute_points):
             attrs = char_copy.attributes
             # so, to choose which attribute to level, sort them (low to high) by 
-            # their value: attrs[attr], minus their clas-supplied weighting: attr_weights[attr]
+            # their value: attrs[attr], minus their class-supplied weighting: attr_weights[attr]
             # this means that attributes with a higher weight get put first
 
             # key takes a function, which takes each iterable elem as an arg (like a for loop), 

@@ -1,7 +1,7 @@
 import pytest
 import src
 
-char = src.character.Character.create(dict(name='named', race='human', clas='soldier', level=1))
+char = src.character.Character.create(dict(name='named', race='human', class_='soldier', level=1))
 
 def test_character_creation():
     assert type(char) == src.character.Character

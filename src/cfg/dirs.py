@@ -2,7 +2,7 @@ from os import sep
 
 FACTIONS_DIR = f".{sep}factions{sep}"
 RACES_DIR = f".{sep}races{sep}"
-CLASES_DIR = f".{sep}clases{sep}"
+CLASS_ES_DIR = f".{sep}class_es{sep}"
 ITEMS_DIR = f".{sep}items{sep}"
 TEMPLATES_DIR = f".{sep}npc_templates{sep}"
 
@@ -21,8 +21,8 @@ DICE_CONFIG_DIR = CONFIG_DIR + "diceconfig.json"
 #             factions_dir = full_dir(root, directory)
 #         case 'races':
 #             races_dir = full_dir(root, directory)
-#         case 'clases':
-#             clases_dir = full_dir(root, directory)
+#         case 'class_es':
+#             class_es_dir = full_dir(root, directory)
 #         case 'items':
 #             items_dir = full_dir(root, directory)
 #         case 'templates':

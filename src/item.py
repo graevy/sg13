@@ -5,7 +5,7 @@
 MELEE_RANGE = 3
 
 ITEM_DEFAULTS = {'name':'item', 'description':None, 'weight':0.0, 'size':2, 'space':0, 'storage':[], 'bonus_attrs':{}, 'bonus_skills':{}}
-WEAPON_DEFAULTS = {'max_range':MELEE_RANGE, 'damage':0, 'proficiency':'strength', 'proficiency_type':'melee', 'cqc_penalty':0}
+WEAPON_DEFAULTS = {'range_':MELEE_RANGE, 'damage':0, 'proficiency':'strength', 'proficiency_type':'melee', 'cqc_penalty':0}
 ARMOR_DEFAULTS = {'bonus_ac':0}
 
 

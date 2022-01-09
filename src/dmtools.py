@@ -262,7 +262,7 @@ def load():
     """builds factions, a nested dict eventually containing lists of character Objs.
     """
 
-    # TODO P3: this broke
+    # TODO P3: this broke because it got moved inside this translation unit
     if 'factions' in globals():
         raise Exception("load() attempted to overwrite factions")
 
@@ -312,7 +312,7 @@ def load():
     return factions
 
 
-def save(iterable: dict, path=cfg.dirs.FACTIONS_DIR):
+def save(iterable, path=cfg.dirs.FACTIONS_DIR):
     """writes all character data to local jsons
 
     Args:

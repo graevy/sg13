@@ -40,7 +40,7 @@ def create_character_manual(mode=0, **kwargs):
                 print(f" invalid entry for {key}")
 
     attrs = {} # this gets populated and then returned
-    basics = ['name', 'race', 'clas', 'faction', 'level']
+    basics = ['name', 'race', 'class_', 'faction', 'level']
 
     # stuffing the basic values into attrs
     for basic in basics:

@@ -596,7 +596,7 @@ class Character:
             for idx,attr in enumerate(order):
                 if attrs[attr] >= MAX_ATTR:
                     # determine the character's attributes aren't all maxed
-                    if idx >= len(attrs):
+                    if idx >= len(attrs) - 1:
                         raise Exception(f"{char_copy.name} has all attrs >= {MAX_ATTR}.")
                     continue
                 # pick the first attribute in the ordered list (that is a valid levelup attr)
@@ -615,7 +615,7 @@ class Character:
 
             for idx,skill in enumerate(order):
                 if skills[skill] >= MAX_SKILL:
-                    if idx >= len(skills):
+                    if idx >= len(skills) - 1:
                         raise Exception(f"{char_copy.name} has all skills >= {MAX_SKILL}.")
                     continue
                 skills[skill] += 1

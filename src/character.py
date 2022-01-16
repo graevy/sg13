@@ -497,8 +497,8 @@ class Character:
         char_copy.level += 1
 
         # level attributes
-        if  char_copy.level % 2 == 0:
-            char_copy.attribute_points += 1
+        if  char_copy.level % 4 == 0:
+            char_copy.attribute_points += 2
             char_copy.show_attributes()
 
         while char_copy.attribute_points > 0:
@@ -544,7 +544,7 @@ class Character:
                 continue
 
             # check to make sure the skill isn't maxed out
-            if char_copy.skills[s] < 5:
+            if char_copy.skills[s] < MAX_SKILL:
                 # skills above 2 cost 2 to level instead of 1
                 if char_copy.skills[s] > 2:
                     if char_copy.skill_points > 1:
@@ -576,9 +576,9 @@ class Character:
 
         char_copy.level += 1
 
-        # level attributes. i opted to give 1 point every 2 levels instead of the traditional 2 every 4
-        if  char_copy.level % 2 == 0:
-            char_copy.attribute_points += 1
+        # level attributes
+        if  char_copy.level % 4 == 0:
+            char_copy.attribute_points += 2
 
         for _ in range(char_copy.attribute_points):
             attrs = char_copy.attributes
@@ -604,11 +604,12 @@ class Character:
                 char_copy.attribute_points -= 1
                 break
 
+        # repeating myself for skills
         # level skills
         base_int_mod = (char_copy.attributes['intelligence'] - 10) // 2
         char_copy.skill_points += BASE_SKILL_POINTS + base_int_mod
 
-        # basically a copy of the attribute leveling
+        # see above
         for _ in range(char_copy.skill_points):
             skills = char_copy.skills
             order = sorted(skills,key=lambda skill: skills[skill] - skill_weights.get(skill,0))

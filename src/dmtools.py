@@ -103,7 +103,7 @@ def group_initiative(*character_lists, print_output=True):
 
 
 def set_dc(success_odds, round_down=True):
-    """returns the DC of a % success chance
+    """prints the DC of a % success chance
 
     Args:
         success_odds (int): the 0-99 chance of action success.
@@ -123,8 +123,9 @@ def set_dc(success_odds, round_down=True):
 
     if round_down:
         # casting floats to ints truncates in python. don't have to import math
-        return f"{int(dc)} (rounded down from {dc})"
-    return f"{round(dc)} (rounded from {dc})"
+        print(f"{int(dc)} (rounded down from {dc})")
+    else:
+        print(f"{round(dc)} (rounded from {dc})")
 
 def odds_num(dc):
     """return odds of succeeding a dice check
@@ -191,7 +192,7 @@ def random_names(n, name_files, name_separator=' '):
         ) for _ in range(n)]
 
 
-def henchmen(n, template=None, attributes=None, faction=None):
+def henchmen(n, level=1, template=None, attributes=None, faction=None):
     """generates henchmen for use in combat encounters
 
     Args:
@@ -214,17 +215,23 @@ def henchmen(n, template=None, attributes=None, faction=None):
         with open(cfg.dirs.TEMPLATES_DIR + template + '.json', encoding='utf-8') as f:
             attributes = json.load(f) | attributes
         race = attributes['race']
-    elif 'race' in attributes and os.listdir(RACES_DIR + attributes['race'] + SEP + "names"):
-        race = attributes['race']
+        class_ = attributes['class']
     else:
         race = 'human'
+        class_ = 'soldier'
 
-    race_path = cfg.dirs.RACES_DIR + race + SEP + 'names'
-    name_files = [race_path + SEP + name_file for name_file in os.listdir(race_path)]
+    race_path = cfg.dirs.RACES_DIR + race + SEP + 'names' + SEP
+    name_files = [race_path + name_file for name_file in os.listdir(race_path)]
     names = random_names(n, name_files)
 
-    # add a list of characters to the supplied list (if any), randomly name them from the names list, and return it
-    return faction + [character.Character.create(attributes | {'name':names.pop()}) for _ in range(n)]
+    # add a list of characters to the supplied list (if any), and randomly name them from the names list
+    for _ in range(n):
+        char_obj = character.Character.create(attributes | {'name':names.pop()})
+        for _ in range(level - 1):
+            char_obj.level_up_auto()
+        faction.append(char_obj)
+
+    return faction
 
 # TODO P3: this is doubling as a factory method and that probably shouldn't happen
 def load_item(item_to_load):
@@ -264,7 +271,7 @@ def load():
 
     # TODO P3: this broke because it got moved inside this translation unit
     if 'factions' in globals():
-        raise Exception("load() attempted to overwrite factions")
+        raise Exception("dmtools.load() attempted to overwrite factions")
 
     # recursive function to both load characters (with items) and populate the root factions dict
     def populate_factions(root_list, cd, files):

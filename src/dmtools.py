@@ -154,27 +154,27 @@ def odds_num(dc):
     # in python 2, (1 + erf(x/root2))/2 can be substituted for normaldist.cdf
 
 # alias commands
-def hurt(char, amount):
-    char.hurt(amount)
+def hurt(character, amount):
+    character.hurt(amount)
 
-def heal(char, amount=None):
+def heal(character, amount=None):
     if amount is None:
-        char.heal()
+        character.heal()
     else:
-        char.heal(amount)
+        character.heal(amount)
 
-def level_up(char):
-    char.level_up()
+def level_up(character):
+    character.level_up()
 
-def dismember(char, at_most=2):
+def dismember(character, at_most=2):
     """permanently randomly decrease a character's attribute
 
     Args:
-        char (character Obj): to dismember
+        character (character.Character): to dismember
         at_most (int, optional): maximum possible value to decrease by. Defaults to 2.
     """
-    tuple(char.attributes.values())[random.randrange(0,len(char.attributes))] -= random.randint(1,at_most)
-    char.update()
+    tuple(character.attributes.values())[random.randrange(0,len(character.attributes))] -= random.randint(1,at_most)
+    character.update()
 
 def random_names(n, name_files, name_separator=' ') -> list[str]:
     """spits out random names from name_files
@@ -252,7 +252,8 @@ def henchmen(n, levels: int | list = 1, template=None, attributes=None, faction=
             for idx,level in enumerate(levels):
                 char_objs[idx].level_up_auto(levels=level-1)
 
-    return faction
+    # char_objs gets slapped onto faction and returned
+    return faction + char_objs
 
 
 #############################

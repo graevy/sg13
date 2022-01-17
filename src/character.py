@@ -6,7 +6,6 @@ import os
 import race
 import class_
 import rolls
-import dmtools
 import cfg.dirs
 
 MAX_LEVEL = 20
@@ -220,7 +219,7 @@ class Character:
         """moves an item to a character object's slot.
 
         Arguments:
-            item {str} -- to equip
+            item {item.*} -- to equip
             slot {str} -- to move to
         """
         slot = self.handle_slot_input(slot)
@@ -228,7 +227,6 @@ class Character:
         if slot in self.slots:
             if self.slots[slot] is None:
                 # the actual equip function, everything else is just boilerplate
-                item = dmtools.load_item(item)
                 self.slots[slot] = item
                 self.handle_new_item(item, equipping=True)
 
@@ -575,7 +573,7 @@ class Character:
 
         # level attributes
         quotient, remainder = divmod(levels,4)
-        char_copy.attribute_points += (quotient + (char_copy.level + remainder) % 4) * 2
+        char_copy.attribute_points += (quotient + (char_copy.level + remainder) >> 2) * 2
 
         char_copy.level += levels
 

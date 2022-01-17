@@ -11,7 +11,11 @@ import cfg.dirs
 
 SEP = os.sep
 
-def create_character_manual(mode=0, **kwargs):
+
+#############################
+#    creation functions     #
+#############################
+def create_character_manual(mode=0, **kwargs) -> character.Character:
     """Stepwise character creation function
 
     Args:
@@ -79,6 +83,19 @@ def create_item_manual(mode=0, **kwargs):
     # TODO: P2
     pass
 
+def create_faction(faction):
+    os.makedirs(faction.replace('\\','/'))
+
+def delete_faction(faction):
+    try:
+        os.removedirs(faction.replace('\\','/'))
+    except OSError:
+        raise Exception(faction + " has characters")
+
+
+#############################
+#        dm buttons         #
+#############################
 # TODO P3: expanded 5e longrest implementation
 def long_rest(*character_lists):
     """pass lists of character objects to reset their hp"""
@@ -90,7 +107,7 @@ def group_initiative(*character_lists, print_output=True):
     """generates initiative rolls from lists of characters.
 
     Returns:
-        list: of character objects sorted by an initiative roll
+        None or list: of character objects sorted by an initiative roll
     """
     out = sorted((character for character_list in character_lists for character in character_list),
         key=lambda character: character.initiative(), reverse=True)
@@ -108,9 +125,6 @@ def set_dc(success_odds, round_down=True):
     Args:
         success_odds (int): the 0-99 chance of action success.
         round_down (bool, optional): floors the DC -- for lower variance rolls. Defaults to True.
-
-    Returns:
-        int: the corresponding DC
     """
     success_odds /= 100
 
@@ -128,18 +142,15 @@ def set_dc(success_odds, round_down=True):
         print(f"{round(dc)} (rounded from {dc})")
 
 def odds_num(dc):
-    """return odds of succeeding a dice check
+    """print odds of succeeding a dice check
 
     Args:
         dc (int): Dice check to pass/fail
-
-    Returns:
-        [str]: Percent chance of success
     """
     odds = NormalDist(mu=rolls.dice_mean, sigma=rolls.dice_stdev).cdf(dc)
     percent_success = 100 - int(round(odds, 2) * 100)
 
-    return f"DC of {dc} rolling {dice}d{die}: {percent_success}% success"
+    print(f"DC of {dc} rolling {dice}d{die}: {percent_success}% success")
     # in python 2, (1 + erf(x/root2))/2 can be substituted for normaldist.cdf
 
 # alias commands
@@ -165,7 +176,7 @@ def dismember(char, at_most=2):
     tuple(char.attributes.values())[random.randrange(0,len(char.attributes))] -= random.randint(1,at_most)
     char.update()
 
-def random_names(n, name_files, name_separator=' '):
+def random_names(n, name_files, name_separator=' ') -> list[str]:
     """spits out random names from name_files
 
     Args:
@@ -192,11 +203,12 @@ def random_names(n, name_files, name_separator=' '):
         ) for _ in range(n)]
 
 
-def henchmen(n, level=1, template=None, attributes=None, faction=None):
+def henchmen(n, levels: int | list = 1, template=None, attributes=None, faction=None) -> list[character.Character]:
     """generates henchmen for use in combat encounters
 
     Args:
         n (int): number of henchmen
+        levels (int or list): of each generated henchman. if int, the same level is applied to all
         template (str, optional): the name (no extension) of a pre-generated character file e.g. 'airman'
         attributes (dict, optional): containing elements for character construction
         faction (list, optional): to extend with the generated henchmen inside
@@ -224,17 +236,30 @@ def henchmen(n, level=1, template=None, attributes=None, faction=None):
     name_files = [race_path + name_file for name_file in os.listdir(race_path)]
     names = random_names(n, name_files)
 
-    # add a list of characters to the supplied list (if any), and randomly name them from the names list
-    for _ in range(n):
-        char_obj = character.Character.create(attributes | {'name':names.pop()})
-        for _ in range(level - 1):
-            char_obj.level_up_auto()
-        faction.append(char_obj)
+    # create the list of characters, and randomly name them from the names list
+    char_objs = [character.Character.create(attributes | {'name':names.pop()}) for _ in range(n)]
+
+    # level up each character
+
+    # if levels is an integer, we iterate through the char_objs list normally, leveling by levels-1 (character levels start at 1)
+    if isinstance(levels,int) and levels > 1:
+        for char_obj in char_objs:
+                char_obj.level_up_auto(levels=levels-1)
+
+    # if levels is a list, iterate through the list with enumerate to edit each index in char_objs in order
+    elif isinstance(levels,list):
+        if len(levels) == n:
+            for idx,level in enumerate(levels):
+                char_objs[idx].level_up_auto(levels=level-1)
 
     return faction
 
+
+#############################
+#      saving/loading       #
+#############################
 # TODO P3: this is doubling as a factory method and that probably shouldn't happen
-def load_item(item_to_load):
+def load_item(item_to_load) -> item.Item:
     """(recursively) loads an item in memory
 
     Args:
@@ -351,7 +376,7 @@ def save(iterable, path=cfg.dirs.FACTIONS_DIR):
                 json.dump(char_copy.get_json(), f)
 
 
-def get_chars(char_dict, out_list=None):
+def get_chars(char_dict, out_list=None) -> list[character.Character]:
     """recursively get character objects from lists inside a nested dict
 
     Args:

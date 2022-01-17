@@ -44,8 +44,7 @@ class Character:
         Returns:
             character: created
         """#           e.g. /races/human/human.json
-        #                               attrs.get('race','human')?
-        with open(cfg.dirs.RACES_DIR + attrs['race'] if 'race' in attrs else 'human' + os.sep + "defaults.json") as f:
+        with open(cfg.dirs.RACES_DIR + attrs.get('race','human') + os.sep + "defaults.json") as f:
             char_obj = cls(json.load(f) | attrs)
 
         char_obj.update()
@@ -564,7 +563,7 @@ class Character:
 
 
     # TODO P3: weights don't scale at all with character level. is that desirable behavior?
-    def level_up_auto(self):
+    def level_up_auto(self, levels=1):
 
         with open(cfg.dirs.CLASS_ES_DIR + self.class_ + '.json', encoding='utf-8') as f:
             class_dict = json.load(f)
@@ -574,11 +573,14 @@ class Character:
         # wrap everything in a copy of self, in case the levelup fails
         char_copy = deepcopy(self)
 
-        char_copy.level += 1
-
         # level attributes
-        if  char_copy.level % 4 == 0:
-            char_copy.attribute_points += 2
+        quotient, remainder = divmod(levels,4)
+        char_copy.attribute_points += (quotient + (char_copy.level + remainder) % 4) * 2
+
+        char_copy.level += levels
+
+        # if  char_copy.level % 4 == 0:
+        #     char_copy.attribute_points += 2
 
         for _ in range(char_copy.attribute_points):
             attrs = char_copy.attributes
@@ -606,8 +608,8 @@ class Character:
 
         # repeating myself for skills
         # level skills
-        base_int_mod = (char_copy.attributes['intelligence'] - 10) // 2
-        char_copy.skill_points += BASE_SKILL_POINTS + base_int_mod
+        base_int_mod = (char_copy.attributes['intelligence'] - 10) // 2 
+        char_copy.skill_points += (BASE_SKILL_POINTS + base_int_mod) * levels
 
         # see above
         for _ in range(char_copy.skill_points):

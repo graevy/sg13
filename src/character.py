@@ -573,7 +573,7 @@ class Character:
 
         # level attributes
         quotient, remainder = divmod(levels,4)
-        char_copy.attribute_points += (quotient + (char_copy.level + remainder) >> 2) * 2
+        char_copy.attribute_points += (quotient + ((char_copy.level + remainder) >> 2)) * 2
 
         char_copy.level += levels
 

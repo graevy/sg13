@@ -560,7 +560,6 @@ class Character:
         self.__dict__ = char_copy.__dict__
 
 
-    # TODO P3: weights don't scale at all with character level. is that desirable behavior?
     def level_up_auto(self, levels=1):
 
         with open(cfg.dirs.CLASS_ES_DIR + self.class_ + '.json', encoding='utf-8') as f:
@@ -572,25 +571,29 @@ class Character:
         char_copy = deepcopy(self)
 
         # level attributes
+
+        # calculate # of points to allocate. 2 every 4 levels
         quotient, remainder = divmod(levels,4)
         char_copy.attribute_points += (quotient + ((char_copy.level + remainder) >> 2)) * 2
 
         char_copy.level += levels
 
-        # if  char_copy.level % 4 == 0:
-        #     char_copy.attribute_points += 2
-
-        for _ in range(char_copy.attribute_points):
+        # attribute selection
+        while char_copy.attribute_points > 0:
             attrs = char_copy.attributes
             # so, to choose which attribute to level, sort them (low to high) by 
-            # their value: attrs[attr], minus their class-supplied weighting: attr_weights[attr]
-            # this means that attributes with a higher weight get put first
+            # their value: attrs[attr], minus their class-supplied weighting: attr_weights[attr],
+            # modified by the formula: (weight * (level + max level) >> 5)
+            # this means that attributes with a higher weight get put first. it scales with character level,
+            # allowing for at most 12 points at max level between highest and lowest attribute
 
             # key takes a function, which takes each iterable elem as an arg (like a for loop), 
             # and sorts by the function's output.
+
             # using dict.get(value,0) allows for support for shorter weights dicts. e.g. a scientist
             # doesn't need 'strength':0, and could just have {'tecnhology':10} for a skill weights dict.
-            order = sorted(attrs,key=lambda attr: attrs[attr] - attr_weights.get(attr,0))
+
+            order = sorted(attrs, key=lambda attr: attrs[attr] - (attr_weights.get(attr,0) * (char_copy.level + MAX_LEVEL) >> 5))
 
             # we still need to make sure that we respect the max attr value
             for idx,attr in enumerate(order):
@@ -605,14 +608,15 @@ class Character:
                 break
 
         # repeating myself for skills
+
         # level skills
         base_int_mod = (char_copy.attributes['intelligence'] - 10) // 2 
         char_copy.skill_points += (BASE_SKILL_POINTS + base_int_mod) * levels
 
         # see above
-        for _ in range(char_copy.skill_points):
+        while char_copy.skill_points > 0:
             skills = char_copy.skills
-            order = sorted(skills,key=lambda skill: skills[skill] - skill_weights.get(skill,0))
+            order = sorted(skills, key=lambda skill: skills[skill] - skill_weights.get(skill,0))
 
             for idx,skill in enumerate(order):
                 if skills[skill] >= MAX_SKILL:

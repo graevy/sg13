@@ -561,6 +561,15 @@ class Character:
 
 
     def level_up_auto(self, levels=1):
+        """automatically level a character based off class-supplied biases
+
+        Args:
+            levels (int, optional): to level the character by. Defaults to 1.
+
+        Raises:
+            Exception: attributes are all at maximum
+            Exception: skills are all at maximum
+        """
 
         with open(cfg.dirs.CLASS_ES_DIR + self.class_ + '.json', encoding='utf-8') as f:
             class_dict = json.load(f)
@@ -574,7 +583,12 @@ class Character:
 
         # calculate # of points to allocate. 2 every 4 levels
         quotient, remainder = divmod(levels,4)
-        char_copy.attribute_points += (quotient + ((char_copy.level + remainder) >> 2)) * 2
+
+        # Δ attribute_points is levels // 4, plus any remainder that pushes char_copy.level above a multiple of 4
+        # expressed by the equation:    (levels//4)         level+remainder//4
+        # char_copy.attribute_points += (quotient + (char_copy.level + remainder >> 2)) * 2
+        # simplified to:
+        char_copy.attribute_points += quotient * 2 + (char_copy.level + remainder >> 1)
 
         char_copy.level += levels
 

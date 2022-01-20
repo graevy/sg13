@@ -191,11 +191,8 @@ def random_names(n, name_files, name_separator=' ') -> list[str]:
     # build a list of lists of all names from each file
     name_file_list_list = []
     for name_file in name_files:
-        name_file_list = []
         with open(name_file, encoding='utf-8') as f:
-            for line in f:
-                name_file_list.append(line) # name whitespace and trailing newline preserved
-        name_file_list_list.append(name_file_list) # better to rstrip on assignment
+            name_file_list_list.append([line for line in f])
 
     # now actually create and return the random names
     return [name_separator.join(
@@ -251,6 +248,8 @@ def henchmen(n, levels: int | list = 1, template=None, attributes=None, faction=
         if len(levels) == n:
             for idx,level in enumerate(levels):
                 char_objs[idx].level_up_auto(levels=level-1)
+        else:
+            raise Exception(f'invalid levels argument. iterable length must equal n')
 
     # char_objs gets slapped onto faction and returned
     return faction + char_objs
@@ -312,7 +311,7 @@ def load():
                     # convert each serialized character into an object,
                     char_obj = character.Character(json.load(f))
                     # convert each serialized item into an object (load_item does recursion),
-                    char_obj.slots = {slot:load_item(item) if item else None \
+                    char_obj.slots = {slot:load_item(item) if item else None
                         for slot,item in char_obj.slots.items()}
                     # add the character to the faction,
                     faction.append(char_obj)
@@ -373,7 +372,7 @@ def save(iterable, path=cfg.dirs.FACTIONS_DIR):
             char_copy.faction = SEP.join(path.split(SEP)[2:-1]).replace('\\','/') # replace is for windows
 
             # write character to file
-            with open(f'{path}{char_copy.name}.json', 'w+', encoding='utf-8') as f:
+            with open(path + char_copy.name + '.json', 'w+', encoding='utf-8') as f:
                 json.dump(char_copy.get_json(), f)
 
 

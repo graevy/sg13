@@ -101,28 +101,28 @@ class Character:
         self.bonus_attrs[attr_name] = self.bonus_attrs.setdefault(attr_name,0) + value
 
     def update_mod(self, attr_name):
-        self.attr_mods[attr_name] = (self.attributes[attr_name] + self.bonus_attrs[attr_name] - 10) // 2
+        self.attr_mods[attr_name] = self.attributes[attr_name] + self.bonus_attrs[attr_name] - 10 >> 1
 
     # TODO P3: this became very horrifying very quickly. i'm sorry.
     # i've left some code at EOF * as the start of a potential alternative?
     def update_bonuses(self):
         self.bonus_attrs = {attr_name:self.bonus_attrs.setdefault(attr_name,0) + 
         sum(
-            item.bonus_attrs[attr_name] if item else 0 for item in self.slots.values()
+            item.bonus_attrs[attr_name] for item in self.slots.values() if item
             ) for attr_name in self.attributes}
 
         self.bonus_skills = {skill_name:self.bonus_skills.setdefault(skill_name,0) + 
         sum(
-            item.bonus_skills[skill_name] if item else 0 for item in self.slots.values()
+            item.bonus_skills[skill_name] for item in self.slots.values() if item
             ) for skill_name in self.skills}
 
 
     def update_mods(self):
-        self.attr_mods = {attr_name:(self.attributes[attr_name] + self.bonus_attrs[attr_name] - 10) // 2 \
+        self.attr_mods = {attr_name:self.attributes[attr_name] + self.bonus_attrs[attr_name] - 10 >> 1
             for attr_name in self.attributes}
 
     def update_ac(self):
-        self.armor_ac = sum(item.bonus_ac if hasattr(item,'bonus_ac') else 0 for item in self.slots.values())
+        self.armor_ac = sum(item.bonus_ac for item in self.slots.values() if hasattr(item,'bonus_ac'))
         self.ac = BASE_AC + self.armor_ac + self.attr_mods['dexterity']
 
     def update_max_hp(self):
@@ -133,7 +133,7 @@ class Character:
 
     def update_weight(self):
         # get_weight() does nested item recursion
-        self.gear_weight = sum(item.get_weight() if item else 0 for item in self.slots.values())
+        self.gear_weight = sum(item.get_weight() for item in self.slots.values() if item)
 
     def update_speed(self):
         str_mod = self.attr_mods['strength']
@@ -166,6 +166,7 @@ class Character:
         self.suffix = "'" if self.name[-1] == ("s" or "x") else "'s"
 
     # TODO P3: make this use the new update_mod and update_bonus methods
+    # it just doesn't build off of the other methods at all. should be simplified
     def handle_new_item(self, item, equipping=True):
         """updates meta-variables whenever a new item is equipped or unequipped
 
@@ -219,7 +220,7 @@ class Character:
         """moves an item to a character object's slot.
 
         Arguments:
-            item {item.*} -- to equip
+            item {item.Item} -- to equip
             slot {str} -- to move to
         """
         slot = self.handle_slot_input(slot)
@@ -505,7 +506,7 @@ class Character:
                 break
 
             if s not in char_copy.attributes:
-                print("invalid attribute. attributes are: ",*char_copy.attributes)
+                print("invalid attribute. attributes are:",*char_copy.attributes)
 
             if char_copy.attributes[s] < MAX_ATTR:
                 char_copy.attributes[s] += 1

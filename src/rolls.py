@@ -2,9 +2,9 @@
 import json
 import random
 import os
-import cfg.dirs
+import cfg.paths
 
-with open(cfg.dirs.DICE_CONFIG_DIR) as f:
+with open(cfg.paths.DICE_CONFIG_PATH) as f:
     dice_config = json.load(f)
 dice = dice_config['dice'] # number of dice used in each roll
 die  = dice_config['die']  # number of sides per die
@@ -26,7 +26,7 @@ def new_dice(new_dice, new_die):
     dice = new_dice
     die = new_die
     dice_config = {'dice':dice, 'die':die}
-    with open(cfg.dirs.DICE_CONFIG_DIR, 'w+', encoding='utf-8') as f:
+    with open(cfg.paths.DICE_CONFIG_PATH, 'w+', encoding='utf-8') as f:
         json.dump(diceConfig, f)
 
 def roll(dice=dice, die=die):

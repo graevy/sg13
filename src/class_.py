@@ -1,7 +1,7 @@
 import json
 import os
 
-import cfg.dirs
+import cfg.paths
 
 class Class_:
     # def __init__(self, name, hit_die, bonus_attrs, bonus_skills, proficiencies=None, feats=None):
@@ -14,10 +14,10 @@ class Class_:
         attrs = {'name':name, 'hit_die':hit_die, 'bonus_attrs':bonus_attrs, 'bonus_skills':bonus_skills,
             'proficiencies':proficiencies, 'feats':feats, 'attr_weights':attr_weights, 'skill_weights':skill_weights}
 
-        with open(cfg.dirs.CLASS_ES_DIR + name + '.json', 'w+', encoding='utf-8') as f:
+        with open(cfg.paths.CLASSES_PATH + name + '.json', 'w+', encoding='utf-8') as f:
             json.dump(attrs, f)
 
 
 def load_class_(name):
-    with open(cfg.dirs.CLASS_ES_DIR + name + '.json', 'r', encoding='utf-8') as f:
+    with open(cfg.paths.CLASSES_PATH + name + '.json', 'r', encoding='utf-8') as f:
         return json.load(f)

@@ -6,7 +6,7 @@ import os
 import race
 import class_
 import rolls
-import cfg.dirs
+import cfg.paths
 
 MAX_LEVEL = 20
 MAX_ATTR = 20
@@ -43,7 +43,7 @@ class Character:
         Returns:
             character: created
         """#           e.g. /races/human/human.json
-        with open(cfg.dirs.RACES_DIR + attrs.get('race','human') + os.sep + "defaults.json") as f:
+        with open(cfg.paths.RACES_PATH + attrs.get('race','human') + os.sep + "defaults.json") as f:
             char_obj = cls(json.load(f) | attrs)
 
         char_obj.update()
@@ -354,7 +354,7 @@ class Character:
                 if self.slots['left_hand'] is None:
                     # TODO P3: i'm thinking about improvised weaponry?
                     # TODO P2: untested
-                    with open(cfg.dirs.ITEMS_DIR + 'fist.json') as fist:
+                    with open(cfg.paths.ITEMS_PATH + 'fist.json') as fist:
                         weapon = item.Weapon(json.load(fist))
                 else:
                     weapon = self.slots['left_hand']
@@ -572,7 +572,7 @@ class Character:
             Exception: skills are all at maximum
         """
 
-        with open(cfg.dirs.CLASS_ES_DIR + self.class_ + '.json', encoding='utf-8') as f:
+        with open(cfg.paths.CLASSES_PATH + self.class_ + '.json', encoding='utf-8') as f:
             class_dict = json.load(f)
             attr_weights = class_dict['attr_weights']
             skill_weights = class_dict['skill_weights']

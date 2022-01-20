@@ -1,13 +1,13 @@
 from os import sep
 
-FACTIONS_DIR = f".{sep}factions{sep}"
-RACES_DIR = f".{sep}races{sep}"
-CLASS_ES_DIR = f".{sep}class_es{sep}"
-ITEMS_DIR = f".{sep}items{sep}"
-TEMPLATES_DIR = f".{sep}npc_templates{sep}"
+FACTIONS_PATH = f".{sep}factions{sep}"
+RACES_PATH = f".{sep}races{sep}"
+CLASSES_PATH = f".{sep}class_es{sep}"
+ITEMS_PATH = f".{sep}items{sep}"
+TEMPLATES_PATH = f".{sep}npc_templates{sep}"
 
-CONFIG_DIR = f".{sep}cfg{sep}"
-DICE_CONFIG_DIR = CONFIG_DIR + "diceconfig.json"
+CONFIG_PATH = f".{sep}cfg{sep}"
+DICE_CONFIG_PATH = CONFIG_PATH + "diceconfig.json"
 
 # # if i ever end up extending things
 # walker = os.walk('.')

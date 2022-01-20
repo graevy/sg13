@@ -7,7 +7,7 @@ import os
 import character
 import item
 import rolls
-import cfg.dirs
+import cfg.paths
 
 SEP = os.sep
 
@@ -22,16 +22,17 @@ def create_character_manual(mode=0, **kwargs) -> character.Character:
         mode (int, optional): level of detail. Defaults to 0.
         kwargs (dict, optional): to include on creation. Defaults to {}.
     """
-    with open(RACES_DIR + kwargs.get('race','human') + SEP + 'defaults.json') as f:
+    with open(cfg.paths.RACES_PATH + kwargs.get('race','human') + SEP + 'defaults.json') as f:
         defaults = json.load(f)
 
     # TODO P2: this doesn't handle invalid races/classes properly because 
     # dict membership checking happens in the character constructor. it
     # only checks invalid typing. if this ends up front-facing it needs an enum.
-    # this defaults_dict implementation is pretty hamfisted
+    # this defaults_dict implementation is pretty hamfisted:
+    # basically, since console input has to get casted, search the racial defaults dictionary for the matching entry's type
+    # unfortunately that dictionary is nested, so i pass the sub-dictionary the key is in
     def handle_input(key, defaults_dict=defaults):
         # infinite loop allows restarting loop iterations
-        # this could be a recursive function but i'm worried about unbounded stack frames with user input
         while True:
             try:
                 value = input(f'{key} <<< ')
@@ -43,41 +44,39 @@ def create_character_manual(mode=0, **kwargs) -> character.Character:
             except ValueError:
                 print(f" invalid entry for {key}")
 
-    attrs = {} # this gets populated and then returned
     basics = ['name', 'race', 'class_', 'faction', 'level']
 
-    # stuffing the basic values into attrs
-    for basic in basics:
-        if basic not in kwargs:
-            attrs[basic] = handle_input(basic)
+    # this gets populated and then returned
+    # first, stuff the basic values into attrs
+    character_creation_dict = {basic:handle_input(basic) for basic in basics if basic not in kwargs}
 
-    # optionally manually edit character attributes and skills
+    # next, edit character attributes and skills
     if mode:
         attrs = defaults['attributes']
-        attrs['attributes'] = {attr_name:handle_input(attr_name,attrs) \
-            if attr_name not in kwargs else None for attr_name in attrs}
+        character_creation_dict['attributes'] = {attr_name:handle_input(attr_name,attrs)
+            for attr_name in attrs if attr_name not in kwargs}
         skills = defaults['skills']
-        attrs['skills'] = {skill_name:handle_input(skill_name,skills) \
-            if skill_name not in kwargs else None for skill_name in skills}
+        character_creation_dict['skills'] = {skill_name:handle_input(skill_name,skills)
+            for skill_name in skills if skill_name not in kwargs}
         
         # gear editing
         if mode > 1:
             slots = defaults['slots']
-            attrs['slots'] = {slot_name:handle_input(slot_name,slots) \
-                if slot_name not in kwargs else None for slot_name in slots}
+            stats['slots'] = {slot_name:handle_input(slot_name,slots)
+                for slot_name in slots if slot_name not in kwargs}
 
-    # at the end, insert kwargs, overwriting any Nones
-    attrs = attrs | kwargs
+    # at the end, insert kwargs
+    character_creation_dict |= kwargs
 
     # this permits create(strength=15) instead of create(attributes={strength:15,dexterity:10...})
     # pop also neatly cleans the attrs dict before assignment if, uh, anyone were to include that error
     for key in kwargs:
         if key in defaults['attributes']:
-            attrs['attributes'][key] = attrs.pop(key)
+            character_creation_dict['attributes'][key] = character_creation_dict.pop(key)
         if key in defaults['skills']:
-            attrs['skills'][key] = attrs.pop(key)
+            character_creation_dict['skills'][key] = character_creation_dict.pop(key)
 
-    return character.Character.create(attrs)
+    return character.Character.create(character_creation_dict)
 
 def create_item_manual(mode=0, **kwargs):
     # TODO: P2
@@ -221,7 +220,7 @@ def henchmen(n, levels: int | list = 1, template=None, attributes=None, faction=
 
     # using a template means we source names from its race
     if template:
-        with open(cfg.dirs.TEMPLATES_DIR + template + '.json', encoding='utf-8') as f:
+        with open(cfg.paths.TEMPLATES_PATH + template + '.json', encoding='utf-8') as f:
             attributes = json.load(f) | attributes
         race = attributes['race']
         class_ = attributes['class']
@@ -229,7 +228,7 @@ def henchmen(n, levels: int | list = 1, template=None, attributes=None, faction=
         race = 'human'
         class_ = 'soldier'
 
-    race_path = cfg.dirs.RACES_DIR + race + SEP + 'names' + SEP
+    race_path = cfg.paths.RACES_PATH + race + SEP + 'names' + SEP
     name_files = [race_path + name_file for name_file in os.listdir(race_path)]
     names = random_names(n, name_files)
 
@@ -271,7 +270,7 @@ def load_item(item_to_load) -> item.Item:
     if isinstance(item_to_load, dict):
         item_json = item_to_load
     elif isinstance(item_to_load, str):
-        with open(cfg.dirs.ITEMS_DIR + item_to_load + '.json') as f:
+        with open(cfg.paths.ITEMS_PATH + item_to_load + '.json') as f:
             item_json = json.load(f)
 
     # ladder to determine item type to construct
@@ -327,7 +326,7 @@ def load():
     # generator yielding file locations
     #                               root:           dirs       files
     # walker output looks like ['./factions'], ['sgc','trust'], []
-    walker = ((root, dirs, files) for root,dirs,files in os.walk(cfg.dirs.FACTIONS_DIR))
+    walker = ((root, dirs, files) for root,dirs,files in os.walk(cfg.paths.FACTIONS_PATH))
 
     # first yield is sort of like a dir head (it has no root), so it gets its own statement
     factions = {key:{} for key in next(walker)[1]} # factions is currently e.g. {'sgc':{}, 'trust':{}}
@@ -344,7 +343,7 @@ def load():
     return factions
 
 
-def save(iterable, path=cfg.dirs.FACTIONS_DIR):
+def save(iterable, path=cfg.paths.FACTIONS_PATH):
     """writes all character data to local jsons
 
     Args:

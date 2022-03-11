@@ -101,7 +101,7 @@ class Character:
         self.bonus_attrs[attr_name] = self.bonus_attrs.setdefault(attr_name,0) + value
 
     def update_mod(self, attr_name):
-        self.attr_mods[attr_name] = (self.attributes[attr_name] + self.bonus_attrs[attr_name] - 10) >> 1
+        self.attr_mods[attr_name] = self.attributes[attr_name] + self.bonus_attrs[attr_name] - 10 >> 1
 
     # TODO P3: this became very horrifying very quickly. i'm sorry.
     # i've left some code at EOF * as the start of a potential alternative?
@@ -118,7 +118,7 @@ class Character:
 
 
     def update_mods(self):
-        self.attr_mods = {attr_name:(self.attributes[attr_name] + self.bonus_attrs[attr_name] - 10) >> 1
+        self.attr_mods = {attr_name:self.attributes[attr_name] + self.bonus_attrs[attr_name] - 10 >> 1
             for attr_name in self.attributes}
 
     def update_ac(self):
@@ -194,7 +194,7 @@ class Character:
         # attributes are tricky because of ac and max_hp
         for attr_name,attr_value in item.bonus_attrs.items():
             self.bonus_attrs[attr_name] += attr_value * equipping
-            mod = self.attr_mods[attr_name] = (self.attributes[attr] + self.bonus_attrs[attr] - 10) // 2
+            mod = self.attr_mods[attr_name] = self.attributes[attr] + self.bonus_attrs[attr] - 10 >> 1
             # ac gets recalculated twice sometimes, but it can't really be helped without collapsing Armor into Item
             # this would simplify a lot of the item code, especially around serialization, but it reduces extensibility
             if attr_name == 'dexterity':
@@ -386,7 +386,7 @@ class Character:
             # damage calculation
             damage = (
                 round(
-                    rolls.roll(2, weapon.damage // 2) * distance_mod
+                    rolls.roll(2, weapon.damage >> 1) * distance_mod
                 )
             )
 
@@ -516,7 +516,7 @@ class Character:
 
         # update. int may have been increased enough to effect skill_points
         char_copy.update_mods()
-        base_int_mod = (char_copy.attributes['intelligence'] - 10) // 2
+        base_int_mod = char_copy.attributes['intelligence'] - 10 >> 1
 
         # level_up skills
         char_copy.skill_points += BASE_SKILL_POINTS + base_int_mod
@@ -624,7 +624,7 @@ class Character:
         # repeating myself for skills
 
         # level skills
-        base_int_mod = (char_copy.attributes['intelligence'] - 10) // 2 
+        base_int_mod = (char_copy.attributes['intelligence'] - 10) >> 1 
         char_copy.skill_points += (BASE_SKILL_POINTS + base_int_mod) * levels
 
         # see above

@@ -101,7 +101,7 @@ class Character:
         self.bonus_attrs[attr_name] = self.bonus_attrs.setdefault(attr_name,0) + value
 
     def update_mod(self, attr_name):
-        self.attr_mods[attr_name] = (self.attributes[attr_name] + self.bonus_attrs[attr_name] - 10) // 2
+        self.attr_mods[attr_name] = (self.attributes[attr_name] + self.bonus_attrs[attr_name] - 10) >> 1
 
     # TODO P3: this became very horrifying very quickly. i'm sorry.
     # i've left some code at EOF * as the start of a potential alternative?
@@ -118,7 +118,7 @@ class Character:
 
 
     def update_mods(self):
-        self.attr_mods = {attr_name:(self.attributes[attr_name] + self.bonus_attrs[attr_name] - 10) // 2 \
+        self.attr_mods = {attr_name:(self.attributes[attr_name] + self.bonus_attrs[attr_name] - 10) >> 1
             for attr_name in self.attributes}
 
     def update_ac(self):
@@ -163,7 +163,7 @@ class Character:
         self.update_weight()
         # speed depends on weight and mods
         self.update_speed()
-        self.suffix = "'" if self.name[-1] == ("s" or "x") else "'s"
+        self.suffix = "'" if self.name.endswith(("s","x")) else "'s"
 
     # TODO P3: make this use the new update_mod and update_bonus methods
     def handle_new_item(self, item, equipping=True):

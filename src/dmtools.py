@@ -22,7 +22,11 @@ def create_character_manual(mode=0, **kwargs) -> character.Character:
         mode (int, optional): level of detail. Defaults to 0.
         kwargs (dict, optional): to include on creation. Defaults to {}.
     """
-    with open(RACES_DIR + kwargs.get('race','human') + SEP + 'defaults.json') as f:
+    if 'race' in kwargs:
+        race = kwargs['race']
+    else:
+        race = 'human'
+    with open(cfg.dirs.RACES_DIR + race + SEP + 'defaults.json') as f:
         defaults = json.load(f)
 
     # TODO P2: this doesn't handle invalid races/classes properly because 
@@ -150,7 +154,7 @@ def odds_num(dc):
     odds = NormalDist(mu=rolls.dice_mean, sigma=rolls.dice_stdev).cdf(dc)
     percent_success = 100 - int(round(odds, 2) * 100)
 
-    print(f"DC of {dc} rolling {dice}d{die}: {percent_success}% success")
+    print(f"DC of {dc} rolling {rolls.dice}d{rolls.die}: {percent_success}% success")
     # in python 2, (1 + erf(x/root2))/2 can be substituted for normaldist.cdf
 
 # alias commands

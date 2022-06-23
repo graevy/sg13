@@ -27,7 +27,7 @@ def new_dice(new_dice, new_die):
     die = new_die
     dice_config = {'dice':dice, 'die':die}
     with open(cfg.dirs.DICE_CONFIG_DIR, 'w+', encoding='utf-8') as f:
-        json.dump(diceConfig, f)
+        json.dump(dice_config, f)
 
 def roll(dice=dice, die=die):
     """custom roll, takes (dice)d(die)"""

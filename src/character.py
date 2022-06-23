@@ -25,7 +25,12 @@ RANGE_EXPONENT = 2 # higher value makes ranged attacks hit less often. below 1 a
 # i'm forced to ask myself why keeping them separate is necessary, and i'm drawing a blank.
 # it's a pretty minor refactor. the biggest issue i see is handling skill/attr points for leveling.
 # it would mitigate the coding-ttrpg "attribute" name collision
-# i need to think more about it. 
+# i need to think more about it.
+
+# refactor TODO:
+# speed weight toggle
+# stat levelup needs to be separate from normal levelup
+
 
 
 class Character:
@@ -42,8 +47,13 @@ class Character:
 
         Returns:
             character: created
-        """#           e.g. /races/human/human.json
-        with open(cfg.dirs.RACES_DIR + attrs.get('race','human') + os.sep + "defaults.json") as f:
+        """
+        if 'race' in attrs:
+            race = attrs['race']
+        else:
+            race = 'human'
+
+        with open(cfg.dirs.RACES_DIR + race + os.sep + "defaults.json") as f:
             char_obj = cls(json.load(f) | attrs)
 
         char_obj.update()
@@ -194,7 +204,7 @@ class Character:
         # attributes are tricky because of ac and max_hp
         for attr_name,attr_value in item.bonus_attrs.items():
             self.bonus_attrs[attr_name] += attr_value * equipping
-            mod = self.attr_mods[attr_name] = self.attributes[attr] + self.bonus_attrs[attr] - 10 >> 1
+            mod = self.attr_mods[attr_name] = self.attributes[attr_name] + self.bonus_attrs[attr_name] - 10 >> 1
             # ac gets recalculated twice sometimes, but it can't really be helped without collapsing Armor into Item
             # this would simplify a lot of the item code, especially around serialization, but it reduces extensibility
             if attr_name == 'dexterity':
@@ -209,9 +219,9 @@ class Character:
     @staticmethod
     def handle_slot_input(slot):
         slot = slot.strip().lower()
-        if slot[:4] == "left" or slot[:2] == "lh":
+        if slot.startswith("left") or slot.startswith("lh"):
             slot = "left_hand"
-        if slot[:5] == "right" or slot[:2] == "rh":
+        if slot.startswith("right") or slot.startswith("rh"):
             slot = "right_hand"
         return slot
 
@@ -353,6 +363,7 @@ class Character:
                 if self.slots['left_hand'] is None:
                     # TODO P3: i'm thinking about improvised weaponry?
                     # TODO P2: untested
+                    import item
                     with open(cfg.dirs.ITEMS_DIR + 'fist.json') as fist:
                         weapon = item.Weapon(json.load(fist))
                 else:
@@ -645,6 +656,7 @@ class Character:
 
         # using __dict__ sort of like dereferencing
         self.__dict__ = char_copy.__dict__
+
 
 
 

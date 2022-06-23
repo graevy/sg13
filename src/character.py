@@ -570,6 +570,31 @@ class Character:
         char_copy.update()
         self.__dict__ = char_copy.__dict__
 
+    # TODO P3: order doesn't need to be fully recalculated each iteration
+    @staticmethod
+    def auto_stats(char, stats, points, weights, max):
+        while points > 0:
+
+            # so, to choose which stat to level, sort them (low to high) by 
+            # their value: stats[stat], MINUS their class-supplied weighting weights[stat],
+            # modified by the formula: (weighting * (level + max level) >> 5)
+            # this means that stats with a higher weight get put first. it scales with character level,
+            # allowing for at most 12 points at max level between highest and lowest stat
+
+            # using .get(value,0) allows for shorter weights dicts. e.g. a scientist doesn't need 
+            # 'persuasion':0, and could just have {'technology':10} for a skill weights dict.
+
+            order = sorted(stats, key=lambda stat: stats[stat] - 
+                (weights.get(stat,0) * (char.level + MAX_LEVEL) >> 5))
+
+            # pick the first stat in the ordered list that can be leveled
+            for stat in order:
+                if stats[stat] < max:
+                    stats[stat] += 1
+                    points -= 1
+                    break
+            else:
+                raise Exception(f"{char.name} has all stats >= {max}.")
 
     def level_up_auto(self, levels=1):
         """automatically level a character based off class-supplied biases
@@ -592,65 +617,25 @@ class Character:
 
         # level attributes
 
-        # calculate # of points to allocate. 2 every 4 levels
+        # calculate # of points to allocate. 2 every 4 levels.
+        # TODO P3: 5e has an ASI at 19 and this is probably unnecessarily convoluted
         quotient, remainder = divmod(levels,4)
 
         # Δ attribute_points is levels // 4, plus any remainder that pushes char_copy.level above a multiple of 4
-        # expressed by the equation:    (levels//4)         level+remainder//4
+        # expressed below:              (levels//4)        (level+remainder//4)
         # char_copy.attribute_points += (quotient + (char_copy.level + remainder >> 2)) * 2
         # simplified to:
         char_copy.attribute_points += quotient * 2 + (char_copy.level + remainder >> 1)
-
         char_copy.level += levels
 
-        # attribute selection
-        while char_copy.attribute_points > 0:
-            attrs = char_copy.attributes
-            # so, to choose which attribute to level, sort them (low to high) by 
-            # their value: attrs[attr], minus their class-supplied weighting: attr_weights[attr],
-            # modified by the formula: (weight * (level + max level) >> 5)
-            # this means that attributes with a higher weight get put first. it scales with character level,
-            # allowing for at most 12 points at max level between highest and lowest attribute
+        # attributes
+        auto_stats(char_copy, char_copy.attributes, char_copy.attribute_points, attr_weights, MAX_ATTR)
 
-            # key takes a function, which takes each iterable elem as an arg (like a for loop), 
-            # and sorts by the function's output.
-
-            # using dict.get(value,0) allows for support for shorter weights dicts. e.g. a scientist
-            # doesn't need 'strength':0, and could just have {'tecnhology':10} for a skill weights dict.
-
-            order = sorted(attrs, key=lambda attr: attrs[attr] - (attr_weights.get(attr,0) * (char_copy.level + MAX_LEVEL) >> 5))
-
-            # we still need to make sure that we respect the max attr value
-            for idx,attr in enumerate(order):
-                if attrs[attr] >= MAX_ATTR:
-                    # determine the character's attributes aren't all maxed
-                    if idx >= len(attrs) - 1:
-                        raise Exception(f"{char_copy.name} has all attrs >= {MAX_ATTR}.")
-                    continue
-                # pick the first attribute in the ordered list (that is a valid levelup attr)
-                attrs[attr] += 1
-                char_copy.attribute_points -= 1
-                break
-
-        # repeating myself for skills
-
-        # level skills
+        # level skills after attrs because +INT affects +skill in old rulesets
         base_int_mod = (char_copy.attributes['intelligence'] - 10) >> 1 
         char_copy.skill_points += (BASE_SKILL_POINTS + base_int_mod) * levels
 
-        # see above
-        while char_copy.skill_points > 0:
-            skills = char_copy.skills
-            order = sorted(skills, key=lambda skill: skills[skill] - skill_weights.get(skill,0))
-
-            for idx,skill in enumerate(order):
-                if skills[skill] >= MAX_SKILL:
-                    if idx >= len(skills) - 1:
-                        raise Exception(f"{char_copy.name} has all skills >= {MAX_SKILL}.")
-                    continue
-                skills[skill] += 1
-                char_copy.skill_points -= 1
-                break
+        auto_stats(char_copy, char_copy.skills, char_copy.skill_points, skill_weights, MAX_SKILL)
 
         char_copy.update()
 

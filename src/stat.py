@@ -1,16 +1,16 @@
 class Stat:
-    def __init__(self, name, value):
-        self.name, self.value = name, value
-    def get_value(self):
-        return self.value
-    def set_value(self, value):
-        self.value = value
+    def update(self):
+        self.value = self.base + self.bonus
+        self.mod = self.value - 10 >> 1
 
+    def __init__(self, name, base, bonus=0):
+        self.name, self.base, self.bonus = name, base, bonus
+        self.update()
 
-class Skill(Stat):
-    def __init__(self, name, value):
-        super().__init__(name, value)
-
-class Attribute(Stat):
-    def __init__(self, name, value):
-        super().__init__(name, value)
+    def set_base(self, new):
+        self.base = new
+        self.update()
+        
+    def serialize(self):
+        return (self.name, self.base, self.bonus)
+        

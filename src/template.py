@@ -2,7 +2,7 @@ import character
 import item
 import dmtools
 import json
-import cfg.dirs
+import cfg
 
 from os import sep
 
@@ -13,7 +13,7 @@ class Template(character.Character):
         self.race = input("race? >>> ") if race is None else race
         self.class_ = input("class_? >>> ") if class_ is None else class_
 
-        # with open(cfg.dirs.RACES_DIR + self.race + sep + self.race + ".json", encoding='utf-8') as f:
+        # with open(cfg.RACES_DIR + self.race + sep + self.race + ".json", encoding='utf-8') as f:
         #     race_defaults = json.load(f)
 
         if slots is None:
@@ -26,7 +26,7 @@ class Template(character.Character):
 
     def load_slots(self):
         # getting the slots from the race allows for non-humanoids
-        with open(cfg.dirs.RACES_DIR + self.race + sep + "defaults.json", encoding='utf-8') as f:
+        with open(cfg.RACES_DIR + self.race + sep + "defaults.json", encoding='utf-8') as f:
             default_slots = json.load(f)['slots']
 
         for slot in default_slots:
@@ -34,7 +34,7 @@ class Template(character.Character):
             self.slots[slot] = dmtools.load_item(s) if s != "" else None
             
     def save(self):
-        with open(cfg.dirs.RACES_DIR + self.race + sep + templates + sep + self.name + ".json", 'w+', encoding='utf-8') as f:
+        with open(cfg.RACES_DIR + self.race + sep + templates + sep + self.name + ".json", 'w+', encoding='utf-8') as f:
             json.dump(character.Character.create({'name':self.name, 'race':self.race, 'class_':self.class_, 'slots':self.slots}).get_json(), f)
 
     @classmethod

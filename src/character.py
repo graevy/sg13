@@ -6,20 +6,7 @@ import os
 import race
 import class_
 import rolls
-import cfg.dirs
-
-MAX_LEVEL = 20
-MAX_ATTR = 20
-MAX_SKILL = 5
-BASE_SKILL_POINTS = 3
-BASE_AC = 6
-MELEE_RANGE = 3
-DEFAULT_POINT_BUY_POINTS = 27
-DEFAULT_ATTR = 8
-DEFAULT_SKILL = 0
-MAX_BONUS_AC_FROM_COVER = 4
-COVER_INTERVAL = 100 // MAX_BONUS_AC_FROM_COVER
-RANGE_EXPONENT = 2 # higher value makes ranged attacks hit less often. below 1 and they're better than melee
+import cfg
 
 # much of the code is duplicated for performing the same actions on attributes and skills.
 # i'm forced to ask myself why keeping them separate is necessary, and i'm drawing a blank.
@@ -30,6 +17,7 @@ RANGE_EXPONENT = 2 # higher value makes ranged attacks hit less often. below 1 a
 # refactor TODO:
 # speed weight toggle
 # stat levelup needs to be separate from normal levelup
+# i think configparser or something similar. cfg.py smelly
 
 
 
@@ -53,7 +41,7 @@ class Character:
         else:
             race = 'human'
 
-        with open(cfg.dirs.RACES_DIR + race + os.sep + "defaults.json") as f:
+        with open(cfg.RACES_DIR + race + os.sep + "defaults.json") as f:
             char_obj = cls(json.load(f) | attrs)
 
         char_obj.update()
@@ -172,10 +160,13 @@ class Character:
         self.update_max_hp()
         self.update_weight()
         # speed depends on weight and mods
-        self.update_speed()
+        if cfg.WEIGHT_AFFECTS_SPEED:
+            self.update_speed()
         self.suffix = "'" if self.name.endswith(("s","x")) else "'s"
 
-    # TODO P3: make this use the new update_mod and update_bonus methods
+    # TODO P3: make this use the update_mod and update_bonus methods
+    # TODO P2: it can't be updating speed without checking cfg, but another check is clunky
+    # feels like this needs a total overhaul
     def handle_new_item(self, item, equipping=True):
         """updates meta-variables whenever a new item is equipped or unequipped
 
@@ -219,9 +210,9 @@ class Character:
     @staticmethod
     def handle_slot_input(slot):
         slot = slot.strip().lower()
-        if slot.startswith("left") or slot.startswith("lh"):
+        if slot.startswith(("left", "lh")):
             slot = "left_hand"
-        if slot.startswith("right") or slot.startswith("rh"):
+        if slot.startswith(("right", "rh")):
             slot = "right_hand"
         return slot
 
@@ -364,7 +355,7 @@ class Character:
                     # TODO P3: i'm thinking about improvised weaponry?
                     # TODO P2: untested
                     import item
-                    with open(cfg.dirs.ITEMS_DIR + 'fist.json') as fist:
+                    with open(cfg.ITEMS_DIR + 'fist.json') as fist:
                         weapon = item.Weapon(json.load(fist))
                 else:
                     weapon = self.slots['left_hand']
@@ -573,6 +564,18 @@ class Character:
     # TODO P3: order doesn't need to be fully recalculated each iteration
     @staticmethod
     def auto_stats(char, stats, points, weights, max):
+        """stat allocation genetic algorithm
+
+        Args:
+            char (Character): to allocate stats for
+            stats (dict): containing stat:value pairs
+            points (int): to allocate
+            weights (dict): _description_
+            max (_type_): _description_
+
+        Raises:
+            Exception: _description_
+        """
         while points > 0:
 
             # so, to choose which stat to level, sort them (low to high) by 
@@ -607,7 +610,7 @@ class Character:
             Exception: skills are all at maximum
         """
 
-        with open(cfg.dirs.CLASS_ES_DIR + self.class_ + '.json', encoding='utf-8') as f:
+        with open(cfg.CLASS_ES_DIR + self.class_ + '.json', encoding='utf-8') as f:
             class_dict = json.load(f)
             attr_weights = class_dict['attr_weights']
             skill_weights = class_dict['skill_weights']

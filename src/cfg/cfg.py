@@ -2,6 +2,9 @@ import json
 import sys
 from os import sep as SEP
 
+# who watches the watchers?
+CFG_DIR = f".{SEP}cfg{SEP}cfg.json"
+
 
 # i decided to do this for extensibility,
 # and the convenience of the dot operator.
@@ -29,7 +32,7 @@ class Config:
 
     @classmethod
     def load(cls, config_json):
-        with open(f".{SEP}cfg{SEP}{config_json}.json") as f:
+        with open(config_json) as f:
             cls = json.load(f)
 
         for k,v in cls.items():
@@ -38,8 +41,11 @@ class Config:
 
         return cls
 
-cfg = Config(Config.load(config_json="cfg"))
+    def set(self, property, value):
+        self.configs.__dict__[property] = value
+
+cfg = Config(Config.load(config_json=CFG_DIR))
 
 # can't believe i thought this was a good idea when i was writing it
 # leaving this as a reminder to not just do things because you can
-# globals().update(Config.load(config_json="cfg"))
+# globals().update(Config.load(config_json=CFG_DIR))

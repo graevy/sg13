@@ -304,7 +304,7 @@ class Character:
     #   character interaction   #
     #############################
 
-    def skill_check(self, stat, dc, roll_fn=rolls.IIId6):
+    def skill_check(self, stat, dc, roll_fn=rolls.roll):
         return True if roll_fn() + self.skills[stat] + self.bonus_skills[stat] >= dc else False
 
     # TODO P2: attack function wrapper method?
@@ -377,7 +377,7 @@ class Character:
                 weapon_hit_mod = max(self.attr_mods['strength'], self.attr_mods['dexterity'])
 
         # hit calculation
-        hit_roll = rolls.IIId6() + weapon_hit_mod
+        hit_roll = rolls.roll() + weapon_hit_mod
 
         # dual wield penalty
         if self.slots['left_hand'] and self.slots['right_hand']:

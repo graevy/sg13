@@ -1,10 +1,10 @@
-import pytest
-import src
+# import pytest
+import src.character as character
 
-char = src.character.Character.create(dict(name='named', race='human', class_='soldier', level=1))
+char = character.Character.create(dict(name='named', race='human', class_='soldier', level=1))
 
 def test_character_creation():
-    assert type(char) == src.character.Character
+    assert type(char) == character.Character
 
 def test_level_up_auto():
     level_old = char.level

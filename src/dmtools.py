@@ -7,7 +7,8 @@ import os
 import character
 import item
 import rolls
-import cfg
+from cfg.cfg import cfg
+CFG = cfg.configs
 
 SEP = os.sep
 
@@ -26,7 +27,7 @@ def create_character_manual(mode=0, **kwargs) -> character.Character:
         race = kwargs['race']
     else:
         race = 'human'
-    with open(cfg.RACES_DIR + race + SEP + 'defaults.json') as f:
+    with open(CFG.RACES_DIR + race + SEP + 'defaults.json') as f:
         defaults = json.load(f)
 
     # TODO P2: this doesn't handle invalid races/classes properly because 
@@ -186,7 +187,7 @@ def random_names(n, name_files, name_separator=' ') -> list[str]:
     Args:
         n (int): number of random names to return
         name_files (iterable): containing files e.g. ["./races/human/names/firstnames.txt"]
-        name_separator (str): to put between names
+        name_separator (str): to put between names. Defaults to ' '
 
     Returns:
         tuple: of ('random name' 'for each' 'namefile used') strings
@@ -228,7 +229,7 @@ def henchmen(n, levels: int | list = 1, template=None, attributes=None, faction=
 
     # using a template means we source names from its race
     if template:
-        with open(cfg.TEMPLATES_DIR + template + '.json', encoding='utf-8') as f:
+        with open(CFG.TEMPLATES_DIR + template + '.json', encoding='utf-8') as f:
             attributes = json.load(f) | attributes
         race = attributes['race']
         class_ = attributes['class']
@@ -236,7 +237,7 @@ def henchmen(n, levels: int | list = 1, template=None, attributes=None, faction=
         race = 'human'
         class_ = 'soldier'
 
-    race_path = cfg.RACES_DIR + race + SEP + 'names' + SEP
+    race_path = CFG.RACES_DIR + race + SEP + 'names' + SEP
     name_files = [race_path + name_file for name_file in os.listdir(race_path)]
     names = random_names(n, name_files)
 
@@ -276,7 +277,7 @@ def load_item(item_to_load) -> item.Item:
     if isinstance(item_to_load, dict):
         item_json = item_to_load
     elif isinstance(item_to_load, str):
-        with open(cfg.ITEMS_DIR + item_to_load + '.json') as f:
+        with open(CFG.ITEMS_DIR + item_to_load + '.json') as f:
             item_json = json.load(f)
 
     # ladder to determine item type to construct
@@ -332,7 +333,7 @@ def load():
     # generator yielding file locations
     #                               root:           dirs       files
     # walker output looks like ['./factions'], ['sgc','trust'], []
-    walker = ((root, dirs, files) for root,dirs,files in os.walk(cfg.FACTIONS_DIR))
+    walker = ((root, dirs, files) for root,dirs,files in os.walk(CFG.FACTIONS_DIR))
 
     # first yield is sort of like a dir head (it has no root), so it gets its own statement
     factions = {key:{} for key in next(walker)[1]} # factions is currently e.g. {'sgc':{}, 'trust':{}}
@@ -349,7 +350,7 @@ def load():
     return factions
 
 
-def save(iterable, path=cfg.FACTIONS_DIR):
+def save(iterable, path=CFG.FACTIONS_DIR):
     """writes all character data to local jsons
 
     Args:

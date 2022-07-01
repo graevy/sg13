@@ -10,7 +10,7 @@ class Stat:
     def set_base(self, new):
         self.base = new
         self.update()
-        
+
     def serialize(self):
         return (self.name, self.base, self.bonus)
         

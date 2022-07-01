@@ -6,7 +6,8 @@ import os
 import race
 import class_
 import rolls
-import cfg
+from cfg.cfg import cfg
+CFG = cfg.configs
 
 # much of the code is duplicated for performing the same actions on attributes and skills.
 # i'm forced to ask myself why keeping them separate is necessary, and i'm drawing a blank.
@@ -15,10 +16,14 @@ import cfg
 # i need to think more about it.
 
 # refactor TODO:
-# speed weight toggle
+# spell slotting
+# stat class
+# speed weight toggle kinda clunky inside update method definition. needs new framework
 # stat levelup needs to be separate from normal levelup
-# i think configparser or something similar. cfg.py smelly
+# too much attention paid to SEP. need to reassess
 
+# featurecreep TODO:
+# ASCII map generation!
 
 
 class Character:
@@ -41,7 +46,7 @@ class Character:
         else:
             race = 'human'
 
-        with open(cfg.RACES_DIR + race + os.sep + "defaults.json") as f:
+        with open(CFG.RACES_DIR + race + os.sep + "defaults.json") as f:
             char_obj = cls(json.load(f) | attrs)
 
         char_obj.update()
@@ -121,7 +126,7 @@ class Character:
 
     def update_ac(self):
         self.armor_ac = sum(item.bonus_ac if hasattr(item,'bonus_ac') else 0 for item in self.slots.values())
-        self.ac = BASE_AC + self.armor_ac + self.attr_mods['dexterity']
+        self.ac = CFG.BASE_AC + self.armor_ac + self.attr_mods['dexterity']
 
     def update_max_hp(self):
         # hp = hit_die+mod for level 1, conMod for each other level
@@ -160,7 +165,7 @@ class Character:
         self.update_max_hp()
         self.update_weight()
         # speed depends on weight and mods
-        if cfg.WEIGHT_AFFECTS_SPEED:
+        if CFG.WEIGHT_AFFECTS_SPEED:
             self.update_speed()
         self.suffix = "'" if self.name.endswith(("s","x")) else "'s"
 
@@ -199,7 +204,7 @@ class Character:
             # ac gets recalculated twice sometimes, but it can't really be helped without collapsing Armor into Item
             # this would simplify a lot of the item code, especially around serialization, but it reduces extensibility
             if attr_name == 'dexterity':
-                self.ac = BASE_AC + self.armor_ac + mod
+                self.ac = CFG.BASE_AC + self.armor_ac + mod
             if attr_name == 'constitution':
                 self.max_hp = (self.hit_die + mod) + \
                 ((self.level - 1) * mod)
@@ -341,12 +346,12 @@ class Character:
             cover (int, optional): % defender is covered. Defaults to None.
         """
         # factoring distance
-        distance_mod = 1 - (distance / weapon.range) ** RANGE_EXPONENT
+        distance_mod = 1 - (distance / weapon.range) ** CFG.RANGE_EXPONENT
         if distance_mod < 0:
             distance_mod = 0.0
 
         # factoring cover
-        cover_mod = cover // COVER_INTERVAL
+        cover_mod = cover // CFG.COVER_INTERVAL
 
         # fetch weapon
         if weapon is None:
@@ -355,7 +360,7 @@ class Character:
                     # TODO P3: i'm thinking about improvised weaponry?
                     # TODO P2: untested
                     import item
-                    with open(cfg.ITEMS_DIR + 'fist.json') as fist:
+                    with open(CFG.ITEMS_DIR + 'fist.json') as fist:
                         weapon = item.Weapon(json.load(fist))
                 else:
                     weapon = self.slots['left_hand']
@@ -432,7 +437,7 @@ class Character:
         self.update()
 
     # smelly
-    def point_buy_attributes(self, points=DEFAULT_POINT_BUY_POINTS):
+    def point_buy_attributes(self, points=CFG.DEFAULT_POINT_BUY_POINTS):
         """Starts the point buy process for the character.
 
         Keyword Arguments:
@@ -441,7 +446,7 @@ class Character:
         # wrap everything in a copy for aborts
         char_copy = deepcopy(self)
         # set all ability scores to DEFAULT_ATTR
-        char_copy.attributes = {attr:DEFAULT_ATTR for attr in self.attributes}
+        char_copy.attributes = {attr:CFG.DEFAULT_ATTR for attr in self.attributes}
 
         def bug_player():
             s = input("type an attribute to increment: ").lower()
@@ -509,7 +514,7 @@ class Character:
             if s not in char_copy.attributes:
                 print("invalid attribute. attributes are: ",*char_copy.attributes)
 
-            if char_copy.attributes[s] < MAX_ATTR:
+            if char_copy.attributes[s] < CFG.MAX_ATTR:
                 char_copy.attributes[s] += 1
                 char_copy.attribute_points -= 1
             else:
@@ -543,7 +548,7 @@ class Character:
                 continue
 
             # check to make sure the skill isn't maxed out
-            if char_copy.skills[s] < MAX_SKILL:
+            if char_copy.skills[s] < CFG.MAX_SKILL:
                 # skills above 2 cost 2 to level instead of 1
                 if char_copy.skills[s] > 2:
                     if char_copy.skill_points > 1:
@@ -588,7 +593,7 @@ class Character:
             # 'persuasion':0, and could just have {'technology':10} for a skill weights dict.
 
             order = sorted(stats, key=lambda stat: stats[stat] - 
-                (weights.get(stat,0) * (char.level + MAX_LEVEL) >> 5))
+                (weights.get(stat,0) * (char.level + CFG.MAX_LEVEL) >> 5))
 
             # pick the first stat in the ordered list that can be leveled
             for stat in order:
@@ -610,7 +615,7 @@ class Character:
             Exception: skills are all at maximum
         """
 
-        with open(cfg.CLASS_ES_DIR + self.class_ + '.json', encoding='utf-8') as f:
+        with open(CFG.CLASSES_DIR + self.class_ + '.json', encoding='utf-8') as f:
             class_dict = json.load(f)
             attr_weights = class_dict['attr_weights']
             skill_weights = class_dict['skill_weights']
@@ -632,13 +637,13 @@ class Character:
         char_copy.level += levels
 
         # attributes
-        auto_stats(char_copy, char_copy.attributes, char_copy.attribute_points, attr_weights, MAX_ATTR)
+        auto_stats(char_copy, char_copy.attributes, char_copy.attribute_points, attr_weights, CFG.MAX_ATTR)
 
         # level skills after attrs because +INT affects +skill in old rulesets
         base_int_mod = (char_copy.attributes['intelligence'] - 10) >> 1 
-        char_copy.skill_points += (BASE_SKILL_POINTS + base_int_mod) * levels
+        char_copy.skill_points += (CFG.BASE_SKILL_POINTS + base_int_mod) * levels
 
-        auto_stats(char_copy, char_copy.skills, char_copy.skill_points, skill_weights, MAX_SKILL)
+        auto_stats(char_copy, char_copy.skills, char_copy.skill_points, skill_weights, CFG.MAX_SKILL)
 
         char_copy.update()
 

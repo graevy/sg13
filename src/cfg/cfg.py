@@ -1,48 +1,45 @@
 import json
-from os import sep
+import sys
+from os import sep as SEP
 
+
+# i decided to do this for extensibility,
+# and the convenience of the dot operator.
+# probably yagni, just use a dictionary?
+class Vars:
+    """containerized dict of config variables
+    """
+    def __init__(self, configs):
+        self.__dict__ |= configs
 
 class Config:
-    def __init__(self, name, vars):
+    """associated methods of Vars struct
+    """
+    def __init__(self, configs, name=None):
+        self.configs = Vars(configs)
         self.name = name
-        self.vars = vars
     
     def save(self):
+        for k,v in self.data.items():
+            if type(v) == str:
+                self.data[k] = v.replace(SEP, '/')
+
         with open(self.name + '.json', 'w+') as f:
-            json.dump(self.vars, f)
+            json.dump(self.data, f)
 
-    # TODO P1: settings must be universal
-    # def handle_path_separators(self):
-    #     for value in self.vars.values():
-    #         if type(value) == str:
-    #             value.replace("/", sep)
-    
+    @classmethod
+    def load(cls, config_json):
+        with open(f".{SEP}cfg{SEP}{config_json}.json") as f:
+            cls = json.load(f)
 
-# global cfg
-WEIGHT_AFFECTS_SPEED = True
-BINARY_SKILLS = False
+        for k,v in cls.items():
+            if type(v) == str:
+                cls[k] = v.replace('/', SEP)
 
-# tweaks
-MAX_LEVEL = 20
-MAX_ATTR = 20
-MAX_SKILL = 5
-BASE_SKILL_POINTS = 3
-BASE_AC = 6
-MELEE_RANGE = 3
-DEFAULT_POINT_BUY_POINTS = 27
-DEFAULT_ATTR = 8
-DEFAULT_SKILL = 0
-MAX_BONUS_AC_FROM_COVER = 4
-COVER_INTERVAL = 100 // MAX_BONUS_AC_FROM_COVER
-RANGE_EXPONENT = 2 # higher value makes ranged attacks hit less often
+        return cls
 
-# dice
-DICE = 3
-DIE = 6
+cfg = Config(Config.load(config_json="cfg"))
 
-# dirs
-FACTIONS_DIR = f".{sep}factions{sep}"
-RACES_DIR = f".{sep}races{sep}"
-CLASS_ES_DIR = f".{sep}class_es{sep}"
-ITEMS_DIR = f".{sep}items{sep}"
-TEMPLATES_DIR = f".{sep}npc_templates{sep}"
+# can't believe i thought this was a good idea when i was writing it
+# leaving this as a reminder to not just do things because you can
+# globals().update(Config.load(config_json="cfg"))

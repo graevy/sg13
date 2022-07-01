@@ -1,11 +1,9 @@
-
-import json
 import random
-import os
-import cfg
+from cfg.cfg import cfg
+CFG = cfg.configs
 
-dice = cfg.DICE # number of dice used in each roll
-die  = cfg.DIE  # number of sides per die
+dice = CFG.DICE # number of dice used in each roll
+die  = CFG.DIE  # number of sides per die
 
 # calculate mean. dice*die is max, dice is min, dice*(die+1) is max+min
 dice_mean = (dice * (die + 1)) / 2
@@ -24,7 +22,7 @@ dice_stdev = dice * ((die**2 - 1) / 12)
 #     dice = new_dice
 #     die = new_die
 #     dice_config = {'dice':dice, 'die':die}
-#     with open(cfg.DICE_CONFIG_DIR, 'w+', encoding='utf-8') as f:
+#     with open(CFG.DICE_CONFIG_DIR, 'w+', encoding='utf-8') as f:
 #         json.dump(dice_config, f)
 
 # recommend 1d20, 3d6, 7d2 for more -> less variance
